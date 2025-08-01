@@ -47,7 +47,7 @@ void putrect(uint16_t x, uint16_t y, uint16_t width, uint16_t height, uint8_t co
 void putrectf(uint16_t x, uint16_t y, uint16_t width, uint16_t height, uint8_t color);
 void graphical_putc(int x, int y, char c, uint8_t color);
 void graphical_puts(int x, int y, const char* str, uint8_t color);
-int putbutton(int x, int y, int width, int height, const char* text, int color);
+int putbutton(int x, int y, int width, int height, const char* text, int color, int fg);
 void update_buttons(int x, int y, int leftclick, int old_leftclick);
 int getbuttonclick(int id);
 void initgraphics(char * s, int c);

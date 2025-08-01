@@ -189,7 +189,7 @@ void graphical_puts(int x, int y, const char* str, uint8_t color) {
     }
 }
 
-int putbutton(int x, int y, int width, int height, const char* text, int color) {
+int putbutton(int x, int y, int width, int height, const char* text, int color, int fg) {
     if (button_count >= MAX_BUTTONS) return -1;
 
     Button *b = &buttons[button_count];
@@ -206,7 +206,7 @@ int putbutton(int x, int y, int width, int height, const char* text, int color) 
     putline(x, y, x, y+height, 0xF);
     putline(x+width, y, x+width, y+height, 0x8);
     putline(x, y+height, x+width, y+height, 0x8);
-    graphical_puts(x + 3, y + height/2 - 7, text, 0x00);
+    graphical_puts(x + 3, y + height/2 - 7, text, fg);
 
     return button_count++;
 }
@@ -268,7 +268,7 @@ initgraphics(char * s, int c)
     putrectf(0, 0, VGA_MAX_WIDTH, 24, 0x7);
     putline(0, 0, VGA_MAX_WIDTH, 0, 0xF);
     putline(0, 0, 0, 24, 0xF);
-    putbutton(VGA_MAX_WIDTH-80, 1, 79, 22, "Exit", 0x07);
+    putbutton(VGA_MAX_WIDTH-80, 1, 79, 22, "Exit", 0x07, BLACK);
     graphical_puts(4, 6, s, 0x00);
     putline(0, 24, VGA_MAX_WIDTH, 24, 0x08);
     putrectf(0, 25, VGA_MAX_WIDTH, VGA_MAX_HEIGHT, c);

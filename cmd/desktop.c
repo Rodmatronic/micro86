@@ -11,7 +11,7 @@ int
 main()
 {
     initgraphics("Desktop", CYAN);
-    int helloworldbutton = putbutton(0, 25, 64, 64, "Hellogui", GREY);
+    int helloworldbutton = putbutton(0, 25, 64, 64, "Hellogui", GREY, WHITE);
 
     flush_background();
 
