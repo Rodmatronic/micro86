@@ -20,8 +20,6 @@ extern int bg_color;
 #define VGA_MAX_WIDTH 640
 #define VGA_MAX_HEIGHT 480
 
-#include "../include/memlayout.h"
-
 #define IRQ_IDE_SECONDARY 15
 
 extern uint16_t current_line;

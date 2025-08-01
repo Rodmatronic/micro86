@@ -46,12 +46,6 @@ trap(struct trapframe *tf)
     return;
   }
 
-  if(tf->trapno == T_IRQ0 + IRQ_MOUSE) {
-    mouse_handler();
-    lapiceoi();
-    return;
-  }
-
   switch(tf->trapno){
   case T_IRQ0 + IRQ_TIMER:
     if(cpunum() == 0){
@@ -69,12 +63,12 @@ trap(struct trapframe *tf)
   case T_IRQ0 + IRQ_IDE+1:
     // Bochs generates spurious IDE1 interrupts.
     break;
-  case T_IRQ0 + IRQ_MOUSE:
-    mouse_handler();
-    lapiceoi();
-    break;
   case T_IRQ0 + IRQ_KBD:
     kbdintr();
+    lapiceoi();
+    break;
+  case T_IRQ0 + IRQ_MOUSE:
+    mouse_handler();
     lapiceoi();
     break;
   case T_IRQ0 + IRQ_COM1:

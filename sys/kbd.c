@@ -3,6 +3,11 @@
 #include "../include/defs.h"
 #include "../include/kbd.h"
 
+is_mouse_data()
+{
+    return (inb(0x64) & 0x20) != 0;
+}
+
 int
 kbdgetc(void)
 {
@@ -11,6 +16,9 @@ kbdgetc(void)
     normalmap, shiftmap, ctlmap, ctlmap
   };
   uint st, data, c;
+  if (is_mouse_data()) {
+    return -1;
+  }
 
   st = inb(KBSTATP);
   if((st & KBS_DIB) == 0)
