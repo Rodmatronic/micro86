@@ -21,6 +21,8 @@ static char cursor_bits[] = {
   0xB7, 0x01, 0xDB, 0x03, 0xDB, 0x07, 0xE3, 0x07,
 };
 
+void graphicsexit(int r);
+
 int leftclick, old_leftclick, leftdown;
 int rightclick, old_rightclick, rightdown;
 int middleclick, old_middleclick, middledown;
@@ -42,14 +44,15 @@ pack_pixel(int x, int y, int color)
     return (x << 22) | (y << 12) | (color & 0xFF);
 }
 
-putpixel(x, y, color)
+void
+putpixel(int x, int y, int color)
 {
   devctl(1, 1, pack_pixel(x, y, color));
 }
 
 void save_background(int x, int y) {
-    for (int row = 0; row < cursor_height + 2; row++) {
-        for (int col = 0; col < cursor_width + 2; col++) {
+    for (int row = 0; row < cursor_height; row++) {
+        for (int col = 0; col < cursor_width; col++) {
             if (y + row < VGA_MAX_HEIGHT && x + col < VGA_MAX_WIDTH) {
                 saved_bg[row][col] = background[y + row][x + col];
             }
@@ -102,7 +105,7 @@ void draw_cursor(int x, int y) {
 void render_background() {
     for (int y = 0; y < VGA_MAX_HEIGHT; y++) {
         for (int x = 0; x < VGA_MAX_WIDTH; x++) {
-            if(!background[y][x] == 0x00){
+            if(background[y][x] != 0x00){
 		    putpixel(x, y, background[y][x]);
 	    }
         }
@@ -358,12 +361,8 @@ initgraphics(char * s, int c)
 }
 
 void
-checkbar(x, y)
+checkbar(int x, int y)
 {
-	int button_x = VGA_MAX_WIDTH-80;
-	int button_y = 0;
-	int button_height = 24;
-	int button_width = 80;
         if (getbuttonclick(exitbutton)) {
             graphicsexit(0);
         }
@@ -402,7 +401,7 @@ openprogram(char * name)
 }
 
 void
-graphicsexit(r)
+graphicsexit(int r)
 {
 //	devctl(1, 2, 0);
 	exit(r);
@@ -431,4 +430,29 @@ mouser()
         update_buttons(dx, dy, leftclick, old_leftclick);
 	old_leftclick = leftclick;
 	checkbar(dx, dy);
+}
+
+void
+putimage(x, y, width, height, bits, c)
+char bits[];
+{
+  int bytes_per_row = (width + 7) / 8;
+
+  for(int row = 0; row < height; row++) {
+    for(int byte_in_row = 0; byte_in_row < bytes_per_row; byte_in_row++) {
+      unsigned char byte = bits[row * bytes_per_row + byte_in_row];
+      for(int bit = 0; bit < 8; bit++) {
+        x = byte_in_row * 8 + bit;
+        if(x >= width) {
+          break; // Skip padding bits at end of row
+        }
+
+        if(!(byte & (1 << bit))) {
+          putpixel_bg(x, y, c);
+        }
+      }
+    }
+    y++;
+    x = 0;
+  }
 }

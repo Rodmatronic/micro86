@@ -1,0 +1,13 @@
+echo "Please refer to /COPYRIGHT regarding kernel copyright information."
+echo 
+echo "To view the most recent kernel/user changes, view /changelog."
+echo
+#rm /etc/mtab
+#cat /dev/null >/etc/utmp
+#touch /etc/mount /dev/rp3 /usr
+#rm -f /usr/spool/lpd/lock
+#: /etc/accton /usr/adm/acct
+#rmdir /tmp
+#mkdir /tmp
+date; echo
+/etc/cron

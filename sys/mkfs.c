@@ -93,21 +93,10 @@ uint create_directory(uint parent_ino, const char *name) {
   de.name[DIRSIZ-1] = '\0'; // Ensure null-termination if truncated
   iappend(parent_ino, &de, sizeof(de));
 
-  // Initialize "." and ".." in the new directory
   add_dot_entries(new_ino, parent_ino);
 
   return new_ino;
 }
-
-/*static const char *etc_files[] = {
-    "init", "rc", "passwd", "group", "motd", NULL
-};
-
-static const char *bin_files[] = {
-    "basename", "cat", "date", "debugger", "echo", "find", "grep", "kill",
-    "ln", "ls", "login", "mkdir", "mv", "pwd", "rm", "rmdir", "sleep",
-    "sh", "stressfs", "uname", "usertests", "touch", "wc", "yes", NULL
-};*/
 
 int
 exists_in_list(char *name, char **list)
@@ -230,6 +219,7 @@ for (i = 2; i < argc; i++) {
 	"echo",
 	"find",
 	"grep",
+	"hexdump",
 	"kill",
 	"ln",
 	"ls",

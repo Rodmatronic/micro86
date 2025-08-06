@@ -35,7 +35,7 @@ extern int last_dy;
 extern int mousebuttons;
 
 int pack_pixel(int x, int y, int color);
-void putpixel(x, y, color);
+void putpixel(int x, int y, int color);
 void save_background(int x, int y);
 void restore_background(int x, int y);
 void draw_cursor(int x, int y);
@@ -55,10 +55,10 @@ int putbutton(int x, int y, int width, int height, const char* text, int color, 
 void update_buttons(int x, int y, int leftclick, int old_leftclick);
 int getbuttonclick(int id);
 void initgraphics(char * s, int c);
-void checkbar(x, y);
+void checkbar(int x, int y);
 void alert(char * msg);
 int openprogram(char * name);
 void flush_background();
 void mouser();
-
+void putimage(int x, int y, int width, int height, char bits[], int c);
 #endif

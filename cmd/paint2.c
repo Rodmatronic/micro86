@@ -29,7 +29,7 @@ main()
     int color_14 = putbutton(0, 175, 25, 25, "14", BRIGHT_MAGENTA, BLACK);
     int color_15 = putbutton(25, 200, 25, 25, "15", YELLOW, BLACK);
     int color_16 = putbutton(0, 200, 25, 25, "16", WHITE, BLACK);
-    int blank_panel = putbutton(0, 250, 50, 250, "", GREY, GREY);
+    putbutton(0, 250, 50, 250, "", GREY, GREY);
     int minus = putbutton(0, 225, 25, 25, "-", GREY, BLACK);
     int plus = putbutton(25, 225, 25, 25, "+", GREY, BLACK);
     flush_background();

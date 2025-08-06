@@ -110,6 +110,7 @@ char *(strcat)(char *s1, const char *s2);
 
 // udate.c
 void epoch_to_tm(unsigned long epoch, struct tm *tm);
+long mktime(struct tm * tm);
 
 // crypt.c
 
