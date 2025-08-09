@@ -488,6 +488,7 @@ create(char *path, short type, short major, short minor)
   ilock(ip);
   ip->major = major;
   ip->minor = minor;
+  ip->mode = type;
   ip->nlink = 1;
   ip->ctime = epoch_mktime();
   ip->lmtime = epoch_mktime();

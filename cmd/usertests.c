@@ -1027,7 +1027,7 @@ subdir(void)
     printf("open (unlinked) dd/dd/ff succeeded!\n");
     exit(1);
   }
-
+  printf("this fails currently\n");
   if(open("dd/ff/ff", O_CREATE|O_RDWR) >= 0){
     printf("create dd/ff/ff succeeded!\n");
     exit(1);
