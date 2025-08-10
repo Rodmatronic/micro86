@@ -29,11 +29,10 @@ static int pressed_button_id = -1;
 
 #define cursor_width 11
 #define cursor_height 16
-static char cursor_bits[] = {
-  0xFF, 0x01, 0xFF, 0x02, 0x7F, 0x03, 0xBF, 0x03, 0xDF, 0x03, 0xEF, 0x03,
-  0xF7, 0x03, 0xFB, 0x03, 0xFD, 0x03, 0xE0, 0x03, 0x6F, 0x03, 0xB7, 0x02,
-  0xB7, 0x01, 0xDB, 0x03, 0xDB, 0x07, 0xE3, 0x07,
-};
+static unsigned char cursor_bits[] = {
+   0xff, 0x01, 0xff, 0x02, 0x7f, 0x03, 0xbf, 0x03, 0xdf, 0x03, 0xef, 0x03,
+   0xf7, 0x03, 0xfb, 0x03, 0xfd, 0x03, 0xe1, 0x03, 0x6f, 0x03, 0xb7, 0x02,
+   0xb7, 0x01, 0xdb, 0x07, 0xdb, 0x07, 0xe7, 0x07};
 
 void graphicsexit(int r);
 
@@ -665,11 +664,13 @@ initgraphics(int x, int y, int width, int height, char * s, int c)
     putrectf(win.x+0, win.y+0, win.width, 24, 0x7);
     putline(win.x+0, win.y+0, win.x+win.width, win.y+0, 0xF);
     putline(win.x+0, win.y+0, win.x+0, win.y+24, 0xF);
-    putbutton(win.width-80, 1, 79, 22, "Exit", 0x07, BLACK);
-    graphical_puts(4, 6, s, 0x00);
-    putline(win.x+0, win.y+24, win.x+win.width, win.y+24, 0x08);
+    putbutton(win.width-22, 3, 18, 18, "", 0x07, BLACK);
+    putline(win.x+win.width-24, win.y+3, win.x+win.width-24, win.y+21, 0x8);
+    putline(win.x+win.width-25, win.y+3, win.x+win.width-25, win.y+21, 0xF);
+    graphical_puts(6, 6, s, 0x00);
     putrectf(win.x+0, win.y+25, win.width, win.height, c);
     putrect(win.x+0, win.y+0, win.width-1, win.height-1, 0xF);
+    putrect(win.x+1, win.y+24, win.width-3, win.height-26, 0x08);
     save_to_window_buffer();
 }
 
