@@ -171,7 +171,7 @@ panic(char *fmt, ...)
   va_list ap;
 
   cli();
-  int x1 = 0;
+/*  int x1 = 0;
   int y1 = 0;
   int x2 = VGA_MAX_WIDTH;
   int y2 = VGA_MAX_HEIGHT;
@@ -184,7 +184,7 @@ panic(char *fmt, ...)
                 putpixel(x, y, 0xF);
             }
         }
-    }
+    }*/
 
   cons.locking = 0;   // Disable console locking during panic
   cprintf("panic: ");
@@ -192,6 +192,9 @@ panic(char *fmt, ...)
   va_start(ap, fmt);
   vcprintf(fmt, ap);
   va_end(ap);
+
+  consputc('\n');
+  cprintf("Please report this panic to https://github.com/Rodmatronic/Exnix/issues");
 
   panicked = 1;       // Freeze other CPUs
 
