@@ -197,7 +197,7 @@ shellcmds(char *buf)
     // Chdir must be called by the parent, not the child.
     buf[strlen(buf)-1] = 0;  // chop \n
     if(chdir(buf+3) < 0) {
-      fprintf(2, "%s: bad directory\n", buf+3);
+      fprintf(stderr, "%s: bad directory\n", buf+3);
       return 1;
     }
     return 0;
@@ -235,7 +235,7 @@ main(int argc, char *argv[])
   // Batch mode if argument is provided
   if (argc >= 2) {
     if ((fd = open(argv[1], O_RDONLY)) < 0) {
-      fprintf(2, "sh: cannot open %s\n", argv[1]);
+      fprintf(stderr, "sh: cannot open %s\n", argv[1]);
       exit(1);
     }
     while (readline(fd, buf, sizeof(buf)) >= 0) {
@@ -255,7 +255,7 @@ main(int argc, char *argv[])
 void
 panic(char *s)
 {
-  fprintf(2, "%s\n", s);
+  fprintf(stderr, "%s\n", s);
   exit(1);
 }
 
@@ -457,7 +457,7 @@ parsecmd(char *s)
   cmd = parseline(&s, es);
   peek(&s, es, "");
   if(s != es){
-    fprintf(2, "leftovers: %s\n", s);
+    fprintf(stderr, "leftovers: %s\n", s);
     panic("syntax");
   }
   nulterminate(cmd);

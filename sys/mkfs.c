@@ -213,6 +213,7 @@ for (i = 2; i < argc; i++) {
     char * bin_files[] = {
 	"basename",
 	"cat",
+	"cmp",
 	"cp",
 	"date",
 	"debugger",

@@ -178,6 +178,7 @@ $S/mkfs: $S/mkfs.c $S/../include/fs.h
 UPROGS=\
         $C/_basename\
 	$C/_cat\
+	$C/_cmp\
 	$C/_cp\
 	$C/_cron\
 	$C/_date\

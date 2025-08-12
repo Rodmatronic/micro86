@@ -1728,7 +1728,7 @@ void argptest()
   int fd;
   fd = open("/etc/init", O_RDONLY);
   if (fd < 0) {
-    fprintf(2, "open failed\n");
+    fprintf(stderr, "open failed\n");
     exit(1);
   }
   read(fd, sbrk(0) - 1, -1);
@@ -1747,6 +1747,16 @@ rand()
 int
 main(int argc, char *argv[])
 {
+  char c;
+  printf("This will mess up your disk. Proceed with caution.\nContinue? (y/n): ");
+  c = getchar();
+  if (c == 'y' || c == 'Y') {
+  } else if (c == 'n' || c == 'N') {
+    exit(0);
+  } else {
+    fprintf(stderr, "Invalid choice.\n");
+    exit(1);
+  }
   printf("usertests starting\n");
 
   if(open("usertests.ran", 0) >= 0){

@@ -28,7 +28,7 @@ main(void)
   int i;
   /* Dispose of random users. */
   if (getuid() != 0) {
-    (void)fprintf(2, "init: %s\n", strerror(EPERM));
+    fprintf(stderr, "init: %s\n", strerror(EPERM));
     exit (1);
   }
 
@@ -64,12 +64,12 @@ main(void)
   for(;;){
     pid = fork();
     if(pid < 0){
-      fprintf(2, "init: fork failed\n");
+      fprintf(stderr, "init: fork failed\n");
       exit(1);
     }
     if(pid == 0){
       exec("/bin/login", argv);
-      fprintf(2, "init: exec sh failed\n");
+      fprintf(stderr, "init: exec sh failed\n");
       exit(1);
     }
     while((wpid=wait(0)) >= 0 && wpid != pid){}
