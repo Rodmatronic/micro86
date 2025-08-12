@@ -90,7 +90,6 @@ identifycpu()
 		cpuid(0x80000004, &reg_values[8], &reg_values[9], &reg_values[10], &reg_values[11]);
 		memmove(cp.cpu_model, reg_values, sizeof(reg_values));
 		cp.cpu_model[48] = '\0';
-		cprintf("%s ", cp.cpu_model);
 	}
 
 	// Get the CPU vendor info
@@ -100,15 +99,13 @@ identifycpu()
 	*((uint *)(cp.cpu_vendor + 4)) = edx;
 	*((uint *)(cp.cpu_vendor + 8)) = ecx;
 	cp.cpu_vendor[12] = '\0';
-
-	cprintf("%s\n", cp.cpu_vendor);
+	cprintf("cpu%d: %s %s\n", cpunum(), cp.cpu_model, cp.cpu_vendor);
 }
 
 // Common CPU setup code.
 static void
 mpmain(void)
 {
-  cprintf("cpu%d: ", cpunum());
   identifycpu();
   idtinit();       // load idt register
   xchg(&(mycpu()->started), 1); // tell startothers() we're up

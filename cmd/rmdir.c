@@ -76,9 +76,9 @@ char *d;
 	}
 	strcat(name, "/.");
 	strcat(name, ".");
-unl:
+//unl:
 	unlink(name);	// unlink name/..
-unl2:
+//unl2:
 	name[strlen(name)-1] = '\0';
 	unlink(name);	// unlink name/.
 	name[strlen(name)-2] = '\0';

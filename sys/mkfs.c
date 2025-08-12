@@ -225,6 +225,7 @@ for (i = 2; i < argc; i++) {
 	"ln",
 	"ls",
 	"login",
+	"man",
 	"mkdir",
 	"mknod",
 	"more",

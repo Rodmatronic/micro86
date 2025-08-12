@@ -66,7 +66,7 @@ main(int argc, char *argv[])
 
     filename = argv[arg_offset];
     if ((fd = open(filename, O_RDONLY)) < 0) {
-        fprintf(2, "hexdump: cannot open %s\n", filename);
+        fprintf(stderr, "hexdump: cannot open %s\n", filename);
         exit(1);
     }
 

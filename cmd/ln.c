@@ -25,7 +25,7 @@ char **argv;
 		fflag++;
 	}
 	if (argc<2 || argc>3) {
-		printf("Usage: ln target [ newname ]\n");
+		fprintf(stderr, "Usage: ln target [ newname ]\n");
 		exit(1);
 	}
 	np = strrchr(argv[1], '/');
@@ -39,11 +39,11 @@ char **argv;
 		arg2 = argv[2];
 	statres = stat(argv[1], &statb);
 	if (statres<0) {
-		printf ("ln: %s does not exist\n", argv[1]);
+		fprintf(stderr, "ln: %s does not exist\n", argv[1]);
 		exit(1);
 	}
 	if (fflag==0 && (statb.mode&S_IFMT) == S_IFDIR) {
-		printf("ln: %s is a directory\n", argv[1]);
+		fprintf(stderr, "ln: %s is a directory\n", argv[1]);
 		exit(1);
 	}
 	statres = stat(arg2, &statb);

@@ -106,10 +106,6 @@ void print_mouse_info() {
     cprintf("%x ", g_status.right_button);
     cprintf("%x\n", g_status.middle_button);
 }
-static int clamp(int value, int min, int max) {
-  return (value < min) ? min : (value > max) ? max : value;
-}
-
 void mouse_handler() {
     static uint8_t mouse_cycle = 0;
     static char mouse_byte[3];
