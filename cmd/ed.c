@@ -587,6 +587,7 @@ onhup(int _x)
 	quit(0);
 }
 
+void
 error(s)
 char *s;
 {
@@ -613,6 +614,7 @@ char *s;
 //	longjmp(savej, 1);
 }
 
+int
 getchr()
 {
 	char c;
@@ -632,6 +634,7 @@ getchr()
 	return(lastc);
 }
 
+int
 gettty()
 {
 	register c;
@@ -658,6 +661,7 @@ gettty()
 	return(0);
 }
 
+int
 getfile()
 {
 	register c;
@@ -694,6 +698,7 @@ getfile()
 	return(0);
 }
 
+void
 putfile()
 {
 	int *a1, n;
@@ -733,6 +738,7 @@ putfile()
 	}
 }
 
+int
 append(f, a)
 int *a;
 int (*f)();
@@ -778,6 +784,7 @@ int (*f)();
     return(nline);
 }
 
+void
 callunix()
 {
 	register void (*savint)(int);
@@ -786,7 +793,7 @@ callunix()
 
 	setnoaddr();
 	if ((pid = fork()) == 0) {
-		char **execargs[] = {"sh", NULL};
+		char **execargs[] = {"sh", "-t", NULL};
 //		exec("/bin/sh", "sh", "-t", NULL);
 		exec("/bin/sh", execargs);
 		exit(0100);
@@ -807,6 +814,7 @@ quit(int _dummy)
 	exit(0);
 }
 
+void
 delete()
 {
 	setdot();
@@ -815,6 +823,7 @@ delete()
 	rdelete(addr1, addr2);
 }
 
+void
 rdelete(ad1, ad2)
 int *ad1, *ad2;
 {
@@ -834,6 +843,7 @@ int *ad1, *ad2;
 	fchange = 1;
 }
 
+void
 gdelete()
 {
 	register *a1, *a2, *a3;
@@ -873,6 +883,7 @@ getline(tl)
 	return(linebuf);
 }
 
+int
 edputline()
 {
 	register char *bp, *lp;
@@ -950,6 +961,7 @@ getblock(atl, iof)
 	return(obuff+off);
 }
 
+void
 blkio(b, buf, iofcn)
 char *buf;
 int (*iofcn)();
@@ -960,6 +972,7 @@ int (*iofcn)();
 	}
 }
 
+void
 init()
 {
 	register *markp;
@@ -982,6 +995,7 @@ init()
 	dot = dol = zero;
 }
 
+void
 global(k)
 {
 	register char *gp;
@@ -1034,6 +1048,7 @@ global(k)
 	}
 }
 
+void
 join()
 {
 	register char *gp, *lp;
@@ -1056,6 +1071,7 @@ join()
 	dot = addr1;
 }
 
+void
 substitute(inglob)
 {
 	register *markp, *a1, nl;
@@ -1095,6 +1111,7 @@ substitute(inglob)
 		error(Q);
 }
 
+int
 compsub()
 {
 	register seof, c;
@@ -1130,6 +1147,7 @@ compsub()
 	return(0);
 }
 
+int
 getsub()
 {
 	register char *p1, *p2;
@@ -1143,6 +1161,7 @@ getsub()
 	return(0);
 }
 
+void
 dosub()
 {
 	register char *lp, *sp, *rp;
@@ -1189,6 +1208,7 @@ register char *sp, *l1, *l2;
 	return(sp);
 }
 
+void
 move(cflag)
 {
 	register int *adt, *ad1, *ad2;
@@ -1232,6 +1252,7 @@ move(cflag)
 	fchange = 1;
 }
 
+void
 reverse(a1, a2)
 register int *a1, *a2;
 {
@@ -1246,6 +1267,7 @@ register int *a1, *a2;
 	}
 }
 
+int
 getcopy()
 {
 	if (addr1 > addr2)
@@ -1254,6 +1276,7 @@ getcopy()
 	return(0);
 }
 
+void
 compile(aeof)
 {
 	register eof, c;
@@ -1383,6 +1406,7 @@ compile(aeof)
 	error(Q);
 }
 
+int
 execute(gf, addr)
 int *addr;
 {
@@ -1434,6 +1458,7 @@ int *addr;
 	return(0);
 }
 
+int
 advance(lp, ep)
 register char *ep, *lp;
 {
@@ -1541,6 +1566,7 @@ register char *ep, *lp;
 	}
 }
 
+int
 backref(i, lp)
 register i;
 register char *lp;
@@ -1554,6 +1580,7 @@ register char *lp;
 	return(0);
 }
 
+int
 cclass(set, c, af)
 register char *set, c;
 {
@@ -1568,6 +1595,7 @@ register char *set, c;
 	return(!af);
 }
 
+void
 putd()
 {
 	register r;
@@ -1579,6 +1607,7 @@ putd()
 	putchr(r + '0');
 }
 
+void
 edputs(sp)
 register char *sp;
 {
@@ -1591,6 +1620,7 @@ register char *sp;
 char	line[70];
 char	*linp	= line;
 
+void
 putchr(ac)
 {
 	register char *lp;
@@ -1634,6 +1664,8 @@ out:
 	}
 	linp = lp;
 }
+
+void
 crblock(permp, buf, nchar, startn)
 char *permp;
 char *buf;
@@ -1663,6 +1695,7 @@ long startn;
 	}
 }
 
+int
 edgetkey()
 {
 	void (*sig)(int);
@@ -1683,6 +1716,7 @@ edgetkey()
  * Besides initializing the encryption machine, this routine
  * returns 0 if the key is null, and 1 if it is non-null.
  */
+int
 crinit(keyp, permp)
 char	*keyp, *permp;
 {
@@ -1746,6 +1780,7 @@ char	*keyp, *permp;
 	return(1);
 }
 
+void
 makekey(a, b)
 char *a, *b;
 {

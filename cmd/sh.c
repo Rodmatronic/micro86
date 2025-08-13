@@ -11,6 +11,7 @@
 #define LIST  4
 #define BACK  5
 #define MAXARGS 64
+int tflag = 0;
 
 struct cmd {
   int type;
@@ -156,10 +157,12 @@ runcmd(struct cmd *cmd)
 int
 getcmd(char *buf, int nbuf)
 {
-  if(!getuid()){
-    printf("# ");
-  } else {
-    printf("$ ");
+  if(tflag == 0){
+  	if(!getuid()){
+    		printf("# ");
+  	} else {
+    		printf("$ ");
+  	}
   }
   memset(buf, 0, nbuf);
   gets(buf, nbuf);
@@ -234,12 +237,18 @@ main(int argc, char *argv[])
 
   // Batch mode if argument is provided
   if (argc >= 2) {
+    if(argc > 1 && argv[1][0] == '-' && argv[1][1] == 't') { // -t mode
+        tflag = 1;
+	getcmd(buf, sizeof(buf));
+	shellcmds(buf);
+	exit(0);
+    }
     if ((fd = open(argv[1], O_RDONLY)) < 0) {
       fprintf(stderr, "sh: cannot open %s\n", argv[1]);
       exit(1);
     }
     while (readline(fd, buf, sizeof(buf)) >= 0) {
-      shellcmds(buf);  // Use shellcmds instead of runcmd
+      shellcmds(buf);
     }
     close(fd);
     exit(0);
