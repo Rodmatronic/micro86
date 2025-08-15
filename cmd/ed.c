@@ -356,22 +356,29 @@ commands()
 
 	case 'W':
 		wrapp++;
-        case 'w':
-                setall();
-                nonzero();
-                filename(c);
-                if(!wrapp ||
-                  ((io = open(file,1)) == -1) ||
-                  ((lseek(io, 0L, 2)) == -1))
-                        if ((io = open(file, O_CREATE | O_RDWR)) < 0)
-                                error(file);
-                wrapp = 0;
-                putfile();
-                exfile();
-                if (addr1==zero+1 && addr2==dol)
-                        fchange = 0;
-                continue;
-
+	case 'w':
+		setall();
+		nonzero();
+		filename(c);
+		if (wrapp) {
+			if ((io = open(file, O_RDWR)) >= 0) {
+				lseek(io, 0, 2);
+			} else {
+				if ((io = open(file, O_CREATE | O_RDWR)) < 0)
+					error(file);
+			}
+		} else {
+			if (io >= 0) close(io);
+			unlink(file);
+			if ((io = open(file, O_CREATE | O_RDWR)) < 0)
+				error(file);
+		}
+		wrapp = 0;
+		putfile();
+		exfile();
+		if (addr1==zero+1 && addr2==dol)
+			fchange = 0;
+		continue;
 	case 'x':
 		setnoaddr();
 		newline();
