@@ -103,19 +103,20 @@ char* strrchr (register const char *s, int c);
 int toupper(int);
 int islower(int);
 int abs (int);
-char * strdup (const char *);
-char * strtok(char *s, const char *delim);
-char * strtok_r(char *s, const char *delim, char **last);
+char* strdup (const char *);
+char* strtok(char *s, const char *delim);
+char* strtok_r(char *s, const char *delim, char **last);
 int getopt(int argc, char **argv, char *opts);
 char *ctime(const struct tm *tm);
 int sprintf(char *buf, const char *fmt, ...);
-char *(strcat)(char *s1, const char *s2);
+char*(strcat)(char *s1, const char *s2);
 int sscanf(const char*, const char*, ...);
+
+// ucrypt.c
+char* crypt(char *pw, char *salt);
 
 // udate.c
 void epoch_to_tm(unsigned long epoch, struct tm *tm);
 long mktime(struct tm * tm);
-
-// crypt.c
 
 #endif

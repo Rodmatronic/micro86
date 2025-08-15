@@ -153,7 +153,7 @@ tags: $(OBJS) $S/entryother.S $S/_init
 $S/vectors.S: $S/vectors.pl
 	$S/vectors.pl > $S/vectors.S
 
-ULIB = $S/ulib.o $S/usys.o $S/printf.o $S/umalloc.o $S/udate.o $S/errno.o $C/font8x16.o $S/ugraphics.o
+ULIB = $S/ulib.o $S/usys.o $S/printf.o $S/umalloc.o $S/udate.o $S/errno.o $C/font8x16.o $S/ugraphics.o $S/ucrypt.o
 
 _%: %.o $(ULIB)
 	$(LD) $(LDFLAGS) -N -e main -Ttext 0 -o $@ $^

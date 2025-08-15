@@ -22,16 +22,13 @@ struct ttyb ttyb;
 
 char	*ttyx;
 
-char* crypt(char *key) {
-    return key;  // Plaintext "encryption" for now
-}
-
 #define	ECHO	010
 
 main(argc, argv)
 char **argv;
 {
 	char pbuf[128];
+	char salt[3];
 //	char loginbuf[128];
 	register char *namep, *np;
 	char pwbuf[9];
@@ -91,7 +88,10 @@ char **argv;
 		ttyb.tflags = ECHO;
 		stty(&ttyb);
 		write(1, "\n", 1);
-		namep = crypt(pwbuf);
+		salt[0] = np[0];
+		salt[1] = np[1];
+		salt[2] = '\0';
+		namep = crypt(pwbuf, salt);
 		while (*namep++ == *np++);
 		if (*--namep!='\0' || *--np!=':')
 			goto bad;
@@ -117,12 +117,12 @@ char **argv;
 		t = utmp.tty;
 		if (t>='a')
 			t =- 'a' - (10+'0');
-//		seek(f, (t-'0')*16, 0);
+		lseek(f, (t-'0')*16, 0);
 		write(f, &utmp, 16);
 		close(f);
 	}
 	if ((f = open("/usr/adm/wtmp", 1)) >= 0) {
-//		seek(f, 0, 2);
+		lseek(f, 0, 2);
 		write(f, &utmp, 16);
 		close(f);
 	}
