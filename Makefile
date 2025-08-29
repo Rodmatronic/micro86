@@ -190,6 +190,7 @@ UPROGS=\
 	$C/_grep\
 	$C/_init\
 	$C/_kill\
+	$C/_line\
 	$C/_ln\
 	$C/_login\
 	$C/_ls\
@@ -210,6 +211,7 @@ UPROGS=\
 	$C/_stressfs\
 	$C/_touch\
 	$C/_uname\
+	$C/_unlink\
 	$C/_wc\
 	$C/_yes\
 	$C/_paint2\

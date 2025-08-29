@@ -224,6 +224,7 @@ for (i = 2; i < argc; i++) {
 	"grep",
 	"hexdump",
 	"kill",
+	"line",
 	"ln",
 	"ls",
 	"login",
@@ -255,6 +256,7 @@ for (i = 2; i < argc; i++) {
 	"rc.local",
 	"stressfs",
 	"usertests",
+	"unlink",
 	NULL
     };
 
