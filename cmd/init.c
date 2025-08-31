@@ -10,6 +10,7 @@ char	shell[] =	"/bin/sh";
 char	runc[] =	"/etc/rc";
 char	utmp[] =	"/etc/utmp";
 char	wtmpf[] =	"/usr/adm/wtmp";
+char	getty[] = 	"/etc/getty";
 
 struct {
 	char	name[8];
@@ -65,8 +66,7 @@ main(void)
       exit(1);
     }
     if(pid == 0){
-      execl("/bin/login", "login", 0);
-      fprintf(stderr, "init: exec sh failed\n");
+      execl(getty, 0);
       exit(1);
     }
     while((wpid=wait(0)) >= 0 && wpid != pid){}

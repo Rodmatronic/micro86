@@ -187,6 +187,7 @@ UPROGS=\
 	$C/_echo\
 	$C/_ed\
 	$C/_find\
+	$C/_getty\
 	$C/_grep\
 	$C/_init\
 	$C/_kill\

@@ -256,6 +256,7 @@ for (i = 2; i < argc; i++) {
 	"stressfs",
 	"usertests",
 	"unlink",
+	"getty",
 	NULL
     };
 
