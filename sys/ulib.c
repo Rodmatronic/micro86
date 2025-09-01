@@ -5,6 +5,126 @@
 #include "../include/x86.h"
 #include "../include/tty.h"
 #include "../include/stdarg.h"
+#include "../include/pwd.h"
+
+static char PASSWD[]	= "/etc/passwd";
+static char EMPTY[] = "";
+static FILE *pwf = NULL;
+static char line[BUFSIZ+1];
+static struct passwd passwd;
+
+#define ECHO 010
+
+char *
+getpass(char *prompt)
+{
+  static char pwbuf[128];
+  char *p;
+  int c;
+  struct ttyb ttyb;
+  int fd = 0;               // stdin
+
+  write(1, prompt, strlen(prompt));
+  ttyb.tflags &= ~ECHO;
+  stty(&ttyb);
+
+  p = pwbuf;
+  while ((c = getchar()) != '\n') {
+    if (c <= 0) {
+      pwbuf[0] = '\0';
+      break;
+    }
+    if (p < pwbuf + sizeof(pwbuf) - 1)
+      *p++ = c;
+  }
+  *p = '\0';
+  ttyb.tflags |= ECHO;
+  stty(&ttyb);
+  write(1, "\n", 1);
+
+  return pwbuf;
+}
+
+rewind(iop)
+{
+	lseek(iop, 0L, 0);
+}
+
+void setpwent(void)
+{
+    if (pwf) {
+        rewind(pwf);
+        return;
+    }
+    pwf = open(PASSWD, O_RDONLY);
+}
+
+void endpwent(void)
+{
+    if (pwf) {
+        fclose(pwf);
+        pwf = NULL;
+    }
+}
+
+static char *pwskip(char *p) {
+    while (*p && *p != ':')
+        ++p;
+    if (*p) *p++ = '\0';
+    return p;
+}
+
+struct passwd *getpwent(void)
+{
+    char *p;
+
+    if (!pwf) {
+        pwf = open(PASSWD, O_RDONLY);
+        if (!pwf) return NULL;
+    }
+
+    if (!fgets(line, sizeof line, pwf))
+        return NULL;
+
+    p = line;
+    char *nl = strchr(p, '\n');
+    if (nl) *nl = '\0';
+
+    // name : passwd : uid : gid : gecos : dir : shell
+    passwd.pw_name   = p;  p = pwskip(p);
+    passwd.pw_passwd = p;  p = pwskip(p);
+    passwd.pw_uid    = atoi(p); p = pwskip(p);
+    passwd.pw_gid    = atoi(p); p = pwskip(p);
+    passwd.pw_quota  = 0;
+    passwd.pw_comment= EMPTY;
+    passwd.pw_gecos  = p;  p = pwskip(p);
+    passwd.pw_dir    = p;  p = pwskip(p);
+    passwd.pw_shell  = p;  // last field; may be empty
+
+    return &passwd;
+}
+
+char *
+getlogin(void)
+{
+  static char name[32];   // buffer for username
+  struct passwd *pw;
+  int uid;
+
+  uid = getuid();
+  setpwent();             // rewind passwd file
+
+  while((pw = getpwent()) != 0){
+    if(pw->pw_uid == uid){
+      strcpy(name, pw->pw_name);
+      endpwent();
+      return name;
+    }
+  }
+
+  endpwent();
+  return 0;   // not found
+}
 
 #define ERR(s, c)	if(opterr){\
 	(void) puts(argv[0]);\
@@ -299,6 +419,27 @@ getc(int fd)
   if (read(fd, &c, 1) <= 0) // read returns 0 on EOF or -1 on error
     return -1;               // Hence, -1 indicates EOF/error
   return (unsigned char)c;
+}
+
+char*
+fgets(char *buf, int max, int fd)
+{
+  int i, cc;
+  char c;
+
+  for(i = 0; i+1 < max; ){
+    cc = read(fd, &c, 1);
+    if(cc < 1){
+      if(i == 0)
+        return 0;   // EOF with no data
+      break;
+    }
+    buf[i++] = c;
+    if(c == '\n')
+      break;
+  }
+  buf[i] = '\0';
+  return buf;
 }
 
 char*

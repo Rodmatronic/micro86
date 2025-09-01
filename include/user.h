@@ -110,7 +110,7 @@ char*(strcat)(char *s1, const char *s2);
 int sscanf(const char*, const char*, ...);
 int seek(int fd, int offset, int whence);
 int execl(const char *path, const char *arg0, ...);
-
+char* fgets(char *buf, int max, int fd);
 // ucrypt.c
 char* crypt(char *pw, char *salt);
 

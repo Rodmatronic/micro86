@@ -8,7 +8,7 @@ typedef uint pde_t;
 typedef unsigned long  size_t;
 typedef int dev_t;
 typedef int ino_t;
-
+typedef int FILE;
 typedef unsigned char uint8_t;
 typedef unsigned short uint16_t;
 typedef unsigned int uint32_t;
