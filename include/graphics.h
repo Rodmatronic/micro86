@@ -56,7 +56,7 @@ void dputcircle(uint16_t x, uint16_t y, uint16_t radius, uint8_t color);
 void dputline_thick(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2, uint16_t r, uint8_t color);
 void graphical_putc(int x, int y, char c, uint8_t color);
 void graphical_puts(int x, int y, const char* str, uint8_t color);
-int putbutton(int x, int y, int width, int height, const char* text, int color, int fg);
+int putbutton(int x, int y, int width, int height, char* text, int color, int fg);
 void update_buttons(int x, int y, int leftclick, int old_leftclick);
 int getbuttonclick(int id);
 void initgraphics(int x, int y, int width, int height, char * s, int c);

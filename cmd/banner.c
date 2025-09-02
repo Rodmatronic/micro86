@@ -4,7 +4,6 @@
 #include "../include/fs.h"
 #include "../include/fcntl.h"
 
-static char sccsid[] = "@(#)banner.c	1.2";
 #define nchars 128	/*number of chars in char set*/
 #define nlines  7	/*number of lines in a banner character*/
 #define pposs  85	/*number of print positions on a line (must be multiple of 4)*/
@@ -186,6 +185,7 @@ char *s;struct bann *bufp;
 	  banfil(q,r);
 	  r = (struct bann *)((char *)r + pospch);
 	}
+	return 0;
 }
 
 banfil(c,p)
@@ -209,6 +209,7 @@ struct bann *p;
 	for(i=0;i<nlines;i++)
 	  for(j=0;j<pposs-1;j++)
 	    p->alpha[i][j] = c;
+	return 0;
 }
 
 banprt(ptr)
@@ -223,4 +224,5 @@ struct bann *ptr;
 	  }
 	printf("%s\n",ptr->alpha[i]);
 	}
+	return 0;
 }

@@ -326,6 +326,7 @@ char *block;
 	 */
 	for (j=0; j<64; j++)
 		block[j] = L[FP[j]-1];
+	return 0;
 }
 
 char *

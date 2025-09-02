@@ -8,7 +8,7 @@ typedef struct {
     int abs_x, abs_y;
     int width, height;
     int pressed, clicked;
-    char * text;
+    char* text;
     int fg, bg;
 } Button;
 
@@ -18,8 +18,6 @@ struct WindowEntry {
     int pid;
     int x, y, width, height;
 };
-
-extern struct Window;
 
 struct Window win;
 
@@ -43,6 +41,9 @@ int middleclick, old_middleclick, middledown;
 static uint8_t *background = NULL;
 static uint8_t *saved_bg = NULL;
 static uint8_t *window_buffer = NULL;
+
+void update_button_positions();
+void redraw_buttons();
 
 int result;
 int dx, dy;
@@ -378,7 +379,7 @@ void bputs(int x, int y, const char* str, uint8_t color) {
     }
 }
 
-int putbutton(int x, int y, int width, int height, const char* text, int color, int fg) {
+int putbutton(int x, int y, int width, int height, char* text, int color, int fg) {
     if (button_count >= MAX_BUTTONS) return -1;
 
     Button *b = &buttons[button_count];

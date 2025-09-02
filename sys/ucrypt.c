@@ -145,6 +145,7 @@ char *key;
 			KS[i][j+24] = D[PC2_D[j]-28-1];
 		}
 	}
+	return 0;
 }
 
 /*
@@ -326,6 +327,7 @@ char *block;
 	 */
 	for (j=0; j<64; j++)
 		block[j] = L[FP[j]-1];
+	return 0;
 }
 
 char *
