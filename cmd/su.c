@@ -11,7 +11,7 @@ main(argc,argv)
 int	argc;
 char	**argv;
 {
-	register char **p;
+//	register char **p;
 	char *nptr;
 	char *password;
 	int badsw = 0;

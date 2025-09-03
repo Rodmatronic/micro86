@@ -15,6 +15,18 @@ static struct passwd passwd;
 
 #define ECHO 010
 
+int iscntrl(int c)
+{
+    unsigned int uc = (unsigned char)c;
+    return (uc < 0x20) || (uc == 0x7F);
+}
+
+int isprint(int c)
+{
+    unsigned int uc = (unsigned char)c;
+    return (uc - 0x20) < 0x5F;
+}
+
 char *
 getpass(char *prompt)
 {
