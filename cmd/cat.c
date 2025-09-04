@@ -2,340 +2,725 @@
 #include "../include/stat.h"
 #include "../include/user.h"
 #include "../include/fcntl.h"
+#include "../include/errno.h"
 
-#define	IDENTICAL(A,B)	(A.dev==B.dev && A.ino==B.ino)
+#define BSIZE 512
 
-char	buffer[BUFSIZ];
+/* cat -- concatenate files and print on the standard output.
+   Copyright (C) 1988, 1990, 1991 Free Software Foundation, Inc.
 
-int	silent = 0;		/* s flag */
-int	visi_mode = 0;		/* v flag */
-int	visi_tab = 0;		/* t flag */
-int	visi_newline = 0;	/* e flag */
-int	errnbr = 0;
+   This program is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation; either version 2, or (at your option)
+   any later version.
 
-main(argc, argv)
-int    argc;
-char **argv;
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+
+   You should have received a copy of the GNU General Public License
+   along with this program; if not, write to the Free Software
+   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
+
+/* Differences from the Unix cat:
+   * Always unbuffered, -u is ignored.
+   * 100 times faster with -v -u.
+   * 20 times faster with -v.
+
+   By tege@sics.se, Torbjorn Granlund, advised by rms, Richard Stallman. */
+
+#define max(h,i) ((h) > (i) ? (h) : (i))
+
+struct option {
+    const char *name;
+    int         has_arg;
+    int        *flag;
+    int         val;
+};
+
+static void cat ();
+static void next_line_num ();
+static void simple_cat ();
+
+/* Name under which this program was invoked.  */
+char *program_name;
+
+/* Name of input file.  May be "-".  */
+static char *infile;
+
+/* Descriptor on which input file is open.  */
+static int input_desc;
+
+/* Descriptor on which output file is open.  Always is 1.  */
+static int output_desc;
+
+/* Buffer for line numbers.  */
+static char line_buf[13] =
+{' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '0', '\t', '\0'};
+
+/* Position in `line_buf' where printing starts.  This will not change
+   unless the number of lines are more than 999999.  */
+static char *line_num_print = line_buf + 5;
+
+/* Position of the first digit in `line_buf'.  */
+static char *line_num_start = line_buf + 10;
+
+/* Position of the last digit in `line_buf'.  */
+static char *line_num_end = line_buf + 10;
+
+/* Preserves the `cat' function's local `newlines' between invocations.  */
+static int newlines2 = 0;
+
+/* Count of non-fatal error conditions.  */
+static int exit_stat = 0;
+
+static void
+usage (status)
+     int status;
 {
-	register FILE *fi;
-	register int c;
-	extern	int optind;
-	int	errflg = 0;
-	int	stdinflg = 0;
-	int	status = 0;
-	struct stat source, target;
+  if (status != 0)
+    fprintf (stderr, "Try `%s --help' for more information.\n",
+	     program_name);
+  else
+    {
+      printf ("\
+Usage: %s [OPTION] [FILE]...\n\
+",
+	      program_name);
+      printf ("\
+\n\
+  -b, --number-nonblank    number nonblank output lines\n\
+  -e                       equivalent to -vE\n\
+  -n, --number             number all output lines\n\
+  -s, --squeeze-blank      never more than one single blank line\n\
+  -t                       equivalent to -vT\n\
+  -u                       (ignored)\n\
+  -v, --show-nonprinting   use ^ and M- notation, save for LFD and TAB\n\
+  -A, --show-all           equivalent to -vET\n\
+  -E, --show-ends          display $ at end of each line\n\
+  -T, --show-tabs          display TAB characters as ^I\n\
+      --help               display this help and exit\n\
+      --version            output version information and exit\n\
+\n\
+With no FILE, or when FILE is -, read standard input.\n\
+");
+    }
+  exit (status);
+}
 
-//	(void)setlocale(LC_ALL, "");
-#ifdef STANDALONE
-	/*
-	 * If the first argument is NULL,
-	 * discard arguments until we find cat.
-	 */
-	if (argv[0][0] == '\0')
-		argc = getargv ("cat", &argv, 0);
+
+void
+main (argc, argv)
+     int argc;
+     char *argv[];
+{
+  /* Optimal size of i/o operations of output.  */
+  int outsize;
+
+  /* Optimal size of i/o operations of input.  */
+  int insize;
+
+  /* Pointer to the input buffer.  */
+  unsigned char *inbuf;
+
+  /* Pointer to the output buffer.  */
+  unsigned char *outbuf;
+
+  int c;
+
+  /* Index in argv to processed argument.  */
+  int argind;
+
+  /* Device number of the output (file or whatever).  */
+  int out_dev;
+
+  /* I-node number of the output.  */
+  int out_ino;
+
+  /* Nonzero if the output file should not be the same as any input file. */
+  int check_redirection = 1;
+
+  /* Nonzero if we have ever read standard input. */
+  int have_read_stdin = 0;
+
+  struct stat stat_buf;
+
+  /* Variables that are set according to the specified options.  */
+  int numbers = 0;
+  int numbers_at_empty_lines = 1;
+  int squeeze_empty_lines = 0;
+  int mark_line_ends = 0;
+  int quote = 0;
+  int output_tabs = 1;
+
+/* If non-zero, call cat, otherwise call simple_cat to do the actual work. */
+  int options = 0;
+
+  /* If non-zero, display usage information and exit.  */
+  static int show_help;
+
+  /* If non-zero, print the version on standard output then exit.  */
+  static int show_version;
+  const int no_argument = 0;
+
+  static struct option const long_options[] =
+  {
+    {"number-nonblank", no_argument, NULL, 'b'},
+    {"number", no_argument, NULL, 'n'},
+    {"squeeze-blank", no_argument, NULL, 's'},
+    {"show-nonprinting", no_argument, NULL, 'v'},
+    {"show-ends", no_argument, NULL, 'E'},
+    {"show-tabs", no_argument, NULL, 'T'},
+    {"show-all", no_argument, NULL, 'A'},
+    {"help", no_argument, &show_help, 1},
+    {"version", no_argument, &show_version, 1},
+    {NULL, 0, NULL, 0}
+  };
+
+  program_name = argv[0];
+
+  /* Parse command line options.  */
+
+  while ((c = getopt_long (argc, argv, "benstuvAET", long_options, (int *) 0))
+	 != EOF)
+    {
+      switch (c)
+	{
+	case 0:
+	  break;
+
+	case 'b':
+	  ++options;
+	  numbers = 1;
+	  numbers_at_empty_lines = 0;
+	  break;
+
+	case 'e':
+	  ++options;
+	  mark_line_ends = 1;
+	  quote = 1;
+	  break;
+
+	case 'n':
+	  ++options;
+	  numbers = 1;
+	  break;
+
+	case 's':
+	  ++options;
+	  squeeze_empty_lines = 1;
+	  break;
+
+	case 't':
+	  ++options;
+	  output_tabs = 0;
+	  quote = 1;
+	  break;
+
+	case 'u':
+	  /* We provide the -u feature unconditionally.  */
+	  break;
+
+	case 'v':
+	  ++options;
+	  quote = 1;
+	  break;
+
+	case 'A':
+	  ++options;
+	  quote = 1;
+	  mark_line_ends = 1;
+	  output_tabs = 0;
+	  break;
+
+	case 'E':
+	  ++options;
+	  mark_line_ends = 1;
+	  break;
+
+	case 'T':
+	  ++options;
+	  output_tabs = 0;
+	  break;
+
+	default:
+	  usage (2);
+	}
+    }
+
+  if (show_version)
+    {
+      printf ("cat - %s\n", version_string);
+      exit (0);
+    }
+
+  if (show_help)
+    usage (0);
+
+  output_desc = 1;
+
+  /* Get device, i-node number, and optimal blocksize of output.  */
+
+  if (fstat (output_desc, &stat_buf) < 0)
+    error (1, errno, "standard output");
+
+//  outsize = ST_BLKSIZE (stat_buf);
+  outsize = BSIZE;
+  /* Input file can be output file for non-regular files.
+     fstat on pipes returns S_IFSOCK on some systems, S_IFIFO
+     on others, so the checking should not be done for those types,
+     and to allow things like cat < /dev/tty > /dev/tty, checking
+     is not done for device files either. */
+
+  if (S_ISREG (stat_buf.mode))
+    {
+      out_dev = stat_buf.dev;
+      out_ino = stat_buf.ino;
+    }
+  else
+    {
+      check_redirection = 0;
+#ifdef lint  /* Suppress `used before initialized' warning.  */
+      out_dev = 0;
+      out_ino = 0;
+#endif
+    }
+
+  /* Check if any of the input files are the same as the output file.  */
+
+  /* Main loop.  */
+
+  infile = "-";
+  argind = optind;
+
+  do
+    {
+      if (argind < argc)
+	infile = argv[argind];
+
+      if (infile[0] == '-' && infile[1] == 0)
+	{
+	  have_read_stdin = 1;
+	  input_desc = 0;
+	}
+      else
+	{
+	  input_desc = open (infile, O_RDONLY);
+	  if (input_desc < 0)
+	    {
+	      error (0, errno, "%s", infile);
+	      exit_stat = 1;
+	      continue;
+	    }
+	}
+
+      if (fstat (input_desc, &stat_buf) < 0)
+	{
+	  error (0, errno, "%s", infile);
+	  exit_stat = 1;
+	  goto contin;
+	}
+//      insize = ST_BLKSIZE (stat_buf);
+	insize = BSIZE;
+      /* Compare the device and i-node numbers of this input file with
+	 the corresponding values of the (output file associated with)
+	 stdout, and skip this input file if they coincide.  Input
+	 files cannot be redirected to themselves.  */
+
+      if (check_redirection
+	  && stat_buf.dev == out_dev && stat_buf.ino == out_ino)
+	{
+	  error (0, 0, "%s: input file is output file", infile);
+	  exit_stat = 1;
+	  goto contin;
+	}
+
+      /* Select which version of `cat' to use. If any options (more than -u,
+	 --version, or --help) were specified, use `cat', otherwise use
+	 `simple_cat'.  */
+
+      if (options == 0)
+	{
+	  insize = max (insize, outsize);
+	  inbuf = (unsigned char *) malloc (insize);
+
+	  simple_cat (inbuf, insize);
+	}
+      else
+	{
+	  inbuf = (unsigned char *) malloc (insize + 1);
+
+	  /* Why are (OUTSIZE  - 1 + INSIZE * 4 + 13) bytes allocated for
+	     the output buffer?
+
+	     A test whether output needs to be written is done when the input
+	     buffer empties or when a newline appears in the input.  After
+	     output is written, at most (OUTSIZE - 1) bytes will remain in the
+	     buffer.  Now INSIZE bytes of input is read.  Each input character
+	     may grow by a factor of 4 (by the prepending of M-^).  If all
+	     characters do, and no newlines appear in this block of input, we
+	     will have at most (OUTSIZE - 1 + INSIZE) bytes in the buffer.  If
+	     the last character in the preceding block of input was a
+	     newline, a line number may be written (according to the given
+	     options) as the first thing in the output buffer. (Done after the
+	     new input is read, but before processing of the input begins.)  A
+	     line number requires seldom more than 13 positions.  */
+
+	  outbuf = (unsigned char *) malloc (outsize - 1 + insize * 4 + 13);
+
+	  cat (inbuf, insize, outbuf, outsize, quote,
+	       output_tabs, numbers, numbers_at_empty_lines, mark_line_ends,
+	       squeeze_empty_lines);
+
+	  free (outbuf);
+	}
+
+      free (inbuf);
+
+    contin:
+      if (strcmp (infile, "-") && close (input_desc) < 0)
+	{
+	  error (0, errno, "%s", infile);
+	  exit_stat = 1;
+	}
+    }
+  while (++argind < argc);
+
+  if (have_read_stdin && close (0) < 0)
+    error (1, errno, "-");
+  if (close (1) < 0)
+    error (1, errno, "write error");
+
+  exit (exit_stat);
+}
+
+/* Plain cat.  Copies the file behind `input_desc' to the file behind
+   `output_desc'.  */
+
+static void
+simple_cat (buf, bufsize)
+     /* Pointer to the buffer, used by reads and writes.  */
+     unsigned char *buf;
+
+     /* Number of characters preferably read or written by each read and write
+        call.  */
+     int bufsize;
+{
+  /* Actual number of characters read, and therefore written.  */
+  int n_read;
+
+  /* Loop until the end of the file.  */
+
+  for (;;)
+    {
+      /* Read a block of input.  */
+
+      n_read = read (input_desc, buf, bufsize);
+      if (n_read < 0)
+	{
+	  error (0, errno, "%s", infile);
+	  exit_stat = 1;
+	  return;
+	}
+
+      /* End of this file?  */
+
+      if (n_read == 0)
+	break;
+
+      /* Write this block out.  */
+
+      if (write (output_desc, buf, n_read) < 0)
+	error (1, errno, "write error");
+    }
+}
+
+/* Cat the file behind INPUT_DESC to the file behind OUTPUT_DESC.
+   Called if any option more than -u was specified.
+
+   A newline character is always put at the end of the buffer, to make
+   an explicit test for buffer end unnecessary.  */
+
+static void
+cat (inbuf, insize, outbuf, outsize, quote,
+     output_tabs, numbers, numbers_at_empty_lines,
+     mark_line_ends, squeeze_empty_lines)
+
+     /* Pointer to the beginning of the input buffer.  */
+     unsigned char *inbuf;
+
+     /* Number of characters read in each read call.  */
+     int insize;
+
+     /* Pointer to the beginning of the output buffer.  */
+     unsigned char *outbuf;
+
+     /* Number of characters written by each write call.  */
+     int outsize;
+
+     /* Variables that have values according to the specified options.  */
+     int quote;
+     int output_tabs;
+     int numbers;
+     int numbers_at_empty_lines;
+     int mark_line_ends;
+     int squeeze_empty_lines;
+{
+  /* Last character read from the input buffer.  */
+  unsigned char ch;
+
+  /* Pointer to the next character in the input buffer.  */
+  unsigned char *bpin;
+
+  /* Pointer to the first non-valid byte in the input buffer, i.e. the
+     current end of the buffer.  */
+  unsigned char *eob;
+
+  /* Pointer to the position where the next character shall be written.  */
+  unsigned char *bpout;
+
+  /* Number of characters read by the last read call.  */
+  int n_read;
+
+  /* Determines how many consecutive newlines there have been in the
+     input.  0 newlines makes NEWLINES -1, 1 newline makes NEWLINES 1,
+     etc.  Initially 0 to indicate that we are at the beginning of a
+     new line.  The "state" of the procedure is determined by
+     NEWLINES.  */
+  int newlines = newlines2;
+
+#ifdef FIONREAD
+  /* If nonzero, use the FIONREAD ioctl, as an optimization.
+     (On Ultrix, it is not supported on NFS filesystems.)  */
+  int use_fionread = 1;
 #endif
 
-	/*
-	 * Process the options for cat.
-	 */
+  /* The inbuf pointers are initialized so that BPIN > EOB, and thereby input
+     is read immediately.  */
 
-	while( (c=getopt(argc,argv,"usvte")) != EOF ) {
-		switch(c) {
+  eob = inbuf;
+  bpin = eob + 1;
 
-		case 'u':
+  bpout = outbuf;
 
-			/*
-			 * If not standalone, set stdout to
-	 		 * completely unbuffered I/O when
-			 * the 'u' option is used.
-			 */
-
-/*#ifndef	STANDALONE
-			setbuf(stdout, (char *)NULL);
-#endif*/
-			continue;
-
-		case 's':
-
-			/*
-			 * The 's' option requests silent mode
-			 * where no messages are written.
-			 */
-
-			silent++;
-			continue;
-
-		case 'v':
-
-			/*
-			 * The 'v' option requests that non-printing
-			 * characters (with the exception of newlines,
-			 * form-feeds, and tabs) be displayed visibly.
-			 *
-			 * Control characters are printed as "^x".
-			 * DEL characters are printed as "^?".
-			 * Non-printable  and non-contrlol characters with the
-			 * 8th bit set are printed as "M-x".
-			 */
-
-			visi_mode++;
-			continue;
-
-		case 't':
-
-			/*
-			 * When in visi_mode, this option causes tabs
-			 * to be displayed as "^I".
-			 */
-
-			visi_tab++;
-			continue;
-
-		case 'e':
-
-			/*
-			 * When in visi_mode, this option causes newlines
-			 * and form-feeds to be displayed as "$" at the end
-			 * of the line prior to the newline.
-			 */
-
-			visi_newline++;
-			continue;
-
-		case '?':
-			errflg++;
-			break;
-		}
-		break;
-	}
-
-	if (errflg) {
-		if (!silent)
-			fprintf(stderr,"usage: cat -usvte [-|file] ...\n");
-		exit(2);
-	}
-
-	/*
-	 * Stat stdout to be sure it is defined.
-	 */
-
-	if(fstat(stdout, &target) < 0) {
-		if(!silent)
-			fprintf(stderr, "cat: Cannot stat stdout\n");
-		exit(2);
-	}
-
-	/*
-	 * If no arguments given, then use stdin for input.
-	 */
-
-	if (optind == argc) {
-		argc++;
-		stdinflg++;
-	}
-
-	/*
-	 * Process each remaining argument,
-	 * unless there is an error with stdout.
-	 */
-
-
-	for (argv = &argv[optind];
-	     optind < argc && optind++; argv++) {
-
-		/*
-		 * If the argument was '-' or there were no files
-		 * specified, take the input from stdin.
-		 */
-
-		if (stdinflg
-		 ||((*argv)[0]=='-'
-		 && (*argv)[1]=='\0'))
-			fi = stdin;
-		else {
-			/*
-			 * Attempt to open each specified file.
-			 */
-
-			if ((fi = open(*argv, O_RDONLY)) == NULL) {
-				if (!silent)
-				   fprintf(stderr, "cat: cannot open %s\n",
-								*argv);
-				status = 2;
-				continue;
-			}
-		}
-
-		/*
-		 * Stat source to make sure it is defined.
-		 */
-
-		if(fstat(fi, &source) < 0) {
-			if(!silent)
-			   fprintf(stderr, "cat: cannot stat %s\n", *argv);
-			status = 2;
-			continue;
-		}
-
-
-		/*
-		 * If the source is not a character special file or a
-		 * block special file, make sure it is not identical
-		 * to the target.
-		 */
-
-//		if (!S_ISCHR(target.mode)
-//		 && !S_ISBLK(target.mode)
-		if (IDENTICAL(target, source)) {
-			if(!silent)
-			   fprintf(stderr, "cat: input/output files '%s' identical\n",
-						stdinflg?"-": *argv);
-			if (fclose(fi) != 0 )
-				fprintf(stderr, "cat: close error\n");
-			status = 2;
-			continue;
-		}
-
-		/*
-		 * If in visible mode, use vcat; otherwise, use cat.
-		 */
-
-		if (visi_mode)
-			status = vcat(fi);
-		else
-			status = cat(fi);
-
-		/*
-		 * If the input is not stdin, flush stdout.
-		 */
-
-		if (fi!=stdin) {
-//			fflush(stdout);
-
-			/*
-			 * Attempt to close the source file.
-			 */
-
-			if (fclose(fi) != 0)
-				if (!silent)
-					fprintf(stderr, "cat: close error\n");
-		}
-	}
-
-	/*
-	 * When all done, flush stdout to make sure data was written.
-	 */
-
-//	fflush(stdout);
-
-	/*
-	 * Display any error with stdout operations.
-	 */
-
-//	if (errnbr = ferror(stdout)) {
-//		if (!silent) {
-//			fprintf (stderr, "cat: output error(%d)\n", errnbr);
-//			perror("");
-//		}
-//		status = 2;
-//	}
-	exit(status);
-}
-
-int
-cat(fi)
-	FILE *fi;
-{
-	register int fi_desc;
-	register int nitems;
-
-//	fi_desc = fileno(fi);
-	fi_desc = fi;
-
-	/*
-	 * While not end of file, copy blocks to stdout.
-	 */
-
-	while ((nitems=read(fi_desc,buffer,BUFSIZ))  > 0) {
-		if ((errnbr = write(1,buffer,(unsigned)nitems)) != nitems) {
-			if (!silent) {
-				if (errnbr == -1)
-					errnbr = 0;
-				fprintf(stderr, "cat: output error (%d/%d characters written)\n", errnbr, nitems);
-//				perror("");
-			}
-			return(2);
-		}
-	}
-
-	return(0);
-}
-
-
-vcat(fi)
-	FILE *fi;
-{
-	register int c;
-
-	while ((c = getc(fi)) != EOF)
+  for (;;)
+    {
+      do
 	{
-		/*
-		 * For non-printable and non-cntrl  chars, use the "M-x" notation.
-		 */
-		if ( ! isprint(c) && ! iscntrl(c) )
-			{
-			putchar('M');
-			putchar('-');
-			c-= 0200;
-			}
-		/*
-		 * Display plain characters
-		 */
-		 if (  isprint(c) )
-			{
-			putchar(c);
-			continue;
-			}
-		/*
-		 * Display tab as "^I" if visi_tab set
-		 */
+	  /* Write if there are at least OUTSIZE bytes in OUTBUF.  */
 
-		if ( (c == '\t') || (c == '\f') )
-			{
-			if (! visi_tab)
-				putchar(c);
-			else
-				{
-				putchar('^');
-				putchar(c^0100);
-				}
-			continue;
-			}
-		/*
-		 * Display newlines as "$<newline>"
-		 * if visi_newline set
-		 */
-		if ( c == '\n')
-			{
-			if (visi_newline)
-				putchar('$');
-			putchar(c);
-			continue;
-			}
-		/*
-		 * Display control characters
-		 */
-		if ( c <  0200 )
-			{
-			putchar('^');
-			putchar(c^0100);
-			}
-		else
-			{
-			putchar('M');
-			putchar('-');
-			putchar('x');
-			}
+	  if (bpout - outbuf >= outsize)
+	    {
+	      unsigned char *wp = outbuf;
+	      do
+		{
+		  if (write (output_desc, wp, outsize) < 0)
+		    error (1, errno, "write error");
+		  wp += outsize;
+		}
+	      while (bpout - wp >= outsize);
+
+	      /* Move the remaining bytes to the beginning of the
+		 buffer.  */
+
+	      memmove (wp, outbuf, bpout - wp);
+	      bpout = outbuf + (bpout - wp);
+	    }
+
+	  /* Is INBUF empty?  */
+
+	  if (bpin > eob)
+	    {
+#ifdef FIONREAD
+	      int n_to_read = 0;
+
+	      /* Is there any input to read immediately?
+		 If not, we are about to wait,
+		 so write all buffered output before waiting.  */
+
+	      if (use_fionread
+		  && ioctl (input_desc, FIONREAD, &n_to_read) < 0)
+		{
+		  /* Ultrix returns EOPNOTSUPP on NFS;
+		     HP-UX returns ENOTTY on pipes.
+		     SunOS returns EINVAL and
+		     More/BSD returns ENODEV on special files
+		     like /dev/null.
+		     Irix-5 returns ENOSYS on pipes.  */
+		  if (errno == EOPNOTSUPP || errno == ENOTTY
+		      || errno == EINVAL || errno == ENODEV
+		      || errno == ENOSYS)
+		    use_fionread = 0;
+		  else
+		    {
+		      error (0, errno, "cannot do ioctl on `%s'", infile);
+		      exit_stat = 1;
+		      newlines2 = newlines;
+		      return;
+		    }
+		}
+	      if (n_to_read == 0)
+#endif
+		{
+		  int n_write = bpout - outbuf;
+
+		  if (write (output_desc, outbuf, n_write) < 0)
+		    error (1, errno, "write error");
+		  bpout = outbuf;
+		}
+
+	      /* Read more input into INBUF.  */
+
+	      n_read = read (input_desc, inbuf, insize);
+	      if (n_read < 0)
+		{
+		  error (0, errno, "%s", infile);
+		  exit_stat = 1;
+		  newlines2 = newlines;
+		  return;
+		}
+	      if (n_read == 0)
+		{
+		  newlines2 = newlines;
+		  return;
+		}
+
+	      /* Update the pointers and insert a sentinel at the buffer
+		 end.  */
+
+	      bpin = inbuf;
+	      eob = bpin + n_read;
+	      *eob = '\n';
+	    }
+	  else
+	    {
+	      /* It was a real (not a sentinel) newline.  */
+
+	      /* Was the last line empty?
+		 (i.e. have two or more consecutive newlines been read?)  */
+
+	      if (++newlines > 0)
+		{
+		  /* Are multiple adjacent empty lines to be substituted by
+		     single ditto (-s), and this was the second empty line?  */
+
+		  if (squeeze_empty_lines && newlines >= 2)
+		    {
+		      ch = *bpin++;
+		      continue;
+		    }
+
+		  /* Are line numbers to be written at empty lines (-n)?  */
+
+		  if (numbers && numbers_at_empty_lines)
+		    {
+		      next_line_num ();
+		      bpout = (unsigned char *) strcpy (bpout, line_num_print);
+		    }
+		}
+
+	      /* Output a currency symbol if requested (-e).  */
+
+	      if (mark_line_ends)
+		*bpout++ = '$';
+
+	      /* Output the newline.  */
+
+	      *bpout++ = '\n';
+	    }
+	  ch = *bpin++;
 	}
-	return(0);
+      while (ch == '\n');
+
+      /* Are we at the beginning of a line, and line numbers are requested?  */
+
+      if (newlines >= 0 && numbers)
+	{
+	  next_line_num ();
+	  bpout = (unsigned char *) strcpy (bpout, line_num_print);
+	}
+
+      /* Here CH cannot contain a newline character.  */
+
+      /* The loops below continue until a newline character is found,
+	 which means that the buffer is empty or that a proper newline
+	 has been found.  */
+
+      /* If quoting, i.e. at least one of -v, -e, or -t specified,
+	 scan for chars that need conversion.  */
+      if (quote)
+	for (;;)
+	  {
+	    if (ch >= 32)
+	      {
+		if (ch < 127)
+		  *bpout++ = ch;
+		else if (ch == 127)
+		  *bpout++ = '^',
+		    *bpout++ = '?';
+		else
+		  {
+		    *bpout++ = 'M',
+		      *bpout++ = '-';
+		    if (ch >= 128 + 32)
+		      if (ch < 128 + 127)
+			*bpout++ = ch - 128;
+		      else
+			*bpout++ = '^',
+			  *bpout++ = '?';
+		    else
+		      *bpout++ = '^',
+			*bpout++ = ch - 128 + 64;
+		  }
+	      }
+	    else if (ch == '\t' && output_tabs)
+	      *bpout++ = '\t';
+	    else if (ch == '\n')
+	      {
+		newlines = -1;
+		break;
+	      }
+	    else
+	      *bpout++ = '^',
+		*bpout++ = ch + 64;
+
+	    ch = *bpin++;
+	  }
+      else
+	/* Not quoting, neither of -v, -e, or -t specified.  */
+	for (;;)
+	  {
+	    if (ch == '\t' && !output_tabs)
+	      *bpout++ = '^',
+		*bpout++ = ch + 64;
+	    else if (ch != '\n')
+	      *bpout++ = ch;
+	    else
+	      {
+		newlines = -1;
+		break;
+	      }
+
+	    ch = *bpin++;
+	  }
+    }
+}
+
+/* Compute the next line number.  */
+
+static void
+next_line_num ()
+{
+  char *endp = line_num_end;
+  do
+    {
+      if ((*endp)++ < '9')
+	return;
+      *endp-- = '0';
+    }
+  while (endp >= line_num_start);
+  *--line_num_start = '1';
+  if (line_num_start < line_num_print)
+    line_num_print--;
 }

@@ -5,6 +5,8 @@ char*
 strerror(int errno)
 {
 	switch (errno) {
+	case 0:
+		return "No such file or directory";
 	case 1:
 		return "Operation not permitted";
 	case 2:

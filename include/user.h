@@ -7,6 +7,7 @@ struct rtcdate;
 #include "types.h"
 #include "../include/utsname.h"
 #include "../include/tty.h"
+#include "../include/stdarg.h"
 
 #define stdout 1
 #define stderr 2
@@ -14,6 +15,8 @@ struct rtcdate;
 
 #define EOF (-1)
 #define NULL ((void*)0)
+#define version_string "GNU COREUTILS for Exnix."
+//#define	no_argument		0
 
 #define BUFSIZ 256
 
@@ -112,6 +115,9 @@ int sscanf(const char*, const char*, ...);
 int seek(int fd, int offset, int whence);
 int execl(char *path, const char *arg0, ...);
 char* fgets(char *buf, int max, int fd);
+void vprintf(int fd, const char *fmt, va_list ap);
+void error(int status, int errnum, const char *fmt, ...);
+
 // ucrypt.c
 char* crypt(char *pw, char *salt);
 

@@ -43,9 +43,8 @@
 #ifndef _SYS_ERRNO_H_
 #define _SYS_ERRNO_H_
 
-#ifndef KERNEL
+extern int optind;
 extern int errno;			/* global error number */
-#endif
 
 #define	EPERM		1		/* Operation not permitted */
 #define	ENOENT		2		/* No such file or directory */

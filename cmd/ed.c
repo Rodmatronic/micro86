@@ -94,7 +94,7 @@ void newline();
 void commands();
 void filename(int comm);
 void putfile();
-void error(char* s);
+void ederror(char* s);
 void delete();
 void callunix();
 void rdelete(int* addr1, int* addr2);
@@ -263,7 +263,7 @@ commands()
 		setnoaddr();
 		if (vflag && fchange) {
 			fchange = 0;
-			error(Q);
+			ederror(Q);
 		}
 		filename(c);
 		init();
@@ -301,7 +301,7 @@ commands()
 
 	case 'k':
 		if ((c = getchr()) < 'a' || c > 'z')
-			error(Q);
+			ederror(Q);
 		newline();
 		setdot();
 		nonzero();
@@ -348,7 +348,7 @@ commands()
 //		if ((io = open(file, 0)) < 0) {
                 if ((io = open(file, O_CREATE | O_RDWR)) < 0) {
 			lastc = '\n';
-			error(file);
+			ederror(file);
 		}
 		setall();
 		ninbuf = 0;
@@ -373,7 +373,7 @@ commands()
 		nonzero();
 		newline();
 		if ((*addr2&~01) != subnewa)
-			error(Q);
+			ederror(Q);
 		*addr2 = subolda;
 		dot = addr2;
 		continue;
@@ -393,13 +393,13 @@ commands()
 				lseek(io, 0, 2);
 			} else {
 				if ((io = open(file, O_CREATE | O_RDWR)) < 0)
-					error(file);
+					ederror(file);
 			}
 		} else {
 			if (io >= 0) close(io);
 			unlink(file);
 			if ((io = open(file, O_CREATE | O_RDWR)) < 0)
-				error(file);
+				ederror(file);
 		}
 		wrapp = 0;
 		putfile();
@@ -432,7 +432,7 @@ commands()
 		return;
 
 	}
-	error(Q);
+	ederror(Q);
 	}
 }
 
@@ -499,7 +499,7 @@ address()
 				if (execute(0, a1))
 					break;
 				if (a1==dot)
-					error(Q);
+					ederror(Q);
 			}
 			break;
 
@@ -513,7 +513,7 @@ address()
 
 		case '\'':
 			if ((c = getchr()) < 'a' || c > 'z')
-				error(Q);
+				ederror(Q);
 			for (a1=zero; a1<=dol; a1++)
 				if (names[c-'a'] == (*a1 & ~01))
 					break;
@@ -525,11 +525,11 @@ address()
 				return(0);
 			a1 += minus;
 			if (a1<zero || a1>dol)
-				error(Q);
+				ederror(Q);
 			return(a1);
 		}
 		if (relerr)
-			error(Q);
+			ederror(Q);
 	}
 }
 
@@ -539,7 +539,7 @@ setdot()
 	if (addr2 == 0)
 		addr1 = addr2 = dot;
 	if (addr1 > addr2)
-		error(Q);
+		ederror(Q);
 }
 
 void
@@ -558,14 +558,14 @@ void
 setnoaddr()
 {
 	if (addr2)
-		error(Q);
+		ederror(Q);
 }
 
 void
 nonzero()
 {
 	if (addr1<=zero || addr2>dol)
-		error(Q);
+		ederror(Q);
 }
 
 void
@@ -582,7 +582,7 @@ newline()
 		if (getchr() == '\n')
 			return;
 	}
-	error(Q);
+	ederror(Q);
 }
 
 void
@@ -596,23 +596,23 @@ filename(int comm)
 	if (c=='\n' || c==EOF) {
 		p1 = savedfile;
 		if (*p1==0 && comm!='f')
-			error(Q);
+			ederror(Q);
 		p2 = file;
 		while ((*p2++ = *p1++))
 			;
 		return;
 	}
 	if (c!=' ')
-		error(Q);
+		ederror(Q);
 	while ((c = getchr()) == ' ')
 		;
 	if (c=='\n')
-		error(Q);
+		ederror(Q);
 	p1 = file;
 	do {
 		*p1++ = c;
 		if (c==' ' || c==EOF)
-			error(Q);
+			ederror(Q);
 	} while ((c = getchr()) != '\n');
 	*p1++ = 0;
 	if (savedfile[0]==0 || comm=='e' || comm=='f') {
@@ -639,7 +639,7 @@ onintr(int _x)
 {
 	putchr('\n');
 	lastc = '\n';
-	error(Q);
+	ederror(Q);
 }
 
 void
@@ -657,7 +657,7 @@ onhup(int _x)
 }
 
 void
-error(s)
+ederror(s)
 char *s;
 {
 	register c;
@@ -722,7 +722,7 @@ gettty()
 			continue;
 		*p++ = c;
 		if (p >= &linebuf[LBSIZE-2])
-			error(Q);
+			ederror(Q);
 	}
 	*p++ = 0;
 	if (linebuf[0]=='.' && linebuf[1]==0)
@@ -757,7 +757,7 @@ getfile()
 			continue;
 		if (c&0200 || lp >= &linebuf[LBSIZE]) {
 			lastc = '\n';
-			error(Q);
+			ederror(Q);
 		}
 		*lp++ = c;
 		count++;
@@ -786,7 +786,7 @@ putfile()
 					crblock(perm, genbuf, n, count-n);
 				if(write(io, genbuf, n) != n) {
 					edputs(WRERR);
-					error(Q);
+					ederror(Q);
 				}
 				nib = 511;
 				fp = genbuf;
@@ -803,7 +803,7 @@ putfile()
 		crblock(perm, genbuf, n, count-n);
 	if(write(io, genbuf, n) != n) {
 		edputs(WRERR);
-		error(Q);
+		ederror(Q);
 	}
 }
 
@@ -828,7 +828,7 @@ int (*f)();
             
             if (new_zero == NULL) {
                 lastc = '\n';
-                error("MEM?");
+                ederror("MEM?");
             }
             
             for (int i = 0; i <= doffset; i++) {
@@ -875,7 +875,7 @@ quit(int _dummy)
 {
 	if (vflag && fchange && dol!=zero) {
 		fchange = 0;
-		error(Q);
+		ederror(Q);
 	}
 	unlink(tfname);
 	exit(0);
@@ -990,7 +990,7 @@ getblock(atl, iof)
 	off = (atl<<1)&0774;
 	if (bno >= 255) {
 		lastc = '\n';
-		error(T);
+		ederror(T);
 	}
 	nleft = 512 - off;
 	if (bno==iblock) {
@@ -1035,7 +1035,7 @@ int (*iofcn)();
 {
 	lseek(tfile, (long)b<<9, 0);
 	if ((*iofcn)(tfile, buf, 512) != 512) {
-		error(T);
+		ederror(T);
 	}
 }
 
@@ -1071,16 +1071,16 @@ global(k)
 	char globuf[GBSIZE];
 
 	if (globp)
-		error(Q);
+		ederror(Q);
 	setall();
 	nonzero();
 	if ((c=getchr())=='\n')
-		error(Q);
+		ederror(Q);
 	compile(c);
 	gp = globuf;
 	while ((c = getchr()) != '\n') {
 		if (c==EOF)
-			error(Q);
+			ederror(Q);
 		if (c=='\\') {
 			c = getchr();
 			if (c!='\n')
@@ -1088,7 +1088,7 @@ global(k)
 		}
 		*gp++ = c;
 		if (gp >= &globuf[GBSIZE-2])
-			error(Q);
+			ederror(Q);
 	}
 	*gp++ = '\n';
 	*gp++ = 0;
@@ -1126,7 +1126,7 @@ join()
 		lp = getline(*a1);
 		while ((*gp = *lp++))
 			if (gp++ >= &genbuf[LBSIZE-2])
-				error(Q);
+				ederror(Q);
 	}
 	lp = linebuf;
 	gp = genbuf;
@@ -1175,7 +1175,7 @@ substitute(inglob)
 		addr2 += nl;
 	}
 	if (inglob==0)
-		error(Q);
+		ederror(Q);
 }
 
 int
@@ -1185,7 +1185,7 @@ compsub()
 	register char *p;
 
 	if ((seof = getchr()) == '\n' || seof == ' ')
-		error(Q);
+		ederror(Q);
 	compile(seof);
 	p = rhsbuf;
 	for (;;) {
@@ -1196,13 +1196,13 @@ compsub()
 			if (globp)
 				c |= 0200;
 			else
-				error(Q);
+				ederror(Q);
 		}
 		if (c==seof)
 			break;
 		*p++ = c;
 		if (p >= &rhsbuf[LBSIZE/2])
-			error(Q);
+			ederror(Q);
 	}
 	*p++ = 0;
 	if ((peekc = getchr()) == 'g') {
@@ -1249,13 +1249,13 @@ dosub()
 		}
 		*sp++ = c&0177;
 		if (sp >= &genbuf[LBSIZE])
-			error(Q);
+			ederror(Q);
 	}
 	lp = loc2;
 	loc2 = sp - genbuf + linebuf;
 	while ((*sp++ = *lp++))
 		if (sp >= &genbuf[LBSIZE])
-			error(Q);
+			ederror(Q);
 	lp = linebuf;
 	sp = genbuf;
 	while ((*lp++ = *sp++))
@@ -1270,7 +1270,7 @@ register char *sp, *l1, *l2;
 	while (l1 < l2) {
 		*sp++ = *l1++;
 		if (sp >= &genbuf[LBSIZE])
-			error(Q);
+			ederror(Q);
 	}
 	return(sp);
 }
@@ -1284,7 +1284,7 @@ move(cflag)
 	setdot();
 	nonzero();
 	if ((adt = address())==0)
-		error(Q);
+		ederror(Q);
 	newline();
 	if (cflag) {
 		int *ozero, delta;
@@ -1315,7 +1315,7 @@ move(cflag)
 		reverse(ad2, adt);
 		reverse(ad1, adt);
 	} else
-		error(Q);
+		ederror(Q);
 	fchange = 1;
 }
 
@@ -1357,7 +1357,7 @@ compile(aeof)
 	bracketp = bracket;
 	if ((c = getchr()) == eof) {
 		if (*ep==0)
-			error(Q);
+			ederror(Q);
 		return;
 	}
 	circfl = 0;
@@ -1470,7 +1470,7 @@ compile(aeof)
    cerror:
 	expbuf[0] = 0;
 	nbra = 0;
-	error(Q);
+	ederror(Q);
 }
 
 int
@@ -1577,7 +1577,7 @@ register char *ep, *lp;
 
 	case CBACK:
 		if (braelist[i = *ep++]==0)
-			error(Q);
+			ederror(Q);
 		if (backref(i, lp)) {
 			lp += braelist[i] - braslist[i];
 			continue;
@@ -1586,7 +1586,7 @@ register char *ep, *lp;
 
 	case CBACK|STAR:
 		if (braelist[i = *ep++] == 0)
-			error(Q);
+			ederror(Q);
 		curlp = lp;
 		while (backref(i, lp))
 			lp += braelist[i] - braslist[i];
@@ -1629,7 +1629,7 @@ register char *ep, *lp;
 		return(0);
 
 	default:
-		error(Q);
+		ederror(Q);
 	}
 }
 
@@ -1817,7 +1817,7 @@ char	*keyp, *permp;
 	}
 	write(pf[1], buf, 10);
 	if (wait((int *)NULL)==-1 || read(pf[0], buf, 13)!=13)
-		error("crypt: cannot generate key");
+		ederror("crypt: cannot generate key");
 	close(pf[0]);
 	close(pf[1]);
 	seed = 123;

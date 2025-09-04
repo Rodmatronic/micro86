@@ -24,6 +24,8 @@
 #define	S_IWRITE	00200		/* write permission, owner */
 #define	S_IEXEC	00100		/* execute/search permission, owner */
 
+#define S_ISREG(mode)	((mode&0xF000) == 0x8000) 
+
 struct stat {
   uint mode;     // File type and permissions
   uint ctime;    // creation time

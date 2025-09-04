@@ -135,7 +135,7 @@ putch_buf(char ch, void *ctx)
     *(*buf)++ = ch;
 }
 
-static void
+void
 vprintf(int fd, const char *fmt, va_list ap)
 {
     vprintfmt(putch_fd, &fd, fmt, ap);
