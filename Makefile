@@ -185,6 +185,7 @@ UPROGS=\
 	$C/_date\
 	$C/_dd\
 	$C/_debugger\
+	$C/_dirname\
 	$C/_du\
 	$C/_echo\
 	$C/_ed\

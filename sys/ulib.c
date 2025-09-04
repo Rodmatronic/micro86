@@ -15,6 +15,27 @@ static char line[BUFSIZ+1];
 static struct passwd passwd;
 #define ECHO 010
 
+char *
+rindex(p, ch)
+	const char *p;
+	int ch;
+{
+	union {
+		const char *cp;
+		char *p;
+	} u;
+	char *save;
+
+	u.cp = p;
+	for (save = NULL;; ++u.p) {
+		if (*u.p == ch)
+			save = u.p;
+		if (*u.p == '\0')
+			return(save);
+	}
+	/* NOTREACHED */
+}
+
 int	errno = 0;
 int	opterr = 1;
 int	optind = 1;
