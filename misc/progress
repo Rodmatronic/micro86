@@ -1,14 +1,15 @@
 NAME		UNIX	FUNC?
 banner		sysv	----o
-basename	V7	----o
-cat		sysvr4	----o
+basename	gnu	----o
+cat		gnu	----o
 cmp		sysv	----o
 cp		V6	----o
 cron		V6	----o
 date		pou	---o- // timezones!
 dd		V7	----o
+dirname		gnu	----o
 du		rod	---o- // '.' doesnt work
-echo		sysv	----o
+echo		gnu	----o
 find		rod	----o
 getty		V6	-o--- // Does bare minimum
 grep		V7	----o
@@ -24,7 +25,7 @@ mknod		V6	----o
 more		rod	---o- // Works fine, just needs options.
 mv		V7	----o
 passwd		V7	----o
-pwd		V7	----o
+pwd		gnu	----o
 rm		V7	----o
 rmdir		V7	----o
 sh		xv6	--o-- // Works fine, but not the same language as 7th edition.

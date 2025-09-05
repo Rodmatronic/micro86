@@ -7,6 +7,7 @@
 #include "../include/stdarg.h"
 #include "../include/pwd.h"
 #include "../include/errno.h"
+#include "../include/fs.h"
 
 static char PASSWD[]	= "/etc/passwd";
 static char EMPTY[] = "";
@@ -14,6 +15,82 @@ static FILE *pwf = NULL;
 static char line[BUFSIZ+1];
 static struct passwd passwd;
 #define ECHO 010
+
+char* getcwd() {
+    static char cwd[512];  // Returned buffer
+    int file;
+    int rdev, rino;
+    char ddot[] = ".";
+    char dotdot[] = "..";
+    char name[512];
+    int off = -1;
+    struct stat d, dd;
+    struct dirent dir;
+
+    stat("/", &d);
+    rdev = d.dev;
+    rino = d.ino;
+
+    for (;;) {
+        stat(ddot, &d);
+        if (d.ino == rino && d.dev == rdev) {
+            if (off < 0)
+                off = 0;
+            name[off] = '\0';
+            cwd[0] = '/';
+            for (int i = 0; i <= off; i++)
+                cwd[i + 1] = name[i];
+            return cwd;
+        }
+
+        if ((file = open(dotdot, 0)) < 0) {
+            return 0; // error
+        }
+
+        stat(file, &dd);
+        chdir(dotdot);
+
+        if (d.dev == dd.dev) {
+            if (d.ino == dd.ino) {
+                if (off < 0)
+                    off = 0;
+                name[off] = '\0';
+                cwd[0] = '/';
+                for (int i = 0; i <= off; i++)
+                    cwd[i + 1] = name[i];
+                close(file);
+                return cwd;
+            }
+            do {
+                if (read(file, (char *)&dir, sizeof(dir)) < sizeof(dir)) {
+                    close(file);
+                    return 0;
+                }
+            } while (dir.inum != d.ino);
+        } else {
+            do {
+                if (read(file, (char *)&dir, sizeof(dir)) < sizeof(dir)) {
+                    close(file);
+                    return 0;
+                }
+                stat(dir.name, &dd);
+            } while (dd.ino != d.ino || dd.dev != d.dev);
+        }
+
+        close(file);
+        int i = -1;
+        while (dir.name[++i] != 0);
+        if ((off + i + 2) > 511) {
+            return 0; // path too long
+        }
+        for (int j = off + 1; j >= 0; --j)
+            name[j + i + 1] = name[j];
+        off = i + off + 1;
+        name[i] = '/';
+        for (--i; i >= 0; --i)
+            name[i] = dir.name[i];
+    }
+}
 
 char *
 rindex(p, ch)
