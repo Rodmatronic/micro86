@@ -1,4 +1,5 @@
-/* $NetBSD: echo.c,v 1.23 2021/11/16 21:38:29 rillig Exp $	*/
+/*	$OpenBSD: echo.c,v 1.11 2023/03/08 04:43:04 guenther Exp $	*/
+/*	$NetBSD: echo.c,v 1.6 1995/03/21 09:04:27 cgd Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,29 +33,29 @@
 #include "../include/stdio.h"
 #include "../include/stdbool.h"
 
-/* ARGSUSED */
 int
 main(int argc, char *argv[])
 {
-	bool nflag;
+	int nflag;
 
-	setprogname(argv[0]);
-	(void)setlocale(LC_ALL, "");
+	if (pledge("stdio", NULL) == -1)
+		err(1, "pledge");
 
 	/* This utility may NOT do getopt(3) option parsing. */
-	nflag = *++argv != NULL && strcmp(*argv, "-n") == 0;
-	if (nflag)
+	if (*++argv && !strcmp(*argv, "-n")) {
 		++argv;
+		nflag = 1;
+	}
+	else
+		nflag = 0;
 
-	while (*argv != NULL) {
-		(void)printf("%s", *argv);
-		if (*++argv != NULL)
-			(void)putchar(' ');
+	while (*argv) {
+		(void)fputs(*argv, stdout);
+		if (*++argv)
+			putchar(' ');
 	}
 	if (!nflag)
-		(void)putchar('\n');
-	(void)fflush(stdout);
-	if (ferror(stdout) != 0)
-		err(1, "write error");
+		putchar('\n');
+
 	return 0;
 }

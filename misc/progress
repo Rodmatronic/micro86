@@ -15,7 +15,7 @@ getty		V6	-o--- // Does bare minimum
 grep		V7	----o
 hexdump		rod	---o- // Lacking options
 init		xv6	-o--- // Yet to be finished
-kill		V7	----o
+kill		openbsd	----o
 ln		V7	----o
 login		V6	----o
 ls		V7	---o- // Unfinished -l

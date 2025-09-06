@@ -1,9 +1,3 @@
-#include "../include/types.h"
-#include "../include/stat.h"
-#include "../include/stdio.h"
-#include "../include/fcntl.h"
-#include "../include/errno.h"
-
 /*	$OpenBSD: cat.c,v 1.34 2022/02/09 01:58:57 cheloha Exp $	*/
 /*	$NetBSD: cat.c,v 1.11 1995/09/07 06:12:54 jtc Exp $	*/
 
@@ -38,6 +32,12 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include "../include/types.h"
+#include "../include/stat.h"
+#include "../include/stdio.h"
+#include "../include/fcntl.h"
+#include "../include/errno.h"
 
 #define MAXIMUM(a, b)	(((a) > (b)) ? (a) : (b))
 

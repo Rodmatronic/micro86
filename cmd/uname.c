@@ -1,4 +1,4 @@
-/*	$NetBSD: uname.c,v 1.11 2011/09/06 18:35:13 joerg Exp $	*/
+/*	$OpenBSD: uname.c,v 1.19 2016/10/28 07:22:59 schwarze Exp $	*/
 
 /*
  * Copyright (c) 1994 Winning Strategies, Inc.
@@ -15,7 +15,7 @@
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
  *      This product includes software developed by Winning Strategies, Inc.
- * 4. The name of Winning Strategies, Inc. may not be used to endorse or 
+ * 4. The name of Winning Strategies, Inc. may not be used to endorse or
  *    promote products derived from this software without specific prior
  *    written permission.
  *
@@ -38,28 +38,26 @@
 
 static void usage(void);
 
-/* Note that PRINT_MACHINE_ARCH is excluded from PRINT_ALL! */
 #define	PRINT_SYSNAME		0x01
 #define	PRINT_NODENAME		0x02
 #define	PRINT_RELEASE		0x04
 #define	PRINT_VERSION		0x08
 #define	PRINT_MACHINE		0x10
-#define	PRINT_MACHINE_ARCH	0x20
-#define	PRINT_ALL		\
-    (PRINT_SYSNAME|PRINT_NODENAME|PRINT_RELEASE|PRINT_VERSION|PRINT_MACHINE)
+#define	PRINT_ALL		0x1f
+#define PRINT_MACHINE_ARCH	0x20
 
 int
-main(int argc, char **argv)
+main(int argc, char *argv[])
 {
 	struct utsname u;
-	char machine_arch[SYS_NMLN];
 	int c;
 	int space = 0;
 	int print_mask = 0;
 
-	(void)setlocale(LC_ALL, "");
+	if (pledge("stdio", NULL) == -1)
+		err(1, "pledge");
 
-	while ((c = getopt(argc,argv,"amnprsv")) != -1) {
+	while ((c = getopt(argc, argv, "amnrsvp")) != -1 ) {
 		switch (c) {
 		case 'a':
 			print_mask |= PRINT_ALL;
@@ -84,65 +82,60 @@ main(int argc, char **argv)
 			break;
 		default:
 			usage();
-			/* NOTREACHED */
 		}
 	}
 
-	if (optind != argc) {
+	if (optind != argc)
 		usage();
-		/* NOTREACHED */
-	}
 
-	if (!print_mask) {
+	if (!print_mask)
 		print_mask = PRINT_SYSNAME;
-	}
 
-	if (uname(&u) != 0) {
-		err(EXIT_FAILURE, "uname");
-		/* NOTREACHED */
-	}
-	if (print_mask & PRINT_MACHINE_ARCH) {
-		int mib[2] = { CTL_HW, HW_MACHINE_ARCH };
-		size_t len = sizeof (machine_arch);
-
-//		if (sysctl(mib, sizeof (mib) / sizeof (mib[0]), machine_arch,
-//		    &len, NULL, 0) < 0)
-//			err(EXIT_FAILURE, "sysctl");
-	}
+	if (uname(&u) == -1)
+		err(1, NULL);
 
 	if (print_mask & PRINT_SYSNAME) {
 		space++;
 		fputs(u.sysname, stdout);
 	}
 	if (print_mask & PRINT_NODENAME) {
-		if (space++) putchar(' ');
+		if (space++)
+			putchar(' ');
+
 		fputs(u.nodename, stdout);
 	}
 	if (print_mask & PRINT_RELEASE) {
-		if (space++) putchar(' ');
+		if (space++)
+			putchar(' ');
+
 		fputs(u.release, stdout);
 	}
 	if (print_mask & PRINT_VERSION) {
-		if (space++) putchar(' ');
+		if (space++)
+			putchar(' ');
+
 		fputs(u.version, stdout);
 	}
 	if (print_mask & PRINT_MACHINE) {
-		if (space++) putchar(' ');
+		if (space++)
+			putchar(' ');
+
 		fputs(u.machine, stdout);
 	}
 	if (print_mask & PRINT_MACHINE_ARCH) {
-		if (space++) putchar(' ');
-		fputs(machine_arch, stdout);
+		if (space++)
+			putchar(' ');
+
+		fputs(HW_MACHINE_ARCH, stdout);
 	}
 	putchar('\n');
 
-	exit(EXIT_SUCCESS);
-	/* NOTREACHED */
+	return 0;
 }
 
 static void
 usage(void)
 {
 	fprintf(stderr, "usage: uname [-amnprsv]\n");
-	exit(EXIT_FAILURE);
+	exit(1);
 }

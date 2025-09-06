@@ -1,4 +1,5 @@
-/* $NetBSD: pwd.c,v 1.23 2021/11/16 16:57:15 kre Exp $ */
+/*	$OpenBSD: pwd.c,v 1.14 2015/10/09 01:37:06 deraadt Exp $	*/
+/*	$NetBSD: pwd.c,v 1.22 2011/08/29 14:51:19 joerg Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994
@@ -38,24 +39,16 @@
 static char *getcwd_logical(void);
 static void usage(void);
 
-/*
- * Note that EEE Std 1003.1, 2003 requires that the default be -L.
- * This is inconsistent with the historic behaviour of everything
- * except the ksh builtin.
- * To avoid breaking scripts the default has been kept as -P.
- * (Some scripts run /bin/pwd in order to get 'pwd -P'.)
- */
-
 int
 main(int argc, char *argv[])
 {
-	int ch, lFlag;
+	int ch, lFlag = 0;
 	const char *p;
 
-	setprogname(argv[0]);
-	(void)setlocale(LC_ALL, "");
+	setprogname(argv[0]);	
+	if (pledge("stdio rpath", NULL) == -1)
+		err(1, "pledge");
 
-	lFlag = 0;
 	while ((ch = getopt(argc, argv, "LP")) != -1) {
 		switch (ch) {
 		case 'L':
@@ -64,7 +57,6 @@ main(int argc, char *argv[])
 		case 'P':
 			lFlag = 0;
 			break;
-		case '?':
 		default:
 			usage();
 		}
@@ -85,20 +77,16 @@ main(int argc, char *argv[])
 	if (p == NULL)
 		err(EXIT_FAILURE, NULL);
 
-	(void)printf("%s\n", p);
-
-	(void)fflush(stdout);
-	if (ferror(stdout))
-		err(EXIT_FAILURE, "stdout");
+	puts(p);
+	printf("\n");
 
 	exit(EXIT_SUCCESS);
-	/* NOTREACHED */
 }
 
 static char *
 getcwd_logical(void)
 {
-	char *pwd;
+	char *pwd, *p;
 	struct stat s_pwd, s_dot;
 
 	/* Check $PWD -- if it's right, it's fast. */
@@ -107,10 +95,16 @@ getcwd_logical(void)
 		return NULL;
 	if (pwd[0] != '/')
 		return NULL;
-	if (strstr(pwd, "/./") != NULL)
-		return NULL;
-	if (strstr(pwd, "/../") != NULL)
-		return NULL;
+
+	/* check for . or .. components, including trailing ones */
+	for (p = pwd; *p != '\0'; p++)
+		if (p[0] == '/' && p[1] == '.') {
+			if (p[2] == '.')
+				p++;
+			if (p[2] == '\0' || p[2] == '/')
+				return NULL;
+		}
+
 	if (stat(pwd, &s_pwd) == -1 || stat(".", &s_dot) == -1)
 		return NULL;
 	if (s_pwd.dev != s_dot.dev || s_pwd.ino != s_dot.ino)
@@ -121,7 +115,6 @@ getcwd_logical(void)
 static void
 usage(void)
 {
-	(void)fprintf(stderr, "usage: %s [-LP]\n", getprogname());
+	fprintf(stderr, "usage: %s [-LP]\n", program_name);
 	exit(EXIT_FAILURE);
-	/* NOTREACHED */
 }

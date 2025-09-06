@@ -1,9 +1,5 @@
-#include "../include/types.h"
-#include "../include/stat.h"
-#include "../include/stdio.h"
-#include "../include/fs.h"
-
-/*	$NetBSD: basename.c,v 1.16 2019/02/01 08:29:04 mrg Exp $	*/
+/*	$OpenBSD: basename.c,v 1.14 2016/10/28 07:22:59 schwarze Exp $	*/
+/*	$NetBSD: basename.c,v 1.9 1995/09/02 05:29:46 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -34,22 +30,29 @@
  * SUCH DAMAGE.
  */
 
+#include "../include/types.h"
+#include "../include/stat.h"
+#include "../include/stdio.h"
+#include "../include/fs.h"
+
 static void usage(void);
 
 int
-main(int argc, char **argv)
+main(int argc, char *argv[])
 {
-	char *p;
 	int ch;
+	char *p;
+	setprogname(argv[0]);
 
-	setlocale(LC_ALL, "");
+	if (pledge("stdio", NULL) == -1)
+		err(1, "pledge");
 
-	while ((ch = getopt(argc, argv, "")) != -1)
+	while ((ch = getopt(argc, argv, "")) != -1) {
 		switch (ch) {
-		case '?':
 		default:
 			usage();
 		}
+	}
 	argc -= optind;
 	argv += optind;
 
@@ -57,31 +60,39 @@ main(int argc, char **argv)
 		usage();
 
 	if (**argv == '\0') {
-		(void)printf("\n");
-		exit(0);
+		(void)puts("");
+		return 0;
 	}
-	if ((p = basename(*argv)) == NULL)
+	p = basename(*argv);
+	if (p == NULL)
 		err(1, "%s", *argv);
-	if (*++argv != NULL) {
-		int suffixlen, stringlen, off;
+	/*
+	 * If the suffix operand is present, is not identical to the
+	 * characters remaining in string, and is identical to a suffix
+	 * of the characters remaining in string, the suffix suffix
+	 * shall be removed from string.
+	 */
+	if (*++argv) {
+		size_t suffixlen, stringlen, off;
 
 		suffixlen = strlen(*argv);
 		stringlen = strlen(p);
 
 		if (suffixlen < stringlen) {
 			off = stringlen - suffixlen;
-			if (strcmp(p + off, *argv) == 0)
+			if (!strcmp(p + off, *argv))
 				p[off] = '\0';
 		}
 	}
-	(void)printf("%s\n", p);
-	exit(0);
+	(void)puts(p);
+	printf("\n");
+	return 0;
 }
 
 static void
 usage(void)
 {
 
-	(void)fprintf(stderr, "usage: basename string [suffix]\n");
+	(void)fprintf(stderr, "usage: %s string [suffix]\n", program_name);
 	exit(1);
 }
