@@ -1,6 +1,6 @@
 NAME		UNIX	FUNC?
 banner		sysv	----o
-basename	gnu	----o
+basename	openbsd	----o
 cat		openbsd	----o
 cmp		sysv	----o
 cp		V6	----o
@@ -35,7 +35,7 @@ touch		sysvr4	----o
 uname		gnu	----o
 wc		V7	----o
 whoami		gnu	----o
-yes		gnu9.1	----o
+yes		openbsd	----o
 
 ISSUES
  o INIT is not up to a usable standard (check old unix source!)
