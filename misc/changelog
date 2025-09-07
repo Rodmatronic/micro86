@@ -1,17 +1,17 @@
 # 
 # This file contains the last 5 GIT commits for Exnix.
 #
-Author: roddo
-Message: Replace 'changelog' with last 5 GIT commits
+Author: SuperPou
+Message: add missing files
+
+Author: SuperPou
+Message: WIP mknod
 
 Author: roddo
-Message: GNU WHOAMI utility
+Message: add NETBSD copyright notice
 
 Author: roddo
-Message: bump version to 0.02-3
+Message: Replace NETBSD utils with OPENBSD
 
 Author: roddo
-Message: GNU SLEEP utility
-
-Author: roddo
-Message: GNU UNAME utility (fix issue #22)
+Message: OPENBSD KILL utility

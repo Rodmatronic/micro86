@@ -599,18 +599,6 @@ char	*input;
 	return(c_ptr);
 }
 
-int iscntrl(int c)
-{
-    unsigned int uc = (unsigned char)c;
-    return (uc < 0x20) || (uc == 0x7F);
-}
-
-int isprint(int c)
-{
-    unsigned int uc = (unsigned char)c;
-    return (uc - 0x20) < 0x5F;
-}
-
 char *
 getpass(char *prompt)
 {
@@ -927,12 +915,6 @@ toupper(int c)
   return islower (c) ? c - 'a' + 'A' : c;
 }
 
-int
-islower(int c)
-{
-    return c >= 'a' && c <= 'z' ? 0x02 : 0;
-}
-
 char *
 strrchr (register const char *s, int c)
 {
@@ -990,12 +972,6 @@ localtime(const unsigned long *timer) {
     tm.tm_mday = t + 1;
 
     return &tm;
-}
-
-int
-isdigit(int c)
-{
-	return (unsigned)c - '0' < 10;
 }
 
 char* strlcpy(char *s, const char *t, size_t size) {

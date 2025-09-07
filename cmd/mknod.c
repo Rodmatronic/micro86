@@ -186,7 +186,7 @@ domakenodes(struct node *node, int n)
 		 * modified by the umask.
 		 */
 		if (node[i].mflag && !done_umask) {
-			(void)umask(0);
+//			(void)umask(0);
 			done_umask = 1;
 		}
 

@@ -21,7 +21,7 @@ login		V6	----o
 ls		V7	---o- // Unfinished -l
 man		rod	---o- // Missing support for bold, italic, etc
 mkdir		xv6	----o
-mknod		gnu	----o
+mknod		openbsd	----o
 more		rod	---o- // Works fine, just needs options.
 mv		V7	----o
 passwd		V7	----o

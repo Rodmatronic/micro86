@@ -2,6 +2,7 @@ S=sys
 C=cmd
 M=misc
 I=include
+L=lib
 
 OBJS = \
 	$S/bio.o\
@@ -153,7 +154,7 @@ tags: $(OBJS) $S/entryother.S $S/_init
 $S/vectors.S: $S/vectors.pl
 	$S/vectors.pl > $S/vectors.S
 
-ULIB = $S/ulib.o $S/usys.o $S/printf.o $S/umalloc.o $S/udate.o $S/errno.o $C/font8x16.o $S/ugraphics.o $S/ucrypt.o $S/setmode.o $S/reallocarray.o $S/strtoul.o
+ULIB = $L/ulib.o $S/usys.o $S/printf.o $S/umalloc.o $L/udate.o $L/errno.o $C/font8x16.o $L/ugraphics.o $L/ucrypt.o $L/setmode.o $L/reallocarray.o $L/strtoul.o $L/isctype.o
 
 _%: %.o $(ULIB)
 	$(LD) $(LDFLAGS) -N -e main -Ttext 0 -o $@ $^
@@ -234,6 +235,7 @@ clean:
 	rm -f $S/*.tex $S/*.dvi $S/*.idx $S/*.aux $S/*.log $S/*.ind $S/*.ilg \
 	$S/*.o $S/*.d $S/*.asm $S/*.sym $C/*.tex $C/*.dvi $C/*.idx $C/*.aux $C/*.log $C/*.ind $C/*.ilg \
 	$C/*.o $C/*.d $C/*.asm $C/*.sym $S/vectors.S $S/bootblock $S/entryother \
+	$L/*.o $L/*.d $L/*.asm $L/*.sym \
 	$S/initcode $S/initcode.out $S/kernel xv6.img $S/fs.img $S/kernelmemfs \
 	$S/xv6memfs.img $S/mkfs .gdbinit \
 	$(UPROGS)
