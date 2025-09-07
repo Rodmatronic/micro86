@@ -33,7 +33,7 @@ su		V7	----o
 sleep		gnu	----o
 touch		sysvr4	----o
 uname		openbsd	----o
-wc		V7	----o
+wc		openbsd	----o
 whoami		gnu	----o
 yes		openbsd	----o
 

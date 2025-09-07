@@ -14,6 +14,9 @@ struct rtcdate;
 #define	HW_MACHINE_ARCH	10		/* string: machine architecture */
 #define NSIG 64
 
+#define MB_CUR_MAX 1
+#define FMT_SCALED_STRSIZE 7
+
 #define no_argument 0
 #define required_argument 1
 #define optional_argument 2
@@ -45,9 +48,6 @@ extern char * program_name;
 #define STDIN_FILENO 0
 #define STDOUT_FILENO 1
 #define STDERR_FILENO 2
-
-#define isascii(c) (((c) & ~0x7F) == 0)
-#define toascii(c) ((c) & 0x7F)
 
 extern char* optarg;
 

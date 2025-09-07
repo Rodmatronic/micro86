@@ -22,6 +22,32 @@ static char line[BUFSIZ+1];
 static struct passwd passwd;
 #define ECHO 010
 
+void* realloc(void* ptr, uint new_size);
+
+int getline(char **buf, size_t *bufsz, int fd) {
+    if (*buf == 0 || *bufsz == 0) {
+        *bufsz = 128;
+        *buf = malloc(*bufsz);
+        if (*buf == 0) return -1;
+    }
+
+    int i = 0;
+    char c;
+    while (read(fd, &c, 1) == 1) {
+        if (i >= *bufsz - 1) {
+            *bufsz *= 2;
+            *buf = realloc(*buf, *bufsz);
+            if (*buf == 0) return -1;
+        }
+        (*buf)[i++] = c;
+        if (c == '\n') break;
+    }
+
+    if (i == 0) return -1; // EOF
+    (*buf)[i] = '\0';
+    return i;
+}
+
 char *dirname(char *path)
 {
     char *slash;

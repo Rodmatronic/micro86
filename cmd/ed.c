@@ -155,7 +155,7 @@ strncpy (char *s1, const char *s2, size_t n)
 }
 
 int	*address();
-char	*getline();
+char	*edgetline();
 char	*getblock();
 char	*place();
 //jmp_buf	savej;
@@ -329,7 +329,7 @@ commands()
 		nonzero();
 		a1 = addr1;
 		do {
-			edputs(getline(*a1++));
+			edputs(edgetline(*a1++));
 		} while (a1 <= addr2);
 		dot = addr2;
 		listf = 0;
@@ -778,7 +778,7 @@ putfile()
 	fp = genbuf;
 	a1 = addr1;
 	do {
-		lp = getline(*a1++);
+		lp = edgetline(*a1++);
 		for (;;) {
 			if (--nib < 0) {
 				n = fp-genbuf;
@@ -933,7 +933,7 @@ gdelete()
 }
 
 char *
-getline(tl)
+edgetline(tl)
 {
 	register char *bp, *lp;
 	register nl;
@@ -1123,7 +1123,7 @@ join()
 
 	gp = genbuf;
 	for (a1=addr1; a1<=addr2; a1++) {
-		lp = getline(*a1);
+		lp = edgetline(*a1);
 		while ((*gp = *lp++))
 			if (gp++ >= &genbuf[LBSIZE-2])
 				ederror(Q);
@@ -1339,7 +1339,7 @@ getcopy()
 {
 	if (addr1 > addr2)
 		return(EOF);
-	getline(*addr1++);
+	edgetline(*addr1++);
 	return(0);
 }
 
@@ -1494,7 +1494,7 @@ int *addr;
 	} else {
 		if (addr==zero)
 			return(0);
-		p1 = getline(*addr);
+		p1 = edgetline(*addr);
 		locs = 0;
 	}
 	p2 = expbuf;

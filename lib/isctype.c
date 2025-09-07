@@ -39,6 +39,10 @@
 
 const char	*_ctype_;
 
+int iswspace(int wc) {
+    return wc == ' ' || wc == '\t' || wc == '\n' || wc == '\v' || wc == '\f' || wc == '\r';
+}
+
 #undef isalnum
 int
 isalnum(int c)
