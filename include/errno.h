@@ -167,4 +167,6 @@ extern int errno;			/* global error number */
 #define	EJUSTRETURN	-2		/* don't modify regs, just return */
 #endif
 
+void errc(int eval, int code, const char *fmt, ...);
+
 #endif /* !_SYS_ERRNO_H_ */

@@ -1,6 +1,28 @@
 #include "../include/errno.h"
 #include "../include/stdio.h"
 
+void
+verrc(int eval, int code, const char *fmt, va_list ap)
+{
+	(void)fprintf(stderr, "%s: ", program_name);
+	if (fmt != NULL) {
+		(void)vprintf(stderr, fmt, ap);
+		(void)fprintf(stderr, ": ");
+	}
+	(void)fprintf(stderr, "%s\n", strerror(code));
+	exit(eval);
+}
+
+void
+errc(int eval, int code, const char *fmt, ...)
+{
+	va_list ap;
+
+	va_start(ap, fmt);
+	verrc(eval, code, fmt, ap);
+	va_end(ap);
+}
+
 void clearerr(FILE *stream) {
     (void)stream;
 }
@@ -9,13 +31,10 @@ void warn(const char *fmt, ...) {
     va_list args;
     va_start(args, fmt);
 
-    fprintf(stderr, "warning: ");
+    fprintf(stderr, "%s: ", program_name);
     vprintf(stderr, fmt, args);
+    fprintf(stderr, ": %s\n", strerror(errno));
 
-    if (errno)
-        fprintf(stderr, ": %s", strerror(errno));
-
-    fprintf(stderr, "\n");
     va_end(args);
 }
 

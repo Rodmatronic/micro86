@@ -115,6 +115,7 @@ cat_file(const char *path)
 			clearerr(stdin);
 		} else {
 			if ((fp = open(path, O_RDONLY)) == NULL) {
+				errno = ENOENT;
 				warn("%s", path);
 				rval = 1;
 				return;
@@ -223,9 +224,5 @@ raw_cat(int rfd, const char *filename)
 			if ((nw = write(wfd, buf + off, nr)) == -1 || nw == 0)
 				err(1, "stdout");
 		}
-	}
-	if (nr == -1) {
-		warn("%s", filename);
-		rval = 1;
 	}
 }

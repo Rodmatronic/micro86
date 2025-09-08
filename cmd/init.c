@@ -12,6 +12,8 @@ char	utmp[] =	"/etc/utmp";
 char	wtmpf[] =	"/usr/adm/wtmp";
 char	getty[] = 	"/etc/getty";
 
+int s_flag = 0;
+
 struct {
 	char	name[8];
 	char	tty;
@@ -25,21 +27,24 @@ main(void)
 {
   int pid, wpid;
   int i;
+
+  setprogname("init");
+
   /* Dispose of random users. */
-  if (getuid() != 0) {
-    fprintf(stderr, "init: %s\n", strerror(EPERM));
-    exit (1);
-  }
+  if (getuid() != 0)
+    errc(1, EPERM, NULL);
+
+  /* System V users like to reexec init. */
+  if (getpid() != 1)
+    err(1, "already running");
 
   if(open("/dev/console", O_RDWR) < 0){
     mknod("/dev/console", 1, 1);
     open("/dev/console", O_RDWR);
   }
 
-  mknod("/dev/null", 3, 0);
-  mknod("/dev/random", 4, 0);
-  mknod("/dev/scr", 5, 0);
-  mknod("/dev/keyb", 6, 0);
+//  mknod("/dev/null", 3, 0);
+//  mknod("/dev/random", 4, 0);
 
   // run shell sequence
   dup(0);

@@ -190,7 +190,7 @@ domakenodes(struct node *node, int n)
 			done_umask = 1;
 		}
 
-		r = mknod(node[i].name, node[i].mode, node[i].dev);
+		r = mknod(node[i].name, major(node[i].dev), minor(node[i].dev));
 		if (r == -1) {
 			warn("%s", node[i].name);
 			rv = 1;
