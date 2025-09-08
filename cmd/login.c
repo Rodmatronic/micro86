@@ -38,16 +38,19 @@ char **argv;
 //	signal(2, 1);
 //	nice(0);
 	ttyx = "/dev/ttyx";
-//	if ((utmp.tty=ttyn(0)) == 'x') {
-//		write(1, "Sorry.\n", 7);
-//		exit();
-//	}
+	if (getuid() != 0) {
+		write(1, "Sorry.\n", 7);
+		exit(1);
+	}
 //	ttyx[8] = utmp.tty;
 //	gtty(0, &ttyb);
 //	ttyb.erase = '#';
 //	ttyb.kill = '@';
 //	stty(ECHO);
 	loop:
+
+        ttyb.tflags = ECHO;
+        stty(&ttyb);
 
 	memset(utmp.name, 0, sizeof(utmp.name));
 	namep = utmp.name;
