@@ -204,6 +204,7 @@ UPROGS=\
 	$C/_mknod\
 	$C/_more\
 	$C/_mv\
+	$C/_nologin\
 	$C/_passwd\
 	$C/_pwd\
 	$C/_usertests\
