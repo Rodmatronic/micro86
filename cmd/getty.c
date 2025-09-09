@@ -148,7 +148,7 @@ char **argv;
 				tmode.sgflag &= ~LCASE;
 			stty(&tmode);*/
 //			execl("/bin/login", "login", name, 0);
-			execl("/bin/login", "login", 0);
+			execl("/sbin/login", "login", 0);
 //			exit(1);
 //		}
 		//tname = tabp->nname;

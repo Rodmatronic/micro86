@@ -147,7 +147,7 @@ char **argv;
 	exit(1);
 bad:
 	write(1, "Login incorrect.\n", 17);
-	execl("/bin/login", "login", 0);
+	execl("/sbin/login", "login", 0);
 	goto loop; // old fallback
 }
 

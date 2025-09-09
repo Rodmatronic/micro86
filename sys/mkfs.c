@@ -224,10 +224,7 @@ for (i = 2; i < argc; i++) {
 	"line",
 	"ln",
 	"ls",
-	"login",
-	"man",
 	"mkdir",
-	"mknod",
 	"mv",
 	"passwd",
 	"pwd",
@@ -260,6 +257,7 @@ for (i = 2; i < argc; i++) {
 	    "dirname",
 	    "find",
 	    "hexdump",
+	    "man",
 	    "more",
 	    "uptime",
 	    "touch",
@@ -289,6 +287,8 @@ for (i = 2; i < argc; i++) {
     };
 
     char * sbin_files[] = {
+	    "login",
+	    "mknod",
 	    "nologin",
 	    NULL
     };

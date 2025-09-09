@@ -238,7 +238,7 @@ clean:
 	$C/*.o $C/*.d $C/*.asm $C/*.sym $S/vectors.S $S/bootblock $S/entryother \
 	$L/*.o $L/*.d $L/*.asm $L/*.sym \
 	$S/initcode $S/initcode.out $S/kernel xv6.img $S/fs.img $S/kernelmemfs \
-	$S/xv6memfs.img $S/mkfs .gdbinit \
+	xv6memfs.img $S/mkfs .gdbinit \
 	$(UPROGS)
 
 # make a printout
