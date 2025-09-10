@@ -180,8 +180,8 @@ main(int argc, char *argv[])
   uint usrbinino = create_directory(usrino, "bin");
   uint usrmanino = create_directory(usrino, "man");
   uint manman1 = create_directory(usrmanino, "man1");
-  uint usrhomeino = create_directory(usrino, "home");
-  create_directory(usrhomeino, "pou");
+  uint homeino = create_directory(rootino, "home");
+  uint homepouino = create_directory(homeino, "pou");
   uint usrlibino = create_directory(usrino, "lib");
   uint optino = create_directory(rootino, "opt");
   uint optbinino = create_directory(optino, "bin");

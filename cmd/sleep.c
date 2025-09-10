@@ -20,38 +20,20 @@
 
 static long argdecode ();
 
-/* If non-zero, display usage information and exit.  */
-static int show_help;
-
-/* If non-zero, print the version on standard output and exit.  */
-static int show_version;
-
 static struct option const long_options[] =
 {
-  {"help", no_argument, &show_help, 1},
-  {"version", no_argument, &show_version, 1},
   {0, 0, 0, 0}
 };
 
 static void
-usage (status)
-     int status;
+usage (void)
 {
-  if (status != 0)
-    fprintf (stderr, "Try `%s --help' for more information.\n",
-	     program_name);
-  else
-    {
-      printf ("Usage: %s [OPTION]... NUMBER[SUFFIX]\n", program_name);
-      printf ("\
-\n\
-  --help      display this help and exit\n\
-  --version   output version information and exit\n\
+      fprintf (stderr, "Usage: sleep [OPTION]... NUMBER[SUFFIX]\n");
+      fprintf (stderr, "\
 \n\
 SUFFIX may be s for seconds, m for minutes, h for hours or d for days.\n\
 ");
-    }
-  exit (status);
+  exit (1);
 }
 
 void
@@ -63,8 +45,6 @@ main (argc, argv)
   unsigned seconds = 0;
   int c;
 
-  program_name = argv[0];
-
   while ((c = getopt_long (argc, argv, "", long_options, (int *) 0)) != EOF)
     {
       switch (c)
@@ -73,23 +53,13 @@ main (argc, argv)
 	  break;
 
 	default:
-	  usage (1);
+	  usage ();
 	}
     }
 
-  if (show_version)
-    {
-      printf ("sleep - %s\n", version_string);
-      exit (0);
-    }
-
-  if (show_help)
-    usage (0);
-
   if (argc == 1)
     {
-      fprintf (stderr, "Usage: %s number[smhd]...\n", argv[0]);
-      exit (1);
+	    usage();
     }
 
   for (i = 1; i < argc; i++)

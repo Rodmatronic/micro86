@@ -4,4 +4,4 @@ operator::2:5:System &:/operator:/sbin/nologin
 bin::3:7:Binaries Commands and Source:/:/sbin/nologin
 uucp::4:4::/usr/lib/uucp:/usr/lib/uucico
 dmr::7:3::/usr/dmr:
-pou:po/JJF/3EJE22:1000:1000::/usr/home/pou:
+pou:po/JJF/3EJE22:1000:1000:Awesome Test User:/home/pou:
