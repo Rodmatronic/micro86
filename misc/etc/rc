@@ -1,9 +1,8 @@
 date
 
+# Make nodes
 mknod /dev/null c 3 0
 mknod /dev/random c 4 0
-
-echo "Please refer to /COPYRIGHT regarding kernel copyright information."
 cat /dev/null >/etc/utmp
 touch /etc/mount /dev/rp3
 echo 'clearing /tmp'
@@ -13,3 +12,5 @@ sh /etc/rc.local
 /etc/cron
 rm /run/win
 date; echo
+echo -n "Welcome to Exnix version "
+uname -v

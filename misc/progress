@@ -14,7 +14,7 @@ find		rod	----o
 getty		V6	-o--- // Does bare minimum
 grep		V7	----o
 hexdump		rod	---o- // Lacking options
-init		xv6	-o--- // Yet to be finished
+init		rod	--o-- // SYSV styled.
 kill		openbsd	----o
 ln		V7	----o
 login		V6	----o
