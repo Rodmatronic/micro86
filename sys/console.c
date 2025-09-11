@@ -179,8 +179,6 @@ panic(char *fmt, ...)
   va_end(ap);
 
   consputc('\n');
-  cprintf("Please report this panic to https://github.com/Rodmatronic/Exnix/issues");
-
   panicked = 1;       // Freeze other CPUs
 
   for(;;)

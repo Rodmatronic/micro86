@@ -10,7 +10,6 @@ rm -rf /tmp/
 mkdir /tmp
 sh /etc/rc.local
 /etc/cron
-rm /run/win
 date; echo
-echo -n "Welcome to Exnix version "
+echo -n "Welcome to FreeNIX v"
 uname -v
