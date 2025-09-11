@@ -1725,7 +1725,7 @@ uio()
 void argptest()
 {
   int fd;
-  fd = open("/etc/init", O_RDONLY);
+  fd = open("/sbin/init", O_RDONLY);
   if (fd < 0) {
     fprintf(stderr, "open failed\n");
     exit(1);

@@ -238,7 +238,6 @@ for (i = 2; i < argc; i++) {
     char * etc_files[] = {
 	"cron",
 	"group",
-	"init",
 	"motd",
 	"master.passwd",
 	"rc",
@@ -287,6 +286,7 @@ for (i = 2; i < argc; i++) {
     };
 
     char * sbin_files[] = {
+	    "init",
 	    "login",
 	    "mknod",
 	    "nologin",
