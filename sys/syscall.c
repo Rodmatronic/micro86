@@ -117,6 +117,7 @@ extern int sys_lseek(void);
 extern int sys_devctl(void);
 extern int sys_stime(void);
 extern int sys_utime(void);
+extern int sys_sethostname(void);
 
 static int (*syscalls[])(void) = {
 [SYS_fork]    sys_fork,
@@ -153,6 +154,7 @@ static int (*syscalls[])(void) = {
 [SYS_devctl]  sys_devctl,
 [SYS_stime]   sys_stime,
 [SYS_utime]   sys_utime,
+[SYS_sethostname] sys_sethostname,
 };
 
 void

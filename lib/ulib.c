@@ -21,8 +21,15 @@ static FILE *pwf = NULL;
 static char line[BUFSIZ+1];
 static struct passwd passwd;
 #define ECHO 010
-
 void* realloc(void* ptr, uint new_size);
+
+int gethostname(char *name, size_t len) {
+	struct utsname u;
+	if (uname(&u) == -1)
+		return NULL;
+	strcpy(name, u.nodename);
+	return 0;
+}
 
 int chmod(char *path, mode_t mode) {
     //placeholder

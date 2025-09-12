@@ -193,6 +193,7 @@ UPROGS=\
 	$C/_find\
 	$C/_getty\
 	$C/_grep\
+	$C/_hostname\
 	$C/_init\
 	$C/_kill\
 	$C/_line\

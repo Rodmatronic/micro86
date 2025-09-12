@@ -145,6 +145,7 @@ int lseek(int, int, int);
 int devctl(int dev, int sig, int data);
 int stime(unsigned long);
 int utime(const char *path);
+int sethostname(const char *, size_t len);
 
 // ulib.c
 int stat(const char*, struct stat*);

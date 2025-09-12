@@ -220,6 +220,7 @@ for (i = 2; i < argc; i++) {
 	"echo",
 	"ed",
 	"grep",
+	"hostname",
 	"kill",
 	"line",
 	"ln",

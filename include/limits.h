@@ -124,6 +124,8 @@
 #  endif
 # endif
 
+#define HOST_NAME_MAX		255
+
 #endif /* __XPG_VISIBLE < 600 */
 
 #endif

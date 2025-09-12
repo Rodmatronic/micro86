@@ -35,6 +35,10 @@ sys_stty(void)
   return 0;
 }
 
+#define MAX 255
+
+char sys_nodename[MAX] = "localhost";
+
 int
 sys_uname(void)
 {
@@ -45,13 +49,33 @@ sys_uname(void)
     return -1;
   u = (struct utsname *)addr;
   safestrcpy(u->sysname, sys_name, sizeof(u->sysname));
-  safestrcpy(u->nodename, "nodename", sizeof(u->nodename));
+  safestrcpy(u->nodename, sys_nodename, sizeof(u->nodename));
   safestrcpy(u->release, sys_release, sizeof(u->release));
   // version-candidate
   safestrcpy(u->version, sys_version, sizeof(u->version));
   safestrcpy(u->machine, "i386", sizeof(u->machine));
   safestrcpy(u->domainname, "domainname", sizeof(u->domainname));
   return 0;
+}
+
+
+int sys_sethostname(void) {
+    char *name;
+    int len;
+
+    if (argstr(0, &name) < 0 || argint(1, &len) < 0)
+        return -1;
+
+    if (len <= 0 || len >= MAX)
+        return -1;
+
+    if (myproc()->uid != 0)
+        return -1;
+
+    if (safestrcpy(sys_nodename, name, MAX) < 0)
+        return -1;
+
+    return 0;
 }
 
 int sys_stime(void) {
