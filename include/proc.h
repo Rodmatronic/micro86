@@ -34,6 +34,15 @@ struct context {
 
 enum procstate { UNUSED, EMBRYO, SLEEPING, RUNNABLE, RUNNING, ZOMBIE };
 
+#define MAX_ENV_VARS 128
+#define MAX_ENV_NAME 32
+#define MAX_ENV_VALUE 128
+
+struct env_var {
+  char name[MAX_ENV_NAME];
+  char value[MAX_ENV_VALUE];
+};
+
 // Per-process state
 struct proc {
   uint sz;                     // Size of process memory (bytes)
@@ -53,6 +62,8 @@ struct proc {
   int gid;		       // Group ID
   int exitstatus;	       // Exit status number
   int ttyflags;       	       // TTY flags
+  struct env_var env[MAX_ENV_VARS]; // Environment variables
+  int env_count;               // Number of environment variables
 };
 
 // Process memory is laid out contiguously, low addresses first:

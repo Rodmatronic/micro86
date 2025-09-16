@@ -34,3 +34,6 @@
 #define SYS_stime  33
 #define SYS_utime  34
 #define SYS_sethostname 35
+#define SYS_setenv 36
+#define SYS_secure_getenv 37
+#define SYS_environ 38

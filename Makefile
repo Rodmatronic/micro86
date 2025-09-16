@@ -190,6 +190,7 @@ UPROGS=\
 	$C/_du\
 	$C/_echo\
 	$C/_ed\
+	$C/_env\
 	$C/_find\
 	$C/_getty\
 	$C/_grep\

@@ -142,6 +142,27 @@ vcprintf(const char *fmt, va_list ap)
   vprintf(1, fmt, ap);
 }
 
+int
+vsprintf(char *buf, const char *fmt, va_list ap)
+{
+    char *start = buf;
+    vprintf(1, fmt, ap);
+    *buf = '\0';
+    return buf - start;
+}
+
+int
+sprintf(char *buf, const char *fmt, ...)
+{
+    va_list ap;
+    int rc;
+
+    va_start(ap, fmt);
+    rc = vsprintf(buf, fmt, ap);
+    va_end(ap);
+    return rc;
+}
+
 void
 cprintf(char *fmt, ...)
 {

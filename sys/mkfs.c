@@ -256,6 +256,7 @@ for (i = 2; i < argc; i++) {
 	    "cmp",
 	    "cron",
 	    "dirname",
+	    "env",
 	    "find",
 	    "hexdump",
 	    "man",

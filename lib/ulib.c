@@ -23,6 +23,21 @@ static struct passwd passwd;
 #define ECHO 010
 void* realloc(void* ptr, uint new_size);
 
+#define MAX_ENV_VARS 128
+#define MAX_ENV_NAME 32
+#define MAX_ENV_VALUE 128
+
+char*
+getenv(const char *name)
+{
+  static char buf[MAX_ENV_VALUE];  // persistent buffer
+  if (secure_getenv((char*)name, buf) < 0)
+    return 0;
+  if (buf[0] == '\0')
+    return 0;  // not found
+  return buf;
+}
+
 int gethostname(char *name, size_t len) {
 	struct utsname u;
 	if (uname(&u) == -1)
@@ -94,10 +109,6 @@ char *dirname(char *path)
         slash[1] = '\0';
         return path;
     }
-}
-
-char* getenv(char* str){
-	return str;
 }
 
 int strncmp(const char s1, const char s2, size_t n){

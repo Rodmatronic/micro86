@@ -116,6 +116,7 @@ char **argv;
 		write(1, "No directory\n", 13);
 		goto loop;
 	}
+	setenv("PWD", namep, 0);
 	time(utmp.time);
 	if ((f = open("/etc/utmp", 1)) >= 0) {
 		t = utmp.tty;

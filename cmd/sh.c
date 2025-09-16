@@ -214,6 +214,7 @@ shellcmds(char *buf)
       fprintf(stderr, "%s: bad directory\n", buf+3);
       return 1;
     }
+    setenv("PWD", buf+3, 0);
     return 0;
   } else
   if(buf[0] == 'e' && buf[1] == 'x' && buf[2] == 'i' && buf[3] == 't'){

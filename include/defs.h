@@ -37,6 +37,8 @@ void            consoleinit(void);
 void            cprintf(char*, ...);
 void            consoleintr(int(*)(void));
 void            panic(char *fmt, ...) __attribute__((noreturn));
+int		sprintf(char *buf, const char *fmt, ...);
+
 
 // exec.c
 int             exec(char*, char**);
