@@ -29,7 +29,7 @@ int
 main(void)
 {
   kinit1(end, P2V(4*1024*1024)); // phys page allocator
-  cprintf("FreeNIX %s\n", sys_version);
+  cprintf("FreeNIX Release %s Version %s\n", sys_release, sys_version);
   kvmalloc();      // kernel page table
   timeinit();	   // set up unix date&time
   mpinit();        // detect other processors

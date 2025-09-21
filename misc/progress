@@ -36,6 +36,7 @@ sleep		gnu	----o // DONE
 touch		sysvr4	----o // TODO: Remove for copyright.
 uname		openbsd	----o // DONE
 wc		openbsd	----o // DONE
+which		openbsd	----o // DONE
 whoami		gnu	----o // DONE
 yes		openbsd	----o // DONE
 
