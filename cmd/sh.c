@@ -101,7 +101,7 @@ runcmd(struct cmd *cmd)
   case REDIR: {
     struct redircmd *rcmd = (struct redircmd*)cmd;
     close(rcmd->fd);
-    int fd = open(rcmd->file, O_CREATE | O_RDWR);
+    int fd = open(rcmd->file, rcmd->mode);
     if (fd < 0) {
       fprintf(stderr, "open %s failed\n", rcmd->file);
       exit(1);
@@ -527,10 +527,10 @@ parseredirs(struct cmd *cmd, char **ps, char *es)
       cmd = redircmd(cmd, q, eq, O_RDONLY, 0, 0);
       break;
     case '>':
-      cmd = redircmd(cmd, q, eq, O_WRONLY|O_CREATE, 1, 0);
+      cmd = redircmd(cmd, q, eq, O_CREATE|O_RDWR|O_TRUNC, 1, 0);
       break;
     case '+':  // >>
-      cmd = redircmd(cmd, q, eq, O_WRONLY|O_CREATE, 1, 1);
+      cmd = redircmd(cmd, q, eq, O_CREATE|O_RDWR, 1, 1);
       break;
     }
   }

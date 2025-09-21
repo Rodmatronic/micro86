@@ -563,6 +563,9 @@ sys_open(void)
       end_op();
       return -1;
     }
+    if (omode & O_TRUNC) {
+      itrunc(ip);
+    }
   } else {
     if((ip = namei(path)) == 0){
       end_op();
