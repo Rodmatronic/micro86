@@ -230,12 +230,14 @@ UPROGS=\
 	$C/_hexdump\
 
 ETC=\
-	$M/etc/rc\
+    	$M/etc/rcS\
+	$M/etc/rc2\
 	$M/etc/rc.local\
 	$M/etc/master.passwd\
 	$M/etc/group\
 	$M/etc/motd\
 	$M/etc/colortest\
+	$M/etc/inittab\
 
 $S/fs.img: $S/mkfs $M/README $(UPROGS)
 	build/build.sh

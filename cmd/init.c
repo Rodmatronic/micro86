@@ -61,7 +61,8 @@ single()
 		exit(1);
 	}
 	while(wait(0) != pid);
-	init_signal = LVL2;
+	/* When CTRL+D'd out of single user, run default state */
+	runrc(rstateid("is"));
 }
 
 char
@@ -179,8 +180,81 @@ userinit(int argc, char** argv)
 }
 
 /*
+ * Get inittab state ID for inittab parsing
+ */
+
+int
+rstateid(const char* target_id)
+{
+    static char rstate[16];
+    char buf[256];
+    int fd = open("/etc/inittab", O_RDONLY);
+    if (fd < 0) {
+        console("Failed to open /etc/inittab");
+        return 0;
+    }
+
+    int n;
+    while ((n = read(fd, buf, sizeof(buf)-1)) > 0) {
+        buf[n] = '\0';
+        char *line = strtok(buf, "\n");
+        while (line) {
+            char *p = line;
+            char *fields[4];
+            int i = 0;
+
+            while (i < 4 && (fields[i] = strsep(&p, ":")) != NULL) {
+                i++;
+            }
+
+            if (i == 4 && strcmp(fields[0], target_id) == 0) {
+                strcpy(rstate, fields[1]);
+                close(fd);
+                return atoi(rstate);
+            }
+
+            line = strtok(NULL, "\n");
+        }
+    }
+
+    close(fd);
+    return 0;  // not found
+}
+
+/*
+ * Run an RC script from level
+ */
+
+void
+runrc(int level)
+{
+    char rc_path[32];
+    if (level == 's' || level == 'S')
+	sprintf(rc_path, "/etc/rcS");
+    else
+	sprintf(rc_path, "/etc/rc%d", level);
+
+    int pid = fork();
+    if (pid < 0) {
+        console("Failed to fork for rc script");
+	single();
+        return 1;
+    }
+
+    if (pid == 0) {
+        execl(shell, "sh", rc_path, (char *)0);
+        console("Failed to exec %s", rc_path);
+	single();
+        return 1;
+    }
+
+    while (wait(0) != pid);
+}
+
+/*
  * We are the first process, not from user.
- * Run /etc/rc to get the system working
+ * Get the system working based on what we
+ * see in /etc/inittab
  */
 
 void
@@ -197,12 +271,9 @@ sysinit(int argc, char** argv)
 	dup(0);
 	dup(0);
 
-	i = fork();
-	if(i == 0) {
-		execl("/bin/sh", shell, runc, 0);
-		exit(0);
-	}
-	while(wait(0) != i);
+	console("default run level: %d", rstateid("is"));
+	runrc(rstateid("is"));
+
 	close(open(utmp, O_CREATE | O_RDWR));
 	if ((i = open(wtmpf, 1)) >= 0) {
 		wtmp.tty = '~';
@@ -235,12 +306,15 @@ main(int argc, char** argv)
 	}
 
 	if (init_signal == SINGLE_USER) {
-		single(0);
+		runrc(level(SINGLE_USER));
+		single();
+		chg_lvl_flag = -1;
 	}
 
 	if (chg_lvl_flag != -1) {
 		chg_lvl_flag = -1;
 		console("New run level: %c", level(init_signal));
+		runrc(atoi(argv[1]));
 	}
 
 	for(;;){
