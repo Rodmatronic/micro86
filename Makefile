@@ -36,7 +36,7 @@ OBJS = \
 	$S/uart.o\
 	$S/vectors.o\
 	$S/vm.o\
-	$S/vga.o\
+	$S/vbe.o\
 
 # Cross-compiling (e.g., on Mac OS X)
 # TOOLPREFIX = i386-jos-elf

@@ -78,6 +78,8 @@ struct vga_meta {
     int width, height;
 };
 
+#include "../include/memlayout.h"
+
 int
 sys_devctl(void)
 {
@@ -117,7 +119,7 @@ sys_devctl(void)
 			return -1;
 	}else
 	if (sig == 2) {
-		vga_clear_screen(data);
+//		vga_clear_screen(data);
 		return 0;
 	}
 	else if (sig == 3) {  // Bulk update
@@ -172,7 +174,7 @@ sys_devctl(void)
         		for (int rel_x = 0; rel_x < meta->width; rel_x++) {
             			int abs_x = meta->x + rel_x;
             			int abs_y = meta->y + rel_y;
-            			temp_buf[rel_y * meta->width + rel_x] = getpixel(abs_x, abs_y);
+//            			temp_buf[rel_y * meta->width + rel_x] = getpixel(abs_x, abs_y);
         		}
     		}
 
@@ -186,6 +188,15 @@ sys_devctl(void)
   if (dev == 2) { // keyboard
 	if (sig == 0) { // keypress?
 		return kbdgetc();
+	}
+	if (sig == 1) {
+		extern pde_t *kpgdir;
+		pde_t *oldpgdir = myproc()->pgdir;  // or read current CR3 -> conversion
+		lcr3(V2P(kpgdir));
+
+		for(int i = 0; i < 255; i++){
+			fbputpixel(i, i, rgb(i, i, i));
+		}
 	}
   }
   return -1;

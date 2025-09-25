@@ -211,18 +211,11 @@ panic(char *fmt, ...)
 #define CRTPORT 0x3d4
 //static ushort *crt = (ushort*)P2V(0xb8000);  // CGA memory
 
-#define CONSOLE_COLS 80
-#define CONSOLE_ROWS 60
-//#define CONSOLE_ROWS 30
+#define CONSOLE_COLS 128
+#define CONSOLE_ROWS 96
 static char console_buffer[CONSOLE_COLS * CONSOLE_ROWS];
 static char old_console_buffer[CONSOLE_COLS * CONSOLE_ROWS];
 static int buffer_index = 0;
-
-void console_buffer_init(void) {
-    for (int i = 0; i < CONSOLE_COLS * CONSOLE_ROWS; i++) {
-        console_buffer[i] = ' ';
-    }
-}
 
 void vga_scroll(void) {
 	memcpy(old_console_buffer, console_buffer, CONSOLE_ROWS * CONSOLE_COLS);
@@ -237,13 +230,19 @@ void vga_scroll(void) {
 			char c = console_buffer[y * CONSOLE_COLS + x];
 			char old_c = old_console_buffer[y * CONSOLE_COLS + x];
 			if (old_c != ' ') {
-				graphical_putc(x * FONT_WIDTH, y * FONT_HEIGHT, old_c, bg_color);
+				graphical_putc(x * FONT_WIDTH, y * FONT_HEIGHT, old_c, rgb(0, 0, 0));
 			}
 			if (c != ' ') {
-				graphical_putc(x * FONT_WIDTH, y * FONT_HEIGHT, c, color);
+				graphical_putc(x * FONT_WIDTH, y * FONT_HEIGHT, c, rgb(255, 255, 255));
 			}
 		}
     	}
+}
+
+void console_buffer_init(void) {
+    for (int i = 0; i < CONSOLE_COLS * CONSOLE_ROWS; i++) {
+        console_buffer[i] = ' ';
+    }
 }
 
 //static int cursor_visible = 1;
@@ -256,28 +255,31 @@ void drawcursor(int x, int y, int visible) {
             uint8_t line = glyph[row];
             for (int col = 0; col < FONT_WIDTH; col++) {
                 if (line & (1 << (7 - col))) {
-                    putpixel(x + col, y + row, color);
+                    putpixel(x + col, y + row, rgb(255, 255, 255));
                 }
             }
         }
     } else {
         char c = console_buffer[cursor_position];
         if (c != ' ' && c != 0) {
-            graphical_putc(x, y, c, 0x0F);
+            graphical_putc(x, y, c, rgb(255, 255, 255));
         } else {
             for (int row = 0; row < FONT_HEIGHT; row++) {
                 for (int col = 0; col < FONT_WIDTH; col++) {
-                    putpixel(x + col, y + row, bg_color);
+                    putpixel(x + col, y + row, rgb(0, 0, 0));
                 }
             }
         }
     }
 }
 
-static void vgaputc(int c) {
+void cgaputc(int c) {
     int cursor_x = (cursor_position % CONSOLE_COLS) * FONT_WIDTH;
     int cursor_y = (cursor_position / CONSOLE_COLS) * FONT_HEIGHT;
-    drawcursor(cursor_x, cursor_y, 0);
+//    oldcgaputc(c);
+
+    if (postvbe)
+    	drawcursor(cursor_x, cursor_y, 0);
 
     if (c == '\n') {
         int current_row = buffer_index / CONSOLE_COLS;
@@ -289,7 +291,10 @@ static void vgaputc(int c) {
         	console_buffer[buffer_index++] = ' ';
 	        int x = (buffer_index - 1) % CONSOLE_COLS;
 	        int y = (buffer_index - 1) / CONSOLE_COLS;
-	        graphical_putc(x * FONT_WIDTH, y * FONT_HEIGHT, ' ', color);
+		    if (!postvbe)
+			    return;
+
+	        graphical_putc(x * FONT_WIDTH, y * FONT_HEIGHT, ' ', rgb(255, 255, 255));
 	        if(buffer_index >= CONSOLE_COLS * CONSOLE_ROWS)
 	            vga_scroll();
 	    }
@@ -300,6 +305,9 @@ static void vgaputc(int c) {
             
             int x_pos = (buffer_index % CONSOLE_COLS) * FONT_WIDTH;
             int y_pos = (buffer_index / CONSOLE_COLS) * FONT_HEIGHT;
+	        if (!postvbe)
+		    return;
+
             for (int row = 0; row < FONT_HEIGHT; row++) {
                 for (int col = 0; col < FONT_WIDTH; col++) {
                     putpixel(x_pos + col, y_pos + row, 0x00);
@@ -317,12 +325,17 @@ static void vgaputc(int c) {
 
     if (c > 0 && c != '\n' && c != '\r' && c != BACKSPACE && c != '\t') {
         int x = (buffer_index - 1) % CONSOLE_COLS;
-        int y = (buffer_index - 1) / CONSOLE_COLS;
-        graphical_putc(x * FONT_WIDTH, y * FONT_HEIGHT, c, color);
+       	int y = (buffer_index - 1) / CONSOLE_COLS;
+	    if (!postvbe)
+		    return;
+
+        graphical_putc(x * FONT_WIDTH, y * FONT_HEIGHT, c, rgb(255, 255, 255));
     }
     cursor_position = buffer_index;
     cursor_x = (cursor_position % CONSOLE_COLS) * FONT_WIDTH;
     cursor_y = (cursor_position / CONSOLE_COLS) * FONT_HEIGHT;
+    if (!postvbe)
+	    return;
     drawcursor(cursor_x, cursor_y, 1);
 }
 
@@ -339,8 +352,8 @@ static int ansi_param_count = 0;
 static int current_colour = 0x0700;
 static ushort *crt = (ushort*)P2V(0xb8000);  // CGA memory
 
-static void
-cgaputc(int c)
+void
+oldcgaputc(int c)
 {
   int pos;
 

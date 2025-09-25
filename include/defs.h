@@ -15,11 +15,12 @@ struct superblock;
 
 extern int draw_blacks;
 extern int cprintf_flag;
-extern int bg_color;
 
-#define VGA_MAX_WIDTH 640
-#define VGA_MAX_HEIGHT 480
+#define VGA_MAX_WIDTH 1024
+#define VGA_MAX_HEIGHT 768
 #define IRQ_IDE_SECONDARY 15
+
+extern int postvbe;
 
 extern unsigned long startup_time;
 extern unsigned long kernel_time;
@@ -226,22 +227,15 @@ void            switchuvm(struct proc*);
 void            switchkvm(void);
 int             copyout(pde_t*, uint, void*, uint);
 void            clearpteu(pde_t *pgdir, char *uva);
+int		mappages(pde_t *pgdir, void *va, uint size, uint pa, int perm);
 
-// vga.c
-#define VGA_PHYS_START 0xA0000
-#define VGA_ADDRESS P2V(VGA_PHYS_START)
+// vbe.c
+void		graphical_putc(uint16_t, uint16_t, char, uint32_t);
+void		vbeinit(void);
+void		putpixel(int x, int y, uint32_t color);
+uint32_t	rgb(uint8_t red, uint8_t green, uint8_t blue);
 
-void		graphical_putc(uint16_t, uint16_t, char, uint8_t);
-void		vgainit(void);
-void 		putpixel(uint16_t, uint16_t, uint8_t);
-void		putline(uint16_t, uint16_t, uint16_t, uint16_t, uint8_t);
-void		putrect(uint16_t, uint16_t, uint16_t, uint16_t, uint8_t);
-void		putrectf(uint16_t, uint16_t, uint16_t, uint16_t, uint8_t);
-void		putcircle(uint16_t, uint16_t, uint16_t, uint8_t);
-uint8_t		getpixel(uint16_t x, uint16_t y);
-extern uint8_t *g_vga_buffer;
-#define VGA_SEQ_INDEX  0x3C4
-#define VGA_SEQ_DATA   0x3C5
+void vga_scroll(void);
 
 // number of elements in fixed-size array
 #define NELEM(x) (sizeof(x)/sizeof((x)[0]))

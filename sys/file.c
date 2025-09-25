@@ -72,7 +72,7 @@ rndread(struct inode *ip, char *dst, int n)
   return n;
 }
 
-int
+/*int
 scrwrite(struct inode *ip, char *src, int n)
 {
     int bytes_processed = 0;
@@ -118,7 +118,7 @@ scrwrite(struct inode *ip, char *src, int n)
         }
     }
     return n;
-}
+}*/
 
 int
 keyread(struct inode *ip, char *dst, int n)
@@ -140,7 +140,7 @@ devinit()
   devsw[RANDOM].read = rndread;
   devsw[RANDOM].write = badwrite;
   devsw[SCRDEV].read = badread;
-  devsw[SCRDEV].write = scrwrite;
+//  devsw[SCRDEV].write = scrwrite;
   devsw[KEYDEV].read = keyread;
   devsw[KEYDEV].write = badwrite;
   devsw[MOUSDEV].read = mouseread;
