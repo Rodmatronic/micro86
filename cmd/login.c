@@ -120,6 +120,7 @@ char **argv;
 		goto loop;
 	}
 	setenv("PWD", namep, 0);
+	setenv("HOME", namep, 0);
 	time(utmp.time);
 	if ((f = open("/etc/utmp", 1)) >= 0) {
 		t = utmp.tty;

@@ -202,7 +202,15 @@ shellcmds(char *buf)
   if(buf[0] == 'c' && buf[1] == 'd') {
     for (int i = sizeof(buf); i >= 2; i--){
       if (buf[i] == '\0' || buf[i] == " "[0] || buf[i] == "\n"[0]){
-        if (i <= 2) {printf("Not implemented\n"); return 0;};
+        if (i <= 2) {
+          if (chdir(getenv("HOME")) < 0) {
+            printf("HOME variable not set, using '/'\n");
+            return 1;
+          } else {
+            setenv("PWD", getenv("HOME"), 0);
+          }
+          return 0;
+	}
         continue;
       } else {
         break;
