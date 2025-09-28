@@ -22,6 +22,8 @@ struct cpuident {
 	int 	mhz;
 };
 
+char * copyrightbsd = "Copyright (c) 1989, 1993 The Regents of the University of California.  All rights reserved.\n";
+
 // Bootstrap processor starts running C code here.
 // Allocate a real stack and switch to it, first
 // doing some setup required for memory allocator to work.
@@ -30,6 +32,7 @@ main(void)
 {
   kinit1(end, P2V(4*1024*1024)); // phys page allocator
   cprintf("FreeNIX Release %s Version %s\n", sys_release, sys_version);
+  cprintf(copyrightbsd);
   kvmalloc();      // kernel page table
   timeinit();	   // set up unix date&time
   mpinit();        // detect other processors

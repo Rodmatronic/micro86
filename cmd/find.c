@@ -19,7 +19,7 @@ find(char *path)
     printf("%s\n", path);
 
     // Only directories need further processing
-    if (st.mode == S_IFDIR) {
+    if (st.mode & S_IFDIR) {
         if ((fd = open(path, 0)) < 0) {
             fprintf(stderr, "find: cannot open directory '%s'\n", path);
             return;
