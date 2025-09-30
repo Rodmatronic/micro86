@@ -288,6 +288,8 @@ void cgaputc(int c) {
     int cursor_x = (cursor_position % CONSOLE_COLS) * FONT_WIDTH;
     int cursor_y = (cursor_position / CONSOLE_COLS) * FONT_HEIGHT;
 
+    oldcgaputc(c);
+
     if (postvbe)
     	drawcursor(cursor_x, cursor_y, 0);
 
