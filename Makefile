@@ -239,9 +239,9 @@ ETC=\
 	$M/etc/colortest\
 	$M/etc/inittab\
 
-$S/fs.img: $S/mkfs $M/README $(UPROGS)
+$S/fs.img: $S/mkfs $(UPROGS)
 	build/build.sh
-	$S/mkfs $S/fs.img $M/changelog $M/cd.1 $M/COPYRIGHT $(UPROGS) $(ETC)
+	$S/mkfs $S/fs.img $M/changelog $M/cd.1 $(UPROGS) $(ETC)
 
 -include *.d
 
