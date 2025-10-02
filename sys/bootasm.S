@@ -18,20 +18,20 @@ start:
   movw    %ax,%es             # -> Extra Segment
   movw    %ax,%ss             # -> Stack Segment
 
-  movw    $0x4F02, %ax    # VBE: set mode
-  movw    $0x118,  %bx    # 1024x768x8
-  orw     $0x4000, %bx    # linear framebuffer
-  int     $0x10
+#  movw    $0x4F02, %ax    # VBE: set mode
+#  movw    $0x118,  %bx    # 1024x768x8
+#  orw     $0x4000, %bx    # linear framebuffer
+#  int     $0x10
 
   # ES:DI -> buffer for VBE ModeInfoBlock (256 bytes)
-  xorw    %ax, %ax
-  movw    $0x9000, %ax       # ES = 0x9000 => phys 0x90000
-  movw    %ax, %es
-  xorw    %di, %di           # DI = 0
+#  xorw    %ax, %ax
+#  movw    $0x9000, %ax       # ES = 0x9000 => phys 0x90000
+#  movw    %ax, %es
+#  xorw    %di, %di           # DI = 0
 
-  movw    $0x4F01, %ax       # VBE: get mode info
-  movw    $0x118,  %cx
-  int     $0x10              # fills ES:DI with ModeInfoBlock
+#  movw    $0x4F01, %ax       # VBE: get mode info
+#  movw    $0x118,  %cx
+#  int     $0x10              # fills ES:DI with ModeInfoBlock
 
   # Physical address line A20 is tied to zero so that the first PCs 
   # with 2 MB would run software that assumed 1 MB.  Undo that.

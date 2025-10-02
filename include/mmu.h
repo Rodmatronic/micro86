@@ -15,14 +15,14 @@
 #define CR4_PSE         0x00000010      // Page size extension
 
 // various segment selectors.
-#define SEG_KCODE 1  // kernel code
-#define SEG_KDATA 2  // kernel data+stack
-#define SEG_UCODE 3  // user code
-#define SEG_UDATA 4  // user data+stack
-#define SEG_TSS   5  // this process's task state
+#define SEG_KCODE 2  // kernel code
+#define SEG_KDATA 3  // kernel data+stack
+#define SEG_UCODE 4  // user code
+#define SEG_UDATA 5  // user data+stack
+#define SEG_TSS   6  // this process's task state
 
 // cpu->gdt[NSEGS] holds the above segments.
-#define NSEGS     6
+#define NSEGS     7
 
 #ifndef __ASSEMBLER__
 // Segment Descriptor

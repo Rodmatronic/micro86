@@ -39,7 +39,7 @@ struct context {
 
 enum procstate { UNUSED, EMBRYO, SLEEPING, RUNNABLE, RUNNING, ZOMBIE };
 
-#define MAX_ENV_VARS 128
+#define MAX_ENV_VARS 64
 #define MAX_ENV_NAME 32
 #define MAX_ENV_VALUE 128
 

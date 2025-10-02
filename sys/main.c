@@ -36,7 +36,7 @@ main(void)
   kvmalloc();      // kernel page table
   timeinit();	   // set up unix date&time
   mpinit();        // detect other processors
-  vbeinit();
+  //vbeinit();
   lapicinit();     // interrupt controller
   seginit();       // segment descriptors
   picinit();       // disable pic

@@ -251,7 +251,7 @@ clean:
 	$C/*.o $C/*.d $C/*.asm $C/*.sym $S/vectors.S $S/bootblock $S/entryother \
 	$L/*.o $L/*.d $L/*.asm $L/*.sym \
 	$S/initcode $S/initcode.out $S/frunix xv6.img $S/fs.img $S/kernelmemfs \
-	xv6memfs.img $S/mkfs .gdbinit \
+	xv6memfs.img $S/mkfs .gdbinit frunix.iso \
 	$(UPROGS)
 
 # make a printout
@@ -281,11 +281,14 @@ CPUS := 2
 endif
 QEMUOPTS = -accel tcg -drive file=$S/fs.img,index=1,media=disk,format=raw -drive file=xv6.img,index=0,media=disk,format=raw -m 512 $(QEMUEXTRA)
 
+image: xv6memfs.img
+	#awesome
+
 qemu: $S/fs.img xv6.img
 	$(QEMU) -serial mon:stdio $(QEMUOPTS)
 
 qemu-memfs: xv6memfs.img
-	$(QEMU) -drive file=xv6memfs.img,index=0,media=disk,format=raw -smp $(CPUS) -m 256
+	$(QEMU) -cdrom frunix.iso -smp $(CPUS) -m 256
 
 qemu-nox: $S/fs.img xv6.img
 	$(QEMU) -nographic $(QEMUOPTS)

@@ -1,1 +1,3 @@
-make clean; rm fs.img; make -j15; make qemu
+make clean; make -j15; make image
+bash build/makeiso.sh
+make qemu-memfs
