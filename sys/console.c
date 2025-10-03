@@ -284,7 +284,7 @@ void drawcursor(int x, int y, int visible) {
     }
 }
 
-void cgaputc(int c) {
+void oldcgaputc(int c) {
     int cursor_x = (cursor_position % CONSOLE_COLS) * FONT_WIDTH;
     int cursor_y = (cursor_position / CONSOLE_COLS) * FONT_HEIGHT;
 
@@ -366,7 +366,7 @@ static int current_colour = 0x0700;
 static ushort *crt = (ushort*)P2V(0xb8000);  // CGA memory
 
 void
-oldcgaputc(int c)
+cgaputc(int c)
 {
   int pos;
 
