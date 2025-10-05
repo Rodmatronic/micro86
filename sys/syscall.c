@@ -121,6 +121,7 @@ extern int sys_sethostname(void);
 extern int sys_setenv(void);
 extern int sys_getenv(void);
 extern int sys_environ(void);
+extern int sys_chmod(void);
 
 static int (*syscalls[])(void) = {
 [SYS_fork]    sys_fork,
@@ -158,9 +159,10 @@ static int (*syscalls[])(void) = {
 [SYS_stime]   sys_stime,
 [SYS_utime]   sys_utime,
 [SYS_sethostname] sys_sethostname,
-[SYS_setenv] sys_setenv,
+[SYS_setenv]  sys_setenv,
 [SYS_secure_getenv] sys_getenv,
 [SYS_environ] sys_environ,
+[SYS_chmod]   sys_chmod,
 };
 
 void

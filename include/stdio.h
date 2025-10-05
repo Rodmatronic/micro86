@@ -153,6 +153,7 @@ int utime(const char *path);
 int sethostname(const char *, size_t len);
 int setenv(const char *name, const char *value, int);
 int environ(char *buf, int buflen);
+int chmod(const char *path, mode_t mode);
 
 // ulib.c
 int stat(const char*, struct stat*);

@@ -180,6 +180,7 @@ UPROGS=\
         $C/_banner\
         $C/_basename\
 	$C/_cat\
+	$C/_chmod\
 	$C/_cmp\
 	$C/_cp\
 	$C/_cron\

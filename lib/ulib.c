@@ -56,16 +56,10 @@ int gethostname(char *name, size_t len) {
 	return 0;
 }
 
-int chmod(char *path, mode_t mode) {
-    //placeholder
-    return 0;
-}
-
 int umask(int mask) {
     //placeholder
     return 0;
 }
-
 
 int symlink(const char *target, const char *linkpath) {
     errno = EOPNOTSUPP;

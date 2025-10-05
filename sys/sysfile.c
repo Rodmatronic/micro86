@@ -256,6 +256,34 @@ argfd(int n, int *pfd, struct file **pf)
 }
 
 int
+sys_chmod(void)
+{
+  char *path;
+  int mode;
+  struct inode *ip;
+
+  if (argstr(0, &path) < 0 || argint(1, &mode) < 0)
+    return -1;
+
+  if ((mode & ~0777) != 0)
+    return -1;
+
+  begin_op();
+  if ((ip = namei(path)) == 0) {
+    end_op();
+    return -1;
+  }
+
+  ilock(ip);
+  ip->mode = (ip->mode & ~0777) | (mode & 0777);
+  iupdate(ip);
+  iunlock(ip);
+  end_op();
+
+  return 0;
+}
+
+int
 sys_lseek(void)
 {
     struct file *f;
