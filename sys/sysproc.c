@@ -13,9 +13,17 @@
 int
 sys_reboot(void)
 {
-  cprintf("rebooting...");
+  int flag;
+  if (argint(0, &flag) < 0)
+    return -1;
+  if (!flag) {
+    cprintf("system halted.\n");
+    asm volatile ("cli\n"
+		  "hlt");
+    return -1;
+  }
+  cprintf("rebooting..\n.");
   outb(0x64, 0xFE);
-  // should not get here
   return -1;
 }
 
