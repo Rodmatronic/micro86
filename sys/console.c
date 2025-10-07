@@ -735,6 +735,11 @@ consoleinit(void)
   cons.locking = 1;
   ttyb.tflags = ECHO;
 
+  outb(0x3D4, 0x0A);
+  outb(0x3D5, (inb(0x3D5) & 0xC0) | 0);
+  outb(0x3D4, 0x0B);
+  outb(0x3D5, (inb(0x3D5) & 0xE0) | 0x0E);
+
   ioapicenable(IRQ_KBD, 0);
 }
 
