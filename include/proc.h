@@ -54,7 +54,7 @@ struct proc {
   pde_t* pgdir;                // Page table
   char *kstack;                // Bottom of kernel stack for this process
   enum procstate state;        // Process state
-  int pid;                     // Process ID
+  int p_pid;                     // Process ID
   struct proc *parent;         // Parent process
   struct trapframe *tf;        // Trap frame for current syscall
   struct context *context;     // swtch() here to run process
@@ -63,8 +63,8 @@ struct proc {
   struct file *ofile[NOFILE];  // Open files
   struct inode *cwd;           // Current directory
   char name[16];               // Process name (debugging)
-  int uid;                     // User ID
-  int gid;		       // Group ID
+  int p_uid;                     // User ID
+  int p_gid;		       // Group ID
   int exitstatus;	       // Exit status number
   int ttyflags;       	       // TTY flags
   struct env_var env[MAX_ENV_VARS]; // Environment variables

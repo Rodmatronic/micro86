@@ -1747,6 +1747,7 @@ int
 main(int argc, char *argv[])
 {
   char c;
+  writetest1();
   printf("This will mess up your disk. Proceed with caution.\nContinue? (y/N): ");
   c = getchar();
   if (c == 'y' || c == 'Y') {

@@ -27,6 +27,11 @@ void* realloc(void* ptr, uint new_size);
 #define MAX_ENV_NAME 32
 #define MAX_ENV_VALUE 128
 
+int signal(int temp, int temp1)
+{
+    return 0;
+}
+
 int rand(void) {
     int f = open("/dev/random", O_RDONLY);
     if (f == -1)

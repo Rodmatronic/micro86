@@ -156,7 +156,7 @@ int sys_sethostname(void) {
     if (len <= 0 || len >= MAX)
         return -1;
 
-    if (myproc()->uid != 0)
+    if (myproc()->p_uid != 0)
         return -1;
 
     if (safestrcpy(sys_nodename, name, MAX) < 0)
@@ -170,7 +170,7 @@ int sys_stime(void) {
     if (argint(0, (int*)&epoch) < 0)
         return -1;
     struct proc *p = myproc();
-    if (p->uid != 0) return 1; // Operation not permitted
+    if (p->p_uid != 0) return 1; // Operation not permitted
     set_kernel_time((unsigned long)epoch);
     return 0;
 }
@@ -209,7 +209,7 @@ sys_setgid(void) {
 
   struct proc *p = myproc();
 //  if (p->gid != 0) return 1; // Operating not permitted
-  p->gid = gid;
+  p->p_gid = gid;
   return 0;
 }
 
@@ -220,20 +220,20 @@ sys_setuid(void) {
 
   struct proc *p = myproc();
 //  if (p->uid != 0) return 1; // Operation not permitted
-  p->uid = uid;
+  p->p_uid = uid;
   return 0;
 }
 
 int
 sys_getgid(void)
 {
-  return myproc()->gid;
+  return myproc()->p_gid;
 }
 
 int
 sys_getuid(void)
 {
-  return myproc()->uid;
+  return myproc()->p_uid;
 }
 
 int
@@ -275,7 +275,7 @@ sys_kill(void)
 int
 sys_getpid(void)
 {
-  return myproc()->pid;
+  return myproc()->p_pid;
 }
 
 int

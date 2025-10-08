@@ -87,9 +87,9 @@ allocproc(void)
 
 found:
   p->state = EMBRYO;
-  p->pid = nextpid++;
-  p->uid = 0;
-  p->gid = 0;
+  p->p_pid = nextpid++;
+  p->p_uid = 0;
+  p->p_gid = 0;
 
 //  p->ttyflags = ECHO;
 
@@ -129,8 +129,8 @@ userinit(void)
 
   p = allocproc();
 
-  p->uid = 0;
-  p->gid = 0;
+  p->p_uid = 0;
+  p->p_gid = 0;
 
   initproc = p;
   if((p->pgdir = setupkvm()) == 0)
@@ -198,8 +198,8 @@ fork(void)
     return -1;
   }
 
-  np->uid = curproc->uid;
-  np->gid = curproc->gid;
+  np->p_uid = curproc->p_uid;
+  np->p_gid = curproc->p_gid;
 
   np->env_count = curproc->env_count;
   for(int i = 0; i < curproc->env_count; i++) {
@@ -228,7 +228,7 @@ fork(void)
 
   safestrcpy(np->name, curproc->name, sizeof(curproc->name));
 
-  pid = np->pid;
+  pid = np->p_pid;
 
   acquire(&ptable.lock);
 
@@ -311,7 +311,7 @@ wait(int *status)  // Add status pointer argument
       havekids = 1;
       if(p->state == ZOMBIE){
         // Found one.
-        pid = p->pid;
+        pid = p->p_pid;
         kfree(p->kstack);
         p->kstack = 0;
         freevm(p->pgdir);
@@ -321,7 +321,7 @@ wait(int *status)  // Add status pointer argument
           *status = p->exitstatus;  // Copy status to user
         }
         
-        p->pid = 0;
+        p->p_pid = 0;
         p->parent = 0;
         p->name[0] = 0;
         p->killed = 0;
@@ -517,13 +517,13 @@ kill(int pid, int status)
 
   acquire(&ptable.lock);
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
-    if(p->pid == pid){
+    if(p->p_pid == pid){
       found = 1;
 
       // Permission check:
       // - Root (UID 0) can kill any process
       // - Users can only kill their own processes
-      if(curproc->uid != 0 && p->uid != curproc->uid) {
+      if(curproc->p_uid != 0 && p->p_uid != curproc->p_uid) {
         release(&ptable.lock);
         return 1;  // Permission denied
       }
@@ -576,7 +576,7 @@ procdump(void)
       state = states[p->state];
     else
       state = "???";
-    cprintf("%d %s %s", p->pid, state, p->name);
+    cprintf("%d %s %s", p->p_pid, state, p->name);
     if(p->state == SLEEPING){
       getcallerpcs((uint*)p->context->ebp+2, pc);
       for(i=0; i<10 && pc[i] != 0; i++)
