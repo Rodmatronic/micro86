@@ -1,7 +1,9 @@
-root:7D.I./2J/JI/E:0:1:Super User:/root:/bin/sh
-daemon::1:1:The devil himself:/root:/sbin/nologin
-operator::2:5:System &:/operator:/sbin/nologin
-bin::3:7:Binaries Commands and Source:/:/sbin/nologin
-uucp::4:4::/usr/lib/uucp:/usr/lib/uucico
-dmr::7:3::/usr/dmr:
-pou:po/JJF/3EJE22:1000:1000:Awesome Test User:/home/pou:
+root:7D.I./2J/JI/E:0:1:Super-User:/root:/bin/sh
+daemon:x:1:1:The devil himself:/root:/sbin/nologin
+bin:x:3:7:Binaries Commands and Source:/:/sbin/nologin
+sys:x:3:3::/:
+adm::4:4:Admin:/var/adm:
+uucp:x:4:4::/usr/lib/uucp:/usr/lib/uucp
+nobody:x:5:5:Nobody:/:
+guest::1000:1000:Guest User:/:
+pou:po/JJF/3EJE22:1001:1001:Awesome Test User:/home/pou:
