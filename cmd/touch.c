@@ -1,7 +1,7 @@
-#include "../include/types.h"
-#include "../include/stat.h"
-#include "../include/stdio.h"
-#include "../include/fcntl.h"
+#include <types.h>
+#include <stat.h>
+#include <stdio.h>
+#include <fcntl.h>
 
 /*	Copyright (c) 1990 UNIX System Laboratories, Inc.	*/
 /*	Copyright (c) 1984, 1986, 1987, 1988, 1989, 1990 AT&T	*/

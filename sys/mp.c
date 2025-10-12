@@ -4,14 +4,14 @@
 
 #pragma GCC diagnostic ignored "-Warray-bounds"
 
-#include "../include/types.h"
-#include "../include/defs.h"
-#include "../include/param.h"
-#include "../include/memlayout.h"
-#include "../include/mp.h"
-#include "../include/x86.h"
-#include "../include/mmu.h"
-#include "../include/proc.h"
+#include <types.h>
+#include <defs.h>
+#include <param.h>
+#include <memlayout.h>
+#include <mp.h>
+#include <x86.h>
+#include <mmu.h>
+#include <proc.h>
 
 struct cpu cpus[NCPU];
 int ncpu;

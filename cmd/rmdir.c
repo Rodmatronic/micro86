@@ -2,11 +2,11 @@
  * Remove directory
  */
 
-#include "../include/types.h"
-#include "../include/stat.h"
-#include "../include/stdio.h"
-#include "../include/fcntl.h"
-#include "../include/fs.h"
+#include <types.h>
+#include <stat.h>
+#include <stdio.h>
+#include <fcntl.h>
+#include <fs.h>
 
 int	Errors = 0;
 char	*rindex();

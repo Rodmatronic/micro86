@@ -29,13 +29,13 @@
  * SUCH DAMAGE.
  */
 
-#include "../include/types.h"
-#include "../include/stat.h"
-#include "../include/stdio.h"
-#include "../include/fcntl.h"
-#include "../include/locale.h"
-#include "../include/errno.h"
-#include "../include/ctype.h"
+#include <types.h>
+#include <stat.h>
+#include <stdio.h>
+#include <fcntl.h>
+#include <locale.h>
+#include <errno.h>
+#include <ctype.h>
 
 #define	_MAXBSIZE (64 * 1024)
 

@@ -30,11 +30,11 @@
  * SUCH DAMAGE.
  */
 
-#include "../include/types.h"
-#include "../include/stat.h"
-#include "../include/stdio.h"
-#include "../include/errno.h"
-#include "../include/fcntl.h"
+#include <types.h>
+#include <stat.h>
+#include <stdio.h>
+#include <errno.h>
+#include <fcntl.h>
 
 #define lstat stat
 

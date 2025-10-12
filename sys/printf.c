@@ -1,7 +1,7 @@
-#include "../include/types.h"
-#include "../include/stat.h"
-#include "../include/stdio.h"
-#include "../include/stdarg.h"
+#include <types.h>
+#include <stat.h>
+#include <stdio.h>
+#include <stdarg.h>
 
 char putchar_buf[512];
 

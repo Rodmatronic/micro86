@@ -30,8 +30,8 @@
  * SUCH DAMAGE.
  */
 
-#include "../include/stdio.h"
-#include "../include/stdbool.h"
+#include <stdio.h>
+#include <stdbool.h>
 
 int
 main(int argc, char *argv[])

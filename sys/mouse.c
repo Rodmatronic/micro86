@@ -1,8 +1,8 @@
-#include "../include/types.h"
-#include "../include/x86.h"
-#include "../include/defs.h"
-#include "../include/traps.h"
-#include "../include/spinlock.h"
+#include <types.h>
+#include <x86.h>
+#include <defs.h>
+#include <traps.h>
+#include <spinlock.h>
 
 #define MOUSE_CMD_RESET     0xFF
 #define MOUSE_CMD_RESEND     0xFE

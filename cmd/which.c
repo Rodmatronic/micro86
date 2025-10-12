@@ -16,13 +16,13 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "../include/stdio.h"
-#include "../include/fcntl.h"
-#include "../include/types.h"
-#include "../include/stat.h"
-#include "../include/limits.h"
-#include "../include/errno.h"
-#include "../include/paths.h"
+#include <stdio.h>
+#include <fcntl.h>
+#include <types.h>
+#include <stat.h>
+#include <limits.h>
+#include <errno.h>
+#include <paths.h>
 
 #define PROG_WHICH	1
 #define PROG_WHEREIS	2

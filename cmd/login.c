@@ -2,15 +2,15 @@
  * login [ name ]
  */
 
-#include "../include/types.h"
-#include "../include/stat.h"
-#include "../include/stdio.h"
-#include "../include/fs.h"
-#include "../include/fcntl.h"
-#include "../include/syslog.h"
-#include "../include/pwd.h"
-#include "../include/signal.h"
-#include "../include/errno.h"
+#include <types.h>
+#include <stat.h>
+#include <stdio.h>
+#include <fs.h>
+#include <fcntl.h>
+#include <syslog.h>
+#include <pwd.h>
+#include <signal.h>
+#include <errno.h>
 #define SCPYN(a, b)	strncpy(a, b, sizeof(a))
 
 struct {

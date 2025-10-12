@@ -1,9 +1,9 @@
-#include "../include/types.h"
-#include "../include/stat.h"
-#include "../include/stdio.h"
-#include "../include/fs.h"
-#include "../include/fcntl.h"
-#include "../include/pwd.h"
+#include <types.h>
+#include <stat.h>
+#include <stdio.h>
+#include <fs.h>
+#include <fcntl.h>
+#include <pwd.h>
 
 /*
  * enter a password in the password file

@@ -2,11 +2,11 @@
  * chown uid file ...
  */
 
-#include "../include/stdio.h"
-#include "../include/ctype.h"
-#include "../include/types.h"
-#include "../include/stat.h"
-#include "../include/pwd.h"
+#include <stdio.h>
+#include <ctype.h>
+#include <types.h>
+#include <stat.h>
+#include <pwd.h>
 
 struct	passwd	*pwd,*getpwnam();
 struct	stat	stbuf;

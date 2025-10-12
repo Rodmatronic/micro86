@@ -1,7 +1,7 @@
-#include "../include/types.h"
-#include "../include/stdio.h"
-#include "../include/pwd.h"
-#include "../include/syslog.h"
+#include <types.h>
+#include <stdio.h>
+#include <pwd.h>
+#include <syslog.h>
 
 struct	passwd *pwd,*getpwnam();
 char	*crypt();

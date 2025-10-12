@@ -29,12 +29,12 @@
  * SUCH DAMAGE.
  */
 
-#include "../include/types.h"
-#include "../include/stat.h"
-#include "../include/stdio.h"
-#include "../include/errno.h"
-#include "../include/limits.h"
-#include "../include/signal.h"
+#include <types.h>
+#include <stat.h>
+#include <stdio.h>
+#include <errno.h>
+#include <limits.h>
+#include <signal.h>
 
 static void nosig(const char *);
 void printsignals(FILE*, int);

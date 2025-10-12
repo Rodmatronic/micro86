@@ -1,5 +1,5 @@
-#include "../include/types.h"
-#include "../include/font8x16.h"
+#include <types.h>
+#include <font8x16.h>
 
 uint8_t fontdata_8x16[] = {
 0b00000000,

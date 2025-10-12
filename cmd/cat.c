@@ -33,11 +33,11 @@
  * SUCH DAMAGE.
  */
 
-#include "../include/types.h"
-#include "../include/stat.h"
-#include "../include/stdio.h"
-#include "../include/fcntl.h"
-#include "../include/errno.h"
+#include <types.h>
+#include <stat.h>
+#include <stdio.h>
+#include <fcntl.h>
+#include <errno.h>
 
 #define MAXIMUM(a, b)	(((a) > (b)) ? (a) : (b))
 

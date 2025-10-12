@@ -30,11 +30,11 @@
  * SUCH DAMAGE.
  */
 
-#include "../include/types.h"
-#include "../include/stat.h"
-#include "../include/stdio.h"
-#include "../include/fs.h"
-#include "../include/errno.h"
+#include <types.h>
+#include <stat.h>
+#include <stdio.h>
+#include <fs.h>
+#include <errno.h>
 
 static char *getcwd_logical(void);
 static void usage(void);

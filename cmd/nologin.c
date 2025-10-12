@@ -25,9 +25,9 @@
  * SUCH DAMAGE.
  */
 
-#include "../include/stdio.h"
-#include "../include/types.h"
-#include "../include/fcntl.h"
+#include <stdio.h>
+#include <types.h>
+#include <fcntl.h>
 
 /* Distinctly different from _PATH_NOLOGIN. */
 #define _PATH_NOLOGIN_TXT	"/etc/nologin.txt"

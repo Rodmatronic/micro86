@@ -10,8 +10,8 @@
  * See Federal Register, March 17, 1975 (40FR12134)
  */
 
-#include "../include/types.h"
-#include "../include/stdio.h"
+#include <types.h>
+#include <stdio.h>
 
 /*
  * Initial permutation,

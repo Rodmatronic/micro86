@@ -30,10 +30,10 @@
  * SUCH DAMAGE.
  */
 
-#include "../include/errno.h"
-#include "../include/stdio.h"
-#include "../include/types.h"
-#include "../include/limits.h"
+#include <errno.h>
+#include <stdio.h>
+#include <types.h>
+#include <limits.h>
 
 static void usage(void);
 

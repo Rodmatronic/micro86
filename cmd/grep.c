@@ -1,7 +1,7 @@
-#include "../include/types.h"
-#include "../include/stat.h"
-#include "../include/stdio.h"
-#include "../include/fcntl.h"
+#include <types.h>
+#include <stat.h>
+#include <stdio.h>
+#include <fcntl.h>
 
 #define	CBRA	1
 #define	CCHR	2

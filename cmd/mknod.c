@@ -19,12 +19,12 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "../include/types.h"
-#include "../include/stat.h"
-#include "../include/stdio.h"
-#include "../include/errno.h"
-#include "../include/fcntl.h"
-#include "../include/limits.h"
+#include <types.h>
+#include <stat.h>
+#include <stdio.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <limits.h>
 
 struct node {
 	const char *name;

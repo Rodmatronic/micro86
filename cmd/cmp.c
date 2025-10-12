@@ -1,8 +1,8 @@
-#include "../include/types.h"
-#include "../include/stat.h"
-#include "../include/stdio.h"
-#include "../include/fs.h"
-#include "../include/fcntl.h"
+#include <types.h>
+#include <stat.h>
+#include <stdio.h>
+#include <fs.h>
+#include <fcntl.h>
 
 /*
 **	compare two files

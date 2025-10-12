@@ -1,6 +1,6 @@
-#include "../include/stdio.h"
-#include "../include/types.h"
-#include "../include/pwd.h"
+#include <stdio.h>
+#include <types.h>
+#include <pwd.h>
 
 int jflg;
 int errflg;

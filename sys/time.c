@@ -1,7 +1,7 @@
-#include "../include/types.h"
-#include "../include/time.h"
-#include "../include/defs.h"
-#include "../include/x86.h"
+#include <types.h>
+#include <time.h>
+#include <defs.h>
+#include <x86.h>
 
 // unix time-related shenanigans are ported from Linux 0.01
 #define CMOS_READ(addr) ({ \

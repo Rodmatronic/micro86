@@ -3,11 +3,11 @@
  *  change mode of files
  */
 
-#include "../include/types.h"
-#include "../include/stat.h"
-#include "../include/stdio.h"
-#include "../include/fs.h"
-#include "../include/fcntl.h"
+#include <types.h>
+#include <stat.h>
+#include <stdio.h>
+#include <fs.h>
+#include <fcntl.h>
 
 #define	USER	05700	/* user's bits */
 #define	GROUP	02070	/* group's bits */

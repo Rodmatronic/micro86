@@ -4,18 +4,18 @@
 // user code, and calls into file.c and fs.c.
 //
 
-#include "../include/types.h"
-#include "../include/defs.h"
-#include "../include/param.h"
-#include "../include/stat.h"
-#include "../include/mmu.h"
-#include "../include/proc.h"
-#include "../include/fs.h"
-#include "../include/spinlock.h"
-#include "../include/sleeplock.h"
-#include "../include/file.h"
-#include "../include/fcntl.h"
-#include "../include/x86.h"
+#include <types.h>
+#include <defs.h>
+#include <param.h>
+#include <stat.h>
+#include <mmu.h>
+#include <proc.h>
+#include <fs.h>
+#include <spinlock.h>
+#include <sleeplock.h>
+#include <file.h>
+#include <fcntl.h>
+#include <x86.h>
 
 // sysfile.c
 
@@ -78,7 +78,7 @@ struct vga_meta {
     int width, height;
 };
 
-#include "../include/memlayout.h"
+#include <memlayout.h>
 
 int
 sys_devctl(void)

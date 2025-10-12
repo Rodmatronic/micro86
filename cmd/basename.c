@@ -30,10 +30,10 @@
  * SUCH DAMAGE.
  */
 
-#include "../include/types.h"
-#include "../include/stat.h"
-#include "../include/stdio.h"
-#include "../include/fs.h"
+#include <types.h>
+#include <stat.h>
+#include <stdio.h>
+#include <fs.h>
 
 static void usage(void);
 

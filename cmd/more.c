@@ -1,6 +1,6 @@
-#include "../include/types.h"
-#include "../include/stdio.h"
-#include "../include/fcntl.h"
+#include <types.h>
+#include <stdio.h>
+#include <fcntl.h>
 
 #define LINES_PER_PAGE 29
 

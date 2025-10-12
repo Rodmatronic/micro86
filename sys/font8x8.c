@@ -1,4 +1,4 @@
-#include "../include/font8x8.h"
+#include <font8x8.h>
 
 uint8_t fontdata_8x8[] = {
    /* 0 0b00000000 '^@' */

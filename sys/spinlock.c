@@ -1,13 +1,13 @@
 // Mutual exclusion spin locks.
 
-#include "../include/types.h"
-#include "../include/defs.h"
-#include "../include/param.h"
-#include "../include/x86.h"
-#include "../include/memlayout.h"
-#include "../include/mmu.h"
-#include "../include/proc.h"
-#include "../include/spinlock.h"
+#include <types.h>
+#include <defs.h>
+#include <param.h>
+#include <x86.h>
+#include <memlayout.h>
+#include <mmu.h>
+#include <proc.h>
+#include <spinlock.h>
 
 void
 initlock(struct spinlock *lk, char *name)

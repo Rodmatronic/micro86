@@ -1,8 +1,8 @@
-#include "../include/errno.h"
-#include "../include/stdio.h"
-#include "../include/stat.h"
-#include "../include/fcntl.h"
-#include "../include/font8x16.h"
+#include <errno.h>
+#include <stdio.h>
+#include <stat.h>
+#include <fcntl.h>
+#include <font8x16.h>
 
 #define VGA_MAX_WIDTH 640
 #define VGA_MAX_HEIGHT 480

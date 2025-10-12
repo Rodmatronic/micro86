@@ -30,9 +30,9 @@
  * SUCH DAMAGE.
  */
 
-#include "../include/stdio.h"
-#include "../include/errno.h"
-#include "../include/stdbool.h"
+#include <stdio.h>
+#include <errno.h>
+#include <stdbool.h>
 
 int
 main(int argc, char *argv[])

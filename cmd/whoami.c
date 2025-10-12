@@ -1,9 +1,9 @@
-#include "../include/types.h"
-#include "../include/stat.h"
-#include "../include/stdio.h"
-#include "../include/errno.h"
-#include "../include/fcntl.h"
-#include "../include/pwd.h"
+#include <types.h>
+#include <stat.h>
+#include <stdio.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <pwd.h>
 
 /* whoami -- print effective userid
    Copyright (C) 89, 90, 91, 92, 93, 1994 Free Software Foundation, Inc.

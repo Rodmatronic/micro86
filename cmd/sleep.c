@@ -1,5 +1,5 @@
-#include "../include/stdio.h"
-#include "../include/errno.h"
+#include <stdio.h>
+#include <errno.h>
 
 int
 main(argc, argv)

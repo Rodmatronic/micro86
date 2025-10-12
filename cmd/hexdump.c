@@ -1,7 +1,7 @@
-#include "../include/types.h"
-#include "../include/stdio.h"
-#include "../include/fs.h"
-#include "../include/fcntl.h"
+#include <types.h>
+#include <stdio.h>
+#include <fs.h>
+#include <fcntl.h>
 
 #define BUFFER_SIZE 16
 

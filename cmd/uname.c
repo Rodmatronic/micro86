@@ -31,10 +31,10 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "../include/types.h"
-#include "../include/stat.h"
-#include "../include/stdio.h"
-#include "../include/errno.h"
+#include <types.h>
+#include <stat.h>
+#include <stdio.h>
+#include <errno.h>
 
 static void usage(void);
 

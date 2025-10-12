@@ -3,10 +3,10 @@
  * reboot or halt the system
  */
 
-#include "../include/stdio.h"
-#include "../include/errno.h"
-#include "../include/syslog.h"
-#include "../include/pwd.h"
+#include <stdio.h>
+#include <errno.h>
+#include <syslog.h>
+#include <pwd.h>
 
 int syncint;
 int halt;

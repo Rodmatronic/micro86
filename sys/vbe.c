@@ -1,12 +1,12 @@
-#include "../include/types.h"
-#include "../include/x86.h"
-#include "../include/defs.h"
-#include "../include/memlayout.h"
-#include "../include/font8x8.h"
-#include "../include/version.h"
-#include "../include/mmu.h"
-#include "../include/proc.h"
-#include "../include/memlayout.h"
+#include <types.h>
+#include <x86.h>
+#include <defs.h>
+#include <memlayout.h>
+#include <font8x8.h>
+#include <version.h>
+#include <mmu.h>
+#include <proc.h>
+#include <memlayout.h>
 
 int postvbe = 0;
 void fbputpixel(int x, int y, uint32_t color);

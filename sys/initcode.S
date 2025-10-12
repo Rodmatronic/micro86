@@ -1,8 +1,8 @@
 # Initial process execs /init.
 # This code runs in user space.
 
-#include "../include/syscall.h"
-#include "../include/traps.h"
+#include <syscall.h>
+#include <traps.h>
 
 
 # exec(init, argv)

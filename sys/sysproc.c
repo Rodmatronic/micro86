@@ -1,14 +1,14 @@
-#include "../include/types.h"
-#include "../include/x86.h"
-#include "../include/defs.h"
-#include "../include/param.h"
-#include "../include/memlayout.h"
-#include "../include/mmu.h"
-#include "../include/proc.h"
-#include "../include/time.h"
-#include "../include/utsname.h"
-#include "../include/tty.h"
-#include "../include/version.h"
+#include <types.h>
+#include <x86.h>
+#include <defs.h>
+#include <param.h>
+#include <memlayout.h>
+#include <mmu.h>
+#include <proc.h>
+#include <time.h>
+#include <utsname.h>
+#include <tty.h>
+#include <version.h>
 
 int
 sys_reboot(void)

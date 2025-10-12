@@ -18,13 +18,13 @@
 // * B_DIRTY: the buffer data has been modified
 //     and needs to be written to disk.
 
-#include "../include/types.h"
-#include "../include/defs.h"
-#include "../include/param.h"
-#include "../include/spinlock.h"
-#include "../include/sleeplock.h"
-#include "../include/fs.h"
-#include "../include/buf.h"
+#include <types.h>
+#include <defs.h>
+#include <param.h>
+#include <spinlock.h>
+#include <sleeplock.h>
+#include <fs.h>
+#include <buf.h>
 
 struct {
   struct spinlock lock;

@@ -1,11 +1,11 @@
 // init: The initial user-level program
 
-#include "../include/types.h"
-#include "../include/stat.h"
-#include "../include/stdio.h"
-#include "../include/fcntl.h"
-#include "../include/errno.h"
-#include "../include/signal.h"
+#include <types.h>
+#include <stat.h>
+#include <stdio.h>
+#include <fcntl.h>
+#include <errno.h>
+#include <signal.h>
 
 #define LVLQ		SIGHUP
 #define	LVL0		SIGINT

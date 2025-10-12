@@ -31,10 +31,10 @@
  */
 
 
-#include "../include/types.h"
-#include "../include/stat.h"
-#include "../include/stdio.h"
-#include "../include/errno.h"
+#include <types.h>
+#include <stat.h>
+#include <stdio.h>
+#include <errno.h>
 
 
 int	mkpath(char *, mode_t, mode_t);

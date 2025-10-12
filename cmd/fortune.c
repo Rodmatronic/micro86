@@ -1,6 +1,6 @@
-#include "../include/stdio.h"
-#include "../include/types.h"
-#include "../include/fcntl.h"
+#include <stdio.h>
+#include <types.h>
+#include <fcntl.h>
 
 char line[500];
 char bline[500];

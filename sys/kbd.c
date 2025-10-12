@@ -1,7 +1,7 @@
-#include "../include/types.h"
-#include "../include/x86.h"
-#include "../include/defs.h"
-#include "../include/kbd.h"
+#include <types.h>
+#include <x86.h>
+#include <defs.h>
+#include <kbd.h>
 
 is_mouse_data()
 {

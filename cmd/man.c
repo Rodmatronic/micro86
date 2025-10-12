@@ -1,6 +1,6 @@
-#include "../include/types.h"
-#include "../include/stdio.h"
-#include "../include/fcntl.h"
+#include <types.h>
+#include <stdio.h>
+#include <fcntl.h>
 
 #define MAX_LINE 512
 #define MAX_PATH 100
