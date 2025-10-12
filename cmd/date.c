@@ -122,7 +122,7 @@ int main(int argc, char *argv[]) {
 	    printf("%s\n", ctime(&new_tm));
             exit(1);
         }
-print:
+print:;
     unsigned long epoch = 0;
     epoch = time(epoch);
     struct tm tm;
