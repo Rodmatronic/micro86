@@ -434,6 +434,9 @@ ialloc(ushort type)
   din.mode = xshort(type);
   din.nlink = xshort(1);
   din.size = xint(0);
+  time_t now = time(NULL); // current epoch
+  din.ctime = xint((uint)now);
+  din.lmtime = xint((uint)now);
   winode(inum, &din);
   return inum;
 }
