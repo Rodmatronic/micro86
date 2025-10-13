@@ -4,6 +4,7 @@
 #include <types.h>
 #include <defs.h>
 #include <param.h>
+#include <memlayout.h>
 #include <mmu.h>
 #include <proc.h>
 #include <x86.h>
@@ -12,17 +13,21 @@
 #include <sleeplock.h>
 #include <fs.h>
 #include <buf.h>
+#include <multiboot.h>
 
-extern uchar _binary_sys_fs_img_start[], _binary_sys_fs_img_size[];
-
-static int disksize;
+static uint disksize;
 static uchar *memdisk;
 
 void
 ideinit(void)
 {
-  memdisk = _binary_sys_fs_img_start;
-  disksize = (uint)_binary_sys_fs_img_size/BSIZE;
+  struct multiboot_tag_module * mod = modget(MULTIBOOT_TAG_TYPE_MODULE);
+  if (mod == 0) {
+    panic("memdisk not loaded");
+  }
+  cprintf("memdisk range = 0x%08x - 0x%08x\n", P2V(mod->mod_start), P2V(mod->mod_end - mod->mod_start));
+  memdisk = P2V(mod->mod_start);
+  disksize = (uint)(mod->mod_end - mod->mod_start)/BSIZE;
 }
 
 // Interrupt handler.

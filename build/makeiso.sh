@@ -13,12 +13,14 @@ set timeout=0
 
 menuentry "FreeNIX" {
 	echo 'Starting FreeNIX...'
-	multiboot /frunix
+	multiboot2 /frunix
+    module2 /fs.img
 	echo 'Done.'
 	boot
 }
 EOF
 
-cp sys/kernelmemfs "$WORKDIR/frunix"
+cp sys/frunix "$WORKDIR/frunix"
+cp sys/fs.img "$WORKDIR/fs.img"
 grub-mkrescue -o "$ISO_NAME" "$WORKDIR"
 echo "ISO created: $ISO_NAME"

@@ -29,8 +29,9 @@ char * copyrightxv6 = "Copyright (c) 2006-2018 Frans Kaashoek, Robert Morris, Ru
 // Allocate a real stack and switch to it, first
 // doing some setup required for memory allocator to work.
 int
-main(void)
+main(uint addr)
 {
+  mbootinit(addr);
   kinit1(end, P2V(4*1024*1024)); // phys page allocator
   cprintf("FreeNIX Release %s Version %s\n", sys_release, sys_version);
   cprintf(copyrightxv6);

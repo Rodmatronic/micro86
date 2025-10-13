@@ -22,17 +22,23 @@
 #include <memlayout.h>
 #include <mmu.h>
 #include <param.h>
+#include <multiboot.h>
 
 # Multiboot header.  Data to direct multiboot loader.
 .p2align 2
 .text
 .globl multiboot_header
-multiboot_header:
-  #define magic 0x1badb002
-  #define flags 0
-  .long magic
-  .long flags
-  .long (-magic-flags)
+multiboot_header_start:
+    .align 8
+    .long MULTIBOOT2_HEADER_MAGIC
+    .long 0
+    .long multiboot_header_end - multiboot_header_start
+    .long -(MULTIBOOT2_HEADER_MAGIC + (multiboot_header_end - multiboot_header_start))
+multiboot_end_tag:
+    .align 8
+    .long 0
+    .long 8
+multiboot_header_end:
 
 # By convention, the _start symbol specifies the ELF entry point.
 # Since we haven't set up virtual memory yet, our entry point is
@@ -58,10 +64,15 @@ entry:
   # Set up the stack pointer.
   movl $(stack + KSTACKSIZE), %esp
 
+  pushl $0
+  popfl
+
   # Jump to main(), and switch to executing at
   # high addresses. The indirect call is needed because
   # the assembler produces a PC-relative instruction
   # for a direct jump.
+  pushl %ebx
+  pushl $0
   mov $main, %eax
   jmp *%eax
 
