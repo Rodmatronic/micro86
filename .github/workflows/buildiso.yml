@@ -16,7 +16,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: install deps
-      run: sudo apt install xorriso grub2-common build-essential
+      run: sudo apt install xorriso grub2-common build-essential mtools
     - name: make
       run: make -j$(nproc); make image
     - name: build iso
