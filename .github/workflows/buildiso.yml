@@ -1,0 +1,29 @@
+name: C/C++ CI
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: install deps
+      run: sudo apt install xorriso grub build-essential
+    - name: make
+      run: make -j$(nproc) image
+    - name: build iso
+      run: bash build/makeiso.sh
+    - name: Upload a Build Artifact
+      uses: actions/upload-artifact@v4.6.2
+      with:
+        name: freenixiso
+        path: frunix.iso
+          
