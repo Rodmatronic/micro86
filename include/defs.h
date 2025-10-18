@@ -43,10 +43,10 @@ void		vbe_initdraw(void);
 extern int	kerndcl;
 
 // exec.c
-int      exec(char*, char**);
+int	      exec(char*, char**);
 
 // debug.c
-void		debugger(int);
+int		debugger(int);
 
 // file.c
 struct file*    filealloc(void);

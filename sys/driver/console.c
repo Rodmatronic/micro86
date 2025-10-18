@@ -175,7 +175,7 @@ cprintf(char *fmt, ...)
   if(locking)
     acquire(&cons.lock);
 
-  if (!kerndcl) {
+  if (kerndcl) {
 	  char * kernmsg = "[system]: ";
 	  for (int i = 0; i < 10; i++){
 		  consputc(kernmsg[i]);
@@ -205,7 +205,8 @@ panic(char *fmt, ...)
 
   consputc('\n');
 #if DEBUGGER
-  debugger(0);
+  if (!debugger(0))
+	exit(0);
 #endif
   panicked = 1;		// Freeze other CPUs
 
