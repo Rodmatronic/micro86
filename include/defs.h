@@ -40,9 +40,13 @@ void            consoleintr(int(*)(void));
 void            panic(char *fmt, ...) __attribute__((noreturn));
 int		sprintf(char *buf, const char *fmt, ...);
 void		vbe_initdraw(void);
+extern int	kerndcl;
 
 // exec.c
-int             exec(char*, char**);
+int      exec(char*, char**);
+
+// debug.c
+void		debugger(int);
 
 // file.c
 struct file*    filealloc(void);
@@ -93,6 +97,7 @@ void            kinit2(void*, void*);
 // kbd.c
 extern int	mouse_enable;
 void            kbdintr(void);
+int		kgetchar(void);
 
 // lapic.c
 void            cmostime(struct rtcdate *r);

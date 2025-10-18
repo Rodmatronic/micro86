@@ -17,11 +17,13 @@
 #include <stdarg.h>
 #include <tty.h>
 #include <font8x8.h>
+#include <config.h>
 
 static void consputc(int);
 int color = 0x0;
 static int panicked = 0;
 int draw_blacks = 0;
+int kerndcl = 1;
 
 struct ttyb ttyb = {
     .speeds = 0,       // Initial speeds
@@ -173,9 +175,11 @@ cprintf(char *fmt, ...)
   if(locking)
     acquire(&cons.lock);
 
-  char * kernmsg = "[system]: ";
-  for (int i = 0; i < 10; i++){
-	  consputc(kernmsg[i]);
+  if (!kerndcl) {
+	  char * kernmsg = "[system]: ";
+	  for (int i = 0; i < 10; i++){
+		  consputc(kernmsg[i]);
+  	}
   }
 
   va_start(ap, fmt);
@@ -200,7 +204,10 @@ panic(char *fmt, ...)
   va_end(ap);
 
   consputc('\n');
-  panicked = 1;       // Freeze other CPUs
+#if DEBUGGER
+  debugger(0);
+#endif
+  panicked = 1;		// Freeze other CPUs
 
   for(;;)
     ;

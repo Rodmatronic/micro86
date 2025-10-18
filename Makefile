@@ -9,6 +9,7 @@ OBJS = \
 	$S/os/bio.o\
 	$S/driver/console.o\
 	$S/os/exec.o\
+	$S/os/debugger.o\
 	$S/os/file.o\
 	$S/graph/font8x8.o\
 	$S/os/fs.o\
