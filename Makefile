@@ -252,7 +252,7 @@ clean:
 	find $S $C $L -type f \( -name '*.o' -o -name '*.asm' -o -name '*.sym' -o -name '*.tex' -o -name '*.dvi' -o -name '*.idx' -o -name '*.aux' -o -name '*.log' -o -name '*.ind' -o -name '*.ilg' -o -name '*.d' \) -delete
 	rm -rf $S/pl/vectors.S $S/boot/bootblock $S/boot/entryother \
 	$S/os/initcode $S/os/initcode.out $S/frunix xv6.img $S/fs.img $S/kernelmemfs \
-	xv6memfs.img $Smkfs/mkfs .gdbinit frunix.iso $(UPROGS)
+	xv6memfs.img $S/mkfs/mkfs .gdbinit frunix.iso $(UPROGS)
 
 # make a printout
 FILES = $(shell grep -v '^\#' runoff.list)

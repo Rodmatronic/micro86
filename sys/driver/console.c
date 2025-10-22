@@ -204,7 +204,7 @@ panic(char *fmt, ...)
   va_end(ap);
 
   consputc('\n');
-#if DEBUGGER
+#if DEBUG
   if (!debugger(0))
 	exit(0);
 #endif

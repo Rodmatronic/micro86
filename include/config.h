@@ -2,4 +2,4 @@
 #define no 0
 
 #define MACHINE "i386"
-#define DEBUGGER yes
+#define DEBUG no

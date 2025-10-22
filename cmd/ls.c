@@ -1,9 +1,14 @@
+/*
+ * List files or directories
+ */
+
 #include <types.h>
 #include <stat.h>
 #include <stdio.h>
 #include <fs.h>
 #include <fcntl.h>
 #include <pwd.h>
+#include <errno.h>
 
 #define	NFILES	1024
 char	*pwdf, *dirf;
@@ -505,7 +510,7 @@ char *file;
 	rep->ltype = '-';
 	if (argfl || statreq) {
 		if (stat(file, &statb)<0) {
-			printf("%s not found\n", file);
+			perror(file);
 			statb.st_ino = -1;
 			statb.st_size = 0;
 			statb.st_mode = 0;

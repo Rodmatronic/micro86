@@ -39,6 +39,12 @@ vwarnc(int code, const char *fmt, va_list ap)
 }
 
 void
+perror(char * str) {
+	fprintf(stderr, "%s: ", str);
+	fprintf(stderr, "%s\n", strerror(errno));
+}
+
+void
 warnc(int code, const char *fmt, ...)
 {
 	va_list ap;

@@ -646,7 +646,7 @@ sys_open(void)
     ip = create(path, S_IFREG | S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH, 0, 0);
     if(ip == 0){
       end_op();
-      return -1;
+      return -2;
     }
     if (omode & O_TRUNC) {
       itrunc(ip);
@@ -654,7 +654,7 @@ sys_open(void)
   } else {
     if((ip = namei(path)) == 0){
       end_op();
-      return -1;
+      return -2;
     }
     ilock(ip);
 
