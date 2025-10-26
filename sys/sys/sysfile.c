@@ -469,7 +469,7 @@ sys_link(void)
   }
 
   ilock(ip);
-  if(ip->mode & S_IFDIR){
+  if ((ip->mode & S_IFMT) != S_IFDIR){
     iunlockput(ip);
     end_op();
     return -1;
@@ -548,7 +548,7 @@ sys_unlink(void)
 
   if(ip->nlink < 1)
     panic("unlink: nlink < 1");
-  if(ip->mode & S_IFDIR && !isdirempty(ip)){
+  if(((ip->mode & S_IFMT) == S_IFDIR) && !isdirempty(ip)){
     iunlockput(ip);
     goto bad;
   }
@@ -556,7 +556,7 @@ sys_unlink(void)
   memset(&de, 0, sizeof(de));
   if(writei(dp, (char*)&de, off, sizeof(de)) != sizeof(de))
     panic("unlink: writei");
-  if(ip->mode & S_IFDIR){
+  if((ip->mode & S_IFMT) == S_IFDIR){
     dp->nlink--;
     iupdate(dp);
   }
@@ -658,7 +658,7 @@ sys_open(void)
     }
     ilock(ip);
 
-    if(ip->mode & S_IFDIR && omode != O_RDONLY){
+    if (((ip->mode & S_IFMT) == S_IFDIR) && omode != O_RDONLY) {
       iunlockput(ip);
       end_op();
       return -1;
@@ -695,7 +695,7 @@ sys_mkdir(void)
   struct inode *ip;
 
   begin_op();
-  if(argstr(0, &path) < 0 || (ip = create(path, S_IFDIR, 0, 0)) == 0){
+  if(argstr(0, &path) < 0 || (ip = create(path, S_IFDIR | S_IRUSR | S_IXUSR | S_IWUSR | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, 0, 0)) == 0){
     end_op();
     return -1;
   }
@@ -737,7 +737,7 @@ sys_chdir(void)
     return -1;
   }
   ilock(ip);
-  if(ip->mode != S_IFDIR){
+  if ((ip->mode & S_IFMT) != S_IFDIR) {
     iunlockput(ip);
     end_op();
     return -1;

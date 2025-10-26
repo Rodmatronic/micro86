@@ -646,7 +646,7 @@ namex(char *path, int nameiparent, char *name)
 
   while((path = skipelem(path, name)) != 0){
     ilock(ip);
-    if(ip->mode != S_IFDIR){
+    if ((ip->mode & S_IFMT) != S_IFDIR) {
       iunlockput(ip);
       return 0;
     }

@@ -80,7 +80,7 @@ add_dot_entries(uint dir_ino, uint parent_ino)
 
 uint create_directory(uint parent_ino, const char *name) {
   // Allocate inode for the new directory
-  uint new_ino = ialloc(S_IFDIR);
+  uint new_ino = ialloc(S_IFDIR | S_IRUSR | S_IXUSR | S_IWUSR | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH);
   if (new_ino == 0) return 0; // Allocation failure
 
   struct dirent de;
@@ -191,7 +191,7 @@ main(int argc, char *argv[])
   uint optbinino = create_directory(optino, "bin");
   uint sbinino = create_directory(rootino, "sbin");
 
-for (i = 2; i < argc; i++) {
+  for (i = 2; i < argc; i++) {
     if ((fd = open(argv[i], 0)) < 0) {
         perror(argv[i]);
         exit(1);
@@ -324,9 +324,8 @@ for (i = 2; i < argc; i++) {
 
     // append files to disk
     if (exists_in_list(name, etc_files)) {
- 	if (strcmp(name, "master.passwd") == 0) { // prevent interfering
+ 	if (strcmp(name, "master.passwd") == 0) // prevent interfering
 		strncpy(de.name, "passwd", DIRSIZ);
-	}
 	iappend(etcino, &de, sizeof(de));
     } else if (exists_in_list(name, bin_files)) {
 	iappend(binino, &de, sizeof(de));
