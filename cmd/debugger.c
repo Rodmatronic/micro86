@@ -4,7 +4,7 @@
 #include <fcntl.h>
 
 int
-main()
+main(int argc, char ** argv)
 {
   for (int i = 0; i < 8; i++){
 	printf("\033[3%dm#", i);
@@ -29,6 +29,10 @@ main()
     printf("pid=%d name=%s state=%d\n", info.p_pid, info.name, info.state);
   else
     printf("process not found\n");
+
+  printf("will now segfault\n");
+  printf("%s", argv[99]);
+  printf("huh?\n");
 
   exit(1);
 }
