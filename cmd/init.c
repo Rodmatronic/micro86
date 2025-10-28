@@ -12,7 +12,7 @@ char	shell[] =	"/bin/sh";
 char	runc[] =	"/etc/rc";
 char	utmp[] =	"/etc/utmp";
 char	wtmpf[] =	"/usr/adm/wtmp";
-char	getty[] = 	"/etc/getty";
+char	getty[] = 	"/sbin/getty";
 
 void runsh(char * path);
 

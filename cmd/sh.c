@@ -124,7 +124,7 @@ runcmd(struct cmd *cmd)
           }
       }
 
-      fprintf(stderr, "%s: not found\n", ecmd->argv[0]);
+      perror(ecmd->argv[0]);
       exit(2);
     }
     break;

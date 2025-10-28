@@ -752,6 +752,39 @@ sys_exec(void)
     if(fetchstr(uarg, &argv[i]) < 0)
       return -1;
   }
+  struct inode *ip;
+  begin_op();
+  ip = namei(path);
+  if(ip == 0){
+    end_op();
+    errno = 2;
+    return -1;
+  }
+
+  ilock(ip);
+  struct proc *p = myproc();
+  uint mode = ip->mode;
+  uint owner = ip->uid;
+  uint group = ip->gid;
+  int can_exec = 0;
+
+  if (p->p_uid == owner)
+    can_exec = mode & S_IXUSR;
+  else if (p->p_gid == group)
+    can_exec = mode & S_IXGRP;
+  else
+    can_exec = mode & S_IXOTH;
+
+  if (!can_exec) {
+    iunlockput(ip);
+    end_op();
+    errno = 8; // ENOEXEC
+    return -1;
+  }
+
+  iunlockput(ip);
+  end_op();
+
   return exec(path, argv);
 }
 

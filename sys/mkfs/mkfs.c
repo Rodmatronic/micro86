@@ -244,7 +244,6 @@ main(int argc, char *argv[])
 	"stressfs",
 	"usertests",
 	"unlink",
-	"getty",
 	"colortest",
 	NULL
     };
@@ -296,6 +295,7 @@ main(int argc, char *argv[])
     };
 
     char * sbin_files[] = {
+	    "getty",
 	    "init",
 	    "login",
 	    "mknod",
