@@ -300,10 +300,11 @@ exit(int status)  // Changed to accept status argument
   struct proc *p;
   int fd;
 
-  if(curproc == initproc)
-
-	panic("init died (exit %d)",
-		    curproc->exitstatus);
+  if(curproc == initproc) {
+    if (strncmp(curproc->name, "initcode", sizeof(curproc->name)) == 0)
+      panic("no init program found!");
+    panic("init died (exit %d)", curproc->exitstatus);
+  }
 
   // Close all open files.
   for(fd = 0; fd < NOFILE; fd++){
