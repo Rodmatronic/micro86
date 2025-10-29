@@ -778,7 +778,7 @@ sys_exec(void)
   if (!can_exec) {
     iunlockput(ip);
     end_op();
-    errno = 8; // ENOEXEC
+    errno = 13;
     return -1;
   }
 

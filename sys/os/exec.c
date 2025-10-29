@@ -111,5 +111,6 @@ exec(char *path, char **argv)
     iunlockput(ip);
     end_op();
   }
+  errno = 8;
   return -1;
 }
