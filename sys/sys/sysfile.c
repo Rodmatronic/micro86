@@ -26,14 +26,17 @@ sys_utime(void)
     struct inode *ip;
     uint now;
 
-    if(argstr(0, &path) < 0)
+    if(argstr(0, &path) < 0) {
+        errno = 1;
         return -1;
+    }
 
     begin_op();
 
     ip = namei(path);
     if(ip == 0){
         end_op();
+        errno = 2;
         return -1;
     }
 
@@ -61,126 +64,126 @@ sys_devctl(void)
   int sig;
   int data; // only used on writes
 
-  if(argint(0, &dev) < 0 || argint(1, &sig) < 0 || argint(2, &data) < 0 )
+  if (argint(0, &dev) < 0 || argint(1, &sig) < 0 || argint(2, &data) < 0 ) {
+    errno = 1;
     return -1;
-
+  }
   if (dev == 0){ // Mouse
-	  if (sig == 0){
-		int packed = ((g_mouse_x_pos & 0xFFF) << 12) |
-			(g_mouse_y_pos & 0xFFF);
-		return packed;
-	  }else if (sig == 1){
-		return -1;  //dont support writes to mousedev
-	  }else if (sig == 2){
-		int packed = (left_button << 8) | (right_button << 4) | middle_button;
-		return packed;
-	  }
+      if (sig == 0){
+        int packed = ((g_mouse_x_pos & 0xFFF) << 12) |
+            (g_mouse_y_pos & 0xFFF);
+        return packed;
+      }else if (sig == 1){
+        return -1;  //dont support writes to mousedev
+      }else if (sig == 2){
+        int packed = (left_button << 8) | (right_button << 4) | middle_button;
+        return packed;
+      }
   } else
   if (dev == 1){ // vga/screen
-	if (sig == 0){
-		int packed = ((VGA_MAX_WIDTH) << 12) | (VGA_MAX_HEIGHT & 0xFFF);
-		return packed;
-	}else
-	if (sig == 1) { // write pixel
-		int x = (data >> 22) & 0x3FF;   // 10 bits for X
-		int y = (data >> 12) & 0x3FF;   // 10 bits for Y
-		int color = data & 0xFF;         // 8 bits for color (use lower 4 bits)
+    if (sig == 0){
+        int packed = ((VGA_MAX_WIDTH) << 12) | (VGA_MAX_HEIGHT & 0xFFF);
+        return packed;
+    }else
+    if (sig == 1) { // write pixel
+        int x = (data >> 22) & 0x3FF;   // 10 bits for X
+        int y = (data >> 12) & 0x3FF;   // 10 bits for Y
+        int color = data & 0xFF;         // 8 bits for color (use lower 4 bits)
 
-		if (x < VGA_MAX_WIDTH && y < VGA_MAX_HEIGHT) {
-			putpixel(x, y, color & 0x0F);  // Use only lower 4 bits for 16 colors
-			return 0;
-		} else
-			return -1;
-	}else
-	if (sig == 2) {
+        if (x < VGA_MAX_WIDTH && y < VGA_MAX_HEIGHT) {
+            putpixel(x, y, color & 0x0F);  // Use only lower 4 bits for 16 colors
+            return 0;
+        } else
+            return -1;
+    }else
+    if (sig == 2) {
 //		vga_clear_screen(data);
-		return 0;
-	}
-	else if (sig == 3) {  // Bulk update
-    		char* user_ptr;
-    		if (argptr(2, (void*)&user_ptr, sizeof(struct vga_meta)) < 0)
-        		return -1;
+        return 0;
+    }
+    else if (sig == 3) {  // Bulk update
+            char* user_ptr;
+            if (argptr(2, (void*)&user_ptr, sizeof(struct vga_meta)) < 0)
+                return -1;
 
-    		struct vga_meta* meta = (struct vga_meta*)user_ptr;
-    
-    		if (meta->width <= 0 || meta->height <= 0 ||
-        		meta->x < 0 || meta->x + meta->width > VGA_MAX_WIDTH ||
-        		meta->y < 0 || meta->y + meta->height > VGA_MAX_HEIGHT) {
-       			return -1;
-    		}
+            struct vga_meta* meta = (struct vga_meta*)user_ptr;
 
-    		size_t buf_size = meta->width * meta->height;
-    		if (argptr(2, (void*)&user_ptr, sizeof(struct vga_meta) + buf_size) < 0)
-        		return -1;
+            if (meta->width <= 0 || meta->height <= 0 ||
+                meta->x < 0 || meta->x + meta->width > VGA_MAX_WIDTH ||
+                meta->y < 0 || meta->y + meta->height > VGA_MAX_HEIGHT) {
+                return -1;
+            }
 
-    		uint8_t* pixels = (uint8_t*)(user_ptr + sizeof(struct vga_meta));
-    		for (int rel_y = 0; rel_y < meta->height; rel_y++) {
-        		for (int rel_x = 0; rel_x < meta->width; rel_x++) {
-            			int abs_x = meta->x + rel_x;
-            			int abs_y = meta->y + rel_y;
-            			uint8_t color = pixels[rel_y * meta->width + rel_x];
-            			putpixel(abs_x, abs_y, color & 0x0F);
-        		}
-    		}
-    		return 0;
-	}
-	if (sig == 4) { // Bulk read
-		char* user_ptr;
-		if (argptr(2, (void*)&user_ptr, sizeof(struct vga_meta)) < 0)
-			return -1;
+            size_t buf_size = meta->width * meta->height;
+            if (argptr(2, (void*)&user_ptr, sizeof(struct vga_meta) + buf_size) < 0)
+                return -1;
 
-		struct vga_meta* meta = (struct vga_meta*)user_ptr;
-		size_t buf_size = meta->width * meta->height;
+            uint8_t* pixels = (uint8_t*)(user_ptr + sizeof(struct vga_meta));
+            for (int rel_y = 0; rel_y < meta->height; rel_y++) {
+                for (int rel_x = 0; rel_x < meta->width; rel_x++) {
+                        int abs_x = meta->x + rel_x;
+                        int abs_y = meta->y + rel_y;
+                        uint8_t color = pixels[rel_y * meta->width + rel_x];
+                        putpixel(abs_x, abs_y, color & 0x0F);
+                }
+            }
+            return 0;
+    }
+    if (sig == 4) { // Bulk read
+        char* user_ptr;
+        if (argptr(2, (void*)&user_ptr, sizeof(struct vga_meta)) < 0)
+            return -1;
 
-		if (meta->width <= 0 || meta->height <= 0 || buf_size > 1024 ||
-			meta->x < 0 || meta->x + meta->width > VGA_MAX_WIDTH ||
-        		meta->y < 0 || meta->y + meta->height > VGA_MAX_HEIGHT) {
-        		return -1;
-    		}
+        struct vga_meta* meta = (struct vga_meta*)user_ptr;
+        size_t buf_size = meta->width * meta->height;
 
-    		if (argptr(2, (void*)&user_ptr, sizeof(struct vga_meta) + buf_size) < 0)
-        		return -1;
+        if (meta->width <= 0 || meta->height <= 0 || buf_size > 1024 ||
+            meta->x < 0 || meta->x + meta->width > VGA_MAX_WIDTH ||
+                meta->y < 0 || meta->y + meta->height > VGA_MAX_HEIGHT) {
+                return -1;
+            }
+            if (argptr(2, (void*)&user_ptr, sizeof(struct vga_meta) + buf_size) < 0)
+                return -1;
 
-    		uint8_t* pixels = (uint8_t*)(user_ptr + sizeof(struct vga_meta));
-    		uint8_t temp_buf[1024]; // Temporary kernel buffer
+            uint8_t* pixels = (uint8_t*)(user_ptr + sizeof(struct vga_meta));
+            uint8_t temp_buf[1024]; // Temporary kernel buffer
 
-    		for (int rel_y = 0; rel_y < meta->height; rel_y++) {
-        		for (int rel_x = 0; rel_x < meta->width; rel_x++) {
+            for (int rel_y = 0; rel_y < meta->height; rel_y++) {
+                for (int rel_x = 0; rel_x < meta->width; rel_x++) {
 //            			int abs_x = meta->x + rel_x;
 //            			int abs_y = meta->y + rel_y;
 //            			temp_buf[rel_y * meta->width + rel_x] = getpixel(abs_x, abs_y);
-        		}
-    		}
+                }
+            }
 
-    		if (copyout(myproc()->pgdir, (uint)pixels, temp_buf, buf_size) < 0)
-        		return -1;
+            if (copyout(myproc()->pgdir, (uint)pixels, temp_buf, buf_size) < 0)
+                return -1;
 
-    		return 0;
-	}
+            return 0;
+    }
 
   }else
   if (dev == 2) { // keyboard
-	if (sig == 0) { // keypress?
-		return kbdgetc();
-	}
-	if (sig == 1) {
-		extern pde_t *kpgdir;
-		lcr3(V2P(kpgdir));
+    if (sig == 0) { // keypress?
+        return kbdgetc();
+    }
+    if (sig == 1) {
+        extern pde_t *kpgdir;
+        lcr3(V2P(kpgdir));
 
-		for(int i = 0; i < 255; i++){
-			fbputpixel(i, i, rgb(i, i, i));
-		}
-	}
+        for(int i = 0; i < 255; i++){
+            fbputpixel(i, i, rgb(i, i, i));
+        }
+    }
   }
   if (dev == 3) { // process
-	if (sig == 0) {
-		return getmaxpid();
-	}
+    if (sig == 0) {
+        return getmaxpid();
+    }
   }
   if (dev == 4) {
-	if (sig == 0) {
-		return errno;
-	}
+    if (sig == 0) {
+        return errno;
+    }
   }
   return -1;
 }
@@ -204,10 +207,14 @@ argfd(int n, int *pfd, struct file **pf)
   int fd;
   struct file *f;
 
-  if(argint(n, &fd) < 0)
+  if(argint(n, &fd) < 0){
+    errno = 1;
     return -1;
-  if(fd < 0 || fd >= NOFILE || (f=myproc()->ofile[fd]) == 0)
+  }
+  if(fd < 0 || fd >= NOFILE || (f=myproc()->ofile[fd]) == 0) {
+    errno = 2;
     return -1;
+  }
   if(pfd)
     *pfd = fd;
   if(pf)
@@ -222,12 +229,15 @@ sys_chmod(void)
   int mode;
   struct inode *ip;
 
-  if (argstr(0, &path) < 0 || argint(1, &mode) < 0)
+  if (argstr(0, &path) < 0 || argint(1, &mode) < 0){
+    errno = 1;
     return -1;
+  }
 
   begin_op();
   if ((ip = namei(path)) == 0) {
     end_op();
+    errno = 2;
     return -1;
   }
 
@@ -254,12 +264,15 @@ sys_chown(void)
   struct inode *ip;
 
   // Fetch syscall arguments: path, uid, gid
-  if (argstr(0, &path) < 0 || argint(1, &owner) < 0 || argint(2, &group) < 0)
+  if (argstr(0, &path) < 0 || argint(1, &owner) < 0 || argint(2, &group) < 0){
+    errno = 1;
     return -1;
+  }
 
   begin_op();
   if ((ip = namei(path)) == 0) {
     end_op();
+    errno = 2;
     return -1;
   }
 
@@ -269,7 +282,7 @@ sys_chown(void)
     end_op();
     errno = 13;
     return -1;
-   }
+  }
 
   ip->uid = owner;
   ip->gid = group;
@@ -290,12 +303,13 @@ sys_lseek(void)
 
     if (argfd(0, 0, &f) < 0 ||
         argint(1, &offset) < 0 ||
-        argint(2, &whence) < 0)
-        return -1;
-
+        argint(2, &whence) < 0){
+      errno = 1;
+      return -1;
+    }
     if (f->type == FD_PIPE) {
-	errno = 1;
-        return -1;
+      errno = 1;
+      return -1;
     }
 
     ilock(f->ip);
@@ -312,7 +326,7 @@ sys_lseek(void)
         break;
     default:
         iunlock(f->ip);
-	errno = 2;
+        errno = 2;
         return -1;
     }
 
@@ -360,8 +374,10 @@ sys_read(void)
   int n;
   char *p;
 
-  if(argfd(0, 0, &f) < 0 || argint(2, &n) < 0 || argptr(1, &p, n) < 0)
+  if(argfd(0, 0, &f) < 0 || argint(2, &n) < 0 || argptr(1, &p, n) < 0){
+    errno = 1;
     return -1;
+  }
   return fileread(f, p, n);
 }
 
@@ -372,8 +388,10 @@ sys_write(void)
   int n;
   char *p;
 
-  if(argfd(0, 0, &f) < 0 || argint(2, &n) < 0 || argptr(1, &p, n) < 0)
+  if(argfd(0, 0, &f) < 0 || argint(2, &n) < 0 || argptr(1, &p, n) < 0){
+    errno = 1;
     return -1;
+  }
   return filewrite(f, p, n);
 }
 
@@ -396,8 +414,10 @@ int sys_fstat(void) {
   struct stat *user_st;
 
   if(argfd(0, 0, &f) < 0 ||
-     argptr(1, (void*)&user_st, sizeof(struct stat)) < 0)
+    argptr(1, (void*)&user_st, sizeof(struct stat)) < 0){
+    errno = 1;
     return -1;
+    }
 
   // Use memset to ensure padding is zeroed
   memset(&st, 0, sizeof(st));
@@ -405,8 +425,10 @@ int sys_fstat(void) {
   stati(f->ip, &st);
 
   // Copy entire struct including padding
-  if(copyout(myproc()->pgdir, (uint)user_st, &st, sizeof(st)) < 0)
+  if(copyout(myproc()->pgdir, (uint)user_st, &st, sizeof(st)) < 0){
+    errno = 2;
     return -1;
+  }
 
   return 0;
 }
@@ -418,12 +440,15 @@ sys_link(void)
   char name[DIRSIZ], *new, *old;
   struct inode *dp, *ip;
 
-  if(argstr(0, &old) < 0 || argstr(1, &new) < 0)
+  if(argstr(0, &old) < 0 || argstr(1, &new) < 0){
+    errno = 1;
     return -1;
+  }
 
   begin_op();
   if((ip = namei(old)) == 0){
     end_op();
+    errno = 2;
     return -1;
   }
 
@@ -488,12 +513,15 @@ sys_unlink(void)
   char name[DIRSIZ], *path;
   uint off;
 
-  if(argstr(0, &path) < 0)
+  if(argstr(0, &path) < 0){
+    errno = 1;
     return -1;
+  }
 
   begin_op();
   if((dp = nameiparent(path, name)) == 0){
     end_op();
+    errno = 2;
     return -1;
   }
 
@@ -608,8 +636,10 @@ sys_open(void)
   struct inode *ip;
   //struct proc *p = myproc();
 
-  if(argstr(0, &path) < 0 || argint(1, &omode) < 0)
+  if(argstr(0, &path) < 0 || argint(1, &omode) < 0){
+    errno = 1;
     return -1;
+  }
 
   begin_op();
 
@@ -687,9 +717,9 @@ sys_mknod(void)
 
   begin_op();
   if((argstr(0, &path)) < 0 ||
-     argint(1, &major) < 0 ||
-     argint(2, &minor) < 0 ||
-     (ip = create(path, S_IFCHR | S_IRUSR | S_IWUSR, major, minor)) == 0){
+    argint(1, &major) < 0 ||
+    argint(2, &minor) < 0 ||
+    (ip = create(path, S_IFCHR | S_IRUSR | S_IWUSR, major, minor)) == 0){
     end_op();
     errno = 13;
     return -1;
@@ -705,7 +735,7 @@ sys_chdir(void)
   char *path;
   struct inode *ip;
   struct proc *curproc = myproc();
-  
+
   begin_op();
   if(argstr(0, &path) < 0 || (ip = namei(path)) == 0){
     end_op();
@@ -734,20 +764,27 @@ sys_exec(void)
   uint uargv, uarg;
 
   if(argstr(0, &path) < 0 || argint(1, (int*)&uargv) < 0){
+    errno = 1;
     return -1;
   }
   memset(argv, 0, sizeof(argv));
   for(i=0;; i++){
-    if(i >= NELEM(argv))
+    if(i >= NELEM(argv)){
+      errno = 12;
       return -1;
-    if(fetchint(uargv+4*i, (int*)&uarg) < 0)
+    }
+    if(fetchint(uargv+4*i, (int*)&uarg) < 0){
+      errno = 1;
       return -1;
+    }
     if(uarg == 0){
       argv[i] = 0;
       break;
     }
-    if(fetchstr(uarg, &argv[i]) < 0)
+    if(fetchstr(uarg, &argv[i]) < 0){
+      errno = 1;
       return -1;
+    }
   }
   struct inode *ip;
   begin_op();
@@ -792,16 +829,21 @@ sys_pipe(void)
   struct file *rf, *wf;
   int fd0, fd1;
 
-  if(argptr(0, (void*)&fd, 2*sizeof(fd[0])) < 0)
+  if(argptr(0, (void*)&fd, 2*sizeof(fd[0])) < 0){
+    errno = 1;
     return -1;
-  if(pipealloc(&rf, &wf) < 0)
+  }
+  if(pipealloc(&rf, &wf) < 0){
+    errno = 12;
     return -1;
+  }
   fd0 = -1;
   if((fd0 = fdalloc(rf)) < 0 || (fd1 = fdalloc(wf)) < 0){
     if(fd0 >= 0)
       myproc()->ofile[fd0] = 0;
     fileclose(rf);
     fileclose(wf);
+    errno = 12;
     return -1;
   }
   fd[0] = fd0;
