@@ -41,7 +41,7 @@ touch		mocsysv	----o // DONE
 uname		openbsd	----o // DONE
 wc		openbsd	----o // DONE
 which		openbsd	----o // DONE
-whoami		gnu	----o // REPLACE (gnu)
+whoami		mocbsd	----o // DONE
 yes		openbsd	----o // DONE
 
 mocsysv? Means utilities not directly based on sysv code, but
