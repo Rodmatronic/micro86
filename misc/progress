@@ -32,7 +32,7 @@ mv		V7	----o // DONE(?) (needs to be updated, mocsysv)
 nologin		openbsd ----o // DONE
 passwd		V7	----o // DONE(?) (lacking options)
 pwd		openbsd	----o // DONE
-rm		V7	----o // DONE(?) (needs to be updated, mocsysv)
+rm		mocbsd	----o // DONE
 rmdir		V7	----o // DONE
 sh		xv6	--o-- // REPLACE (csh, please!)
 su		V7	----o // DONE

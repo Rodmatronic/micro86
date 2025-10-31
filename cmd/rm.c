@@ -1,3 +1,7 @@
+/*
+ * remove a file/directory
+ */
+
 #include <types.h>
 #include <stat.h>
 #include <stdio.h>
@@ -5,53 +9,53 @@
 #include <fs.h>
 #include <errno.h>
 
-int	errcode;
-
+int errcode;
 int rm(char arg[], int fflg, int rflg, int iflg, int level);
 int dotname(char *s);
 int rmdir(char *f, int iflg);
 int yes();
+
+void
+usage()
+{
+	fprintf(stderr, "usage: rm [-fir] file ...\n");
+	exit(1);
+}
 
 int
 main(argc, argv)
 int argc;
 char *argv[];
 {
-	register char *arg;
-	int fflg, iflg, rflg;
-
-	fflg = 0;
-//	if (isatty(0) == 0)
-//		fflg++;
-	iflg = 0;
-	rflg = 0;
-	if(argc>1 && argv[1][0]=='-') {
-		arg = *++argv;
-		argc--;
-		while(*++arg != '\0')
-			switch(*arg) {
-			case 'f':
-				fflg++;
-				break;
-			case 'i':
-				iflg++;
-				break;
-			case 'r':
-				rflg++;
-				break;
-			default:
-				printf("rm: unknown option %s\n", *argv);
-				exit(1);
-			}
+	int opt;
+	int fflg = 0, iflg = 0, rflg = 0;
+	while ((opt = getopt(argc, argv, "fir")) != -1) {
+		switch(opt) {
+		case 'f':
+			fflg++;
+			break;
+		case 'i':
+			iflg++;
+			break;
+		case 'r':
+			rflg++;
+			break;
+		default:
+			usage();
+		}
 	}
-	while(--argc > 0) {
-		if(!strcmp(*++argv, "..")) {
+
+	if (optind >= argc) {
+		usage();
+	}
+
+	for (; optind < argc; optind++) {
+		if (strcmp(argv[optind], "..") == 0) {
 			fprintf(stderr, "rm: cannot remove `..'\n");
 			continue;
 		}
-		rm(*argv, fflg, rflg, iflg, 0);
+		rm(argv[optind], fflg, rflg, iflg, 0);
 	}
-
 	exit(errcode);
 }
 
@@ -64,13 +68,11 @@ int iflg;
 int level;
 {
 	struct stat buf;
-	//struct direct direct;
-//	char name[100];
 	int d;
 
 	if(stat(arg, &buf)) {
 		if (fflg==0) {
-			printf("rm: %s nonexistent\n", arg);
+			perror(arg);
 			++errcode;
 		}
 		return 0;
@@ -84,7 +86,7 @@ int level;
 					return 1;
 			}
 			if((d=open(arg, 0)) < 0) {
-				printf("rm: %s: cannot read\n", arg);
+				perror(arg);
 				exit(1);
 			}
 
