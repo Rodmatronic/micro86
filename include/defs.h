@@ -35,9 +35,9 @@ void		sync();
 
 // console.c
 void            consoleinit(void);
+void		consputc(int);
 void            cprintf(char*, ...);
 void            consoleintr(int(*)(void));
-void            panic(char *fmt, ...) __attribute__((noreturn));
 int		sprintf(char *buf, const char *fmt, ...);
 void		vbe_initdraw(void);
 extern int	kerndcl;
@@ -114,6 +114,9 @@ void            log_write(struct buf*);
 void            begin_op();
 void            end_op();
 
+// main.c
+int		reboot(int);
+
 // mouse.c
 void		mouseinit(void);
 
@@ -133,6 +136,10 @@ extern int g_mouse_x_pos, g_mouse_y_pos, left_button, right_button, middle_butto
 // mp.c
 extern int      ismp;
 void            mpinit(void);
+
+// panic.c
+void            panic(char *fmt, ...) __attribute__((noreturn));
+extern int	panicked;
 
 // picirq.c
 void            picenable(int);

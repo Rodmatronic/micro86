@@ -14,14 +14,12 @@
 #include <mmu.h>
 #include <proc.h>
 #include <x86.h>
-#include <stdarg.h>
 #include <tty.h>
 #include <font8x8.h>
 #include <config.h>
+#include <stdarg.h>
 
-static void consputc(int);
 int color = 0x0;
-static int panicked = 0;
 int draw_blacks = 0;
 int kerndcl = 1;
 
@@ -31,6 +29,8 @@ struct ttyb ttyb = {
 	.kill = '\025',		// Ctrl+U
 	.tflags = ECHO		 // Enable echo by default
 };
+
+static int current_colour = 0x0700;
 
 int posx;
 int posy;
@@ -170,46 +170,25 @@ cprintf(char *fmt, ...)
 {
 	va_list ap;
 	int locking;
+	int prevcolour=0;
 
 	locking = cons.locking;
 	if(locking)
 		acquire(&cons.lock);
 
 	if (kerndcl) {
-		char * kernmsg = "system: ";
-		for (int i = 0; i < 8; i++){
-			consputc(kernmsg[i]);
-		}
+		prevcolour=current_colour;
+		current_colour=0x0F00;
 	}
 
 	va_start(ap, fmt);
 	vcprintf(fmt, ap);
 	va_end(ap);
 
+	current_colour=prevcolour;
+
 	if(locking)
 		release(&cons.lock);
-}
-
-void
-panic(char *fmt, ...)
-{
-	va_list ap;
-
-	cli();
-	cons.locking = 0;	 // Disable console locking during panic
-	cprintf("panic: ");
-
-	va_start(ap, fmt);
-	vcprintf(fmt, ap);
-	va_end(ap);
-
-	consputc('\n');
-#if DEBUG
-	if (!debugger(0))
-	exit(0);
-#endif
-	panicked = 1;		// Freeze other CPUs
-	for(;;);
 }
 
 #define BACKSPACE 0x100
@@ -363,7 +342,6 @@ enum ansi_state {
 static enum ansi_state ansi_state = ANSI_NORMAL;
 static int ansi_params[4];
 static int ansi_param_count = 0;
-static int current_colour = 0x0700;
 static ushort *crt = (ushort*)P2V(0xb8000);	// CGA memory
 
 void

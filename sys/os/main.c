@@ -159,6 +159,20 @@ startothers(void)
   }
 }
 
+// reboot/halt kern
+int
+reboot(int flag)
+{
+  if (!flag) {
+    cprintf("system halted.\n");
+    asm volatile ("cli\n"
+                  "hlt");
+    return -1;
+  }
+  outb(0x64, 0xFE);
+  return -1;
+}
+
 // The boot page table used in entry.S and entryother.S.
 // Page directories (and page tables) must start on page boundaries,
 // hence the __aligned__ attribute.

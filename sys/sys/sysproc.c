@@ -18,14 +18,8 @@ sys_reboot(void)
     errno=1;
     return -1;
   }
-  if (!flag) {
-    cprintf("system halted.\n");
-    asm volatile ("cli\n"
-		  "hlt");
-    return -1;
-  }
-  cprintf("rebooting..\n.");
-  outb(0x64, 0xFE);
+  reboot(flag);
+  errno=5; // huh?
   return -1;
 }
 

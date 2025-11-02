@@ -22,6 +22,7 @@ OBJS = \
 	$S/os/main.o\
 	$S/os/mp.o\
 	$S/driver/mouse.o\
+	$S/os/panic.o\
 	$S/os/picirq.o\
 	$S/os/pipe.o\
 	$S/os/proc.o\
