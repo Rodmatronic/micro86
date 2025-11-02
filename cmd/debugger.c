@@ -3,9 +3,26 @@
 #include <stat.h>
 #include <fcntl.h>
 
+void gotoxy(int x, int y) {
+	printf("\x1b[%d;%df", y, x);
+}
+
 int
 main(int argc, char ** argv)
 {
+
+  printf("\033[H\033[2J");
+  printf("One");
+  gotoxy(2, 2);
+  printf("Two");
+  gotoxy(4, 4);
+  printf("Three");
+  gotoxy(5, 10);
+  printf("Four");
+  gotoxy(10, 10);
+  printf("Five");
+  return 1;
+
   for (int i = 0; i < 8; i++){
 	printf("\033[3%dm#", i);
   }

@@ -420,15 +420,15 @@ void
 handle_ansi_clear(int param)
 {
   if(param == 2 || param == 0) { // 2J = clear entire screen, 0J = clear from cursor
-    memset(crt, 0, sizeof(crt[0]) * 25 * 80);
-    setcursor(0, 0);
+	memset(crt, 0, sizeof(crt[0]) * 25 * 80);
+	setcursor(0, 0);
   } else if(param == 1) { // clear from top to cursor
-    outb(CRTPORT, 14);
-    int pos = inb(CRTPORT+1) << 8;
-    outb(CRTPORT, 15);
-    pos |= inb(CRTPORT+1);
-    for(int i = 0; i <= pos; i++)
-      crt[i] = ' ' | 0x0700;
+	outb(CRTPORT, 14);
+	int pos = inb(CRTPORT+1) << 8;
+	outb(CRTPORT, 15);
+	pos |= inb(CRTPORT+1);
+	for(int i = 0; i <= pos; i++)
+	  crt[i] = ' ' | 0x0700;
   }
 }
 
@@ -579,40 +579,51 @@ consputc(int c)
 				ansi_state = ANSI_NORMAL;
 			}
 			return;
-			
+
 		case ANSI_BRACKET:
-			if(c >= '0' && c <= '9') {
-				ansi_params[ansi_param_count] = c - '0';
+			ansi_param_count = 0;
+			memset(ansi_params, 0, sizeof(ansi_params));
+			if (c >= '0' && c <= '9') {
+				ansi_params[0] = c - '0';
+				ansi_param_count = 1;
 				ansi_state = ANSI_PARAM;
-			} else if(c == 'm') {
+			} else if (c == 'm') {
 				handle_ansi_sgr(0);
 				ansi_state = ANSI_NORMAL;
 			} else {
 				ansi_state = ANSI_NORMAL; // invalid
 			}
 			return;
-			
+
 		case ANSI_PARAM:
-			if(c >= '0' && c <= '9') {
-				ansi_params[ansi_param_count] = ansi_params[ansi_param_count] * 10 + (c - '0');
-			} else if(c == ';') {
-				ansi_param_count++;
-				if(ansi_param_count >= 4) {
-					ansi_state = ANSI_NORMAL; // too short
-				}
+			if (c >= '0' && c <= '9') {
+				ansi_params[ansi_param_count - 1] =
+					ansi_params[ansi_param_count - 1] * 10 + (c - '0');
+				return;
+			} else if (c == ';') {
+				if (ansi_param_count < 4)
+					ansi_param_count++;
+				return;
 			} else if(c == 'm') {
-				ansi_param_count++; // end of seq
 				handle_ansi_sgr_sequence(ansi_params, ansi_param_count);
 				ansi_state = ANSI_NORMAL;
-			} else if(c == 'J') {
-				ansi_param_count++;
-				int param = (ansi_param_count > 0) ? ansi_params[0] : 0;
+				return;
+			} else if (c == 'J') {
+				int param = ansi_param_count > 0 ? ansi_params[0] : 0;
 				handle_ansi_clear(param);
 				ansi_state = ANSI_NORMAL;
+				return;
+			} else if (c == 'H' || c == 'f') {
+				int row = (ansi_param_count >= 1 ? ansi_params[0] : 1) - 1;
+				int col = (ansi_param_count >= 2 ? ansi_params[1] : 1) - 1;
+				setcursor(col, row);
+				ansi_state = ANSI_NORMAL;
+				return;
 			} else {
 				ansi_state = ANSI_NORMAL; // not valid
+				return;
 			}
-			return;
+		return;
 	}
 
 	cgaputc(c);
