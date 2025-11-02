@@ -355,25 +355,29 @@ cgaputc(int c)
 	outb(CRTPORT, 15);
 	pos |= inb(CRTPORT+1);
 
-	if(c == '\n')
-		pos += 80 - pos%80;
-	else if(c == BACKSPACE){
-		if(pos > 0) --pos;
-	} else if(c == '\t') {
-		int spaces = 8 - (pos % 8);
-		for(int i = 0; i < spaces; i++) {
+	switch(c) {
+		case('\n'):
+			pos += 80 - pos%80;
+			break;
+		case(BACKSPACE):
+			if(pos > 0) -- pos;
+			break;
+		case ('\t'):
+			int spaces = 8 - (pos % 8);
+			for(int i = 0; i < spaces; i++) {
 			crt[pos++] = ' ' | current_colour;
-			if((pos/80) >= 25){
-				memmove(crt, crt+80, sizeof(crt[0])*24*80);
-				pos -= 80;
-				memset(crt+pos, 0, sizeof(crt[0])*(25*80 - pos));
+				if((pos/80) >= 25){
+					memmove(crt, crt+80, sizeof(crt[0])*24*80);
+					pos -= 80;
+					memset(crt+pos, 0, sizeof(crt[0])*(25*80 - pos));
+				}
 			}
-		}
-	} else
-		crt[pos++] = (c&0xff) | current_colour;	// black on white
-
-	if(pos < 0 || pos > 26*80)
-		panic("pos under/overflow");
+			break;
+		
+		default:
+			crt[pos++] = (c&0xff) | current_colour;	// black on white
+			break;
+	}
 
 	if((pos/80) >= 25){	// Scroll up.
 		memmove(crt, crt+80, sizeof(crt[0])*24*80);

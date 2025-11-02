@@ -30,10 +30,6 @@ main(int argc, char *argv[])
 	int ch;
 	char *dir;
 
-	setprogname(argv[0]);
-	if (pledge("stdio", NULL) == -1)
-		err(1, "pledge");
-
 	while ((ch = getopt(argc, argv, "")) != -1) {
 		switch (ch) {
 		default:
@@ -48,7 +44,7 @@ main(int argc, char *argv[])
 
 	if ((dir = dirname(argv[0])) == NULL)
 		err(1, "%s", argv[0]);
-	puts(dir);
+	printf("%s\n", dir);
 	return 0;
 }
 
