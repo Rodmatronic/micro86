@@ -11,6 +11,11 @@
 size_t buffsize = 1;
 char *buff;
 size_t modchar = 0;
+int currline = 0;
+int scrollline = 0;
+int interactive = 0;
+int firstrun = 1;
+int ibuff = 0;
 
 int resize_buff(int size) {
 	char *tmp = malloc(size);
@@ -18,6 +23,25 @@ int resize_buff(int size) {
 	strcpy(tmp, buff);
 	buff = tmp;
 	return 0;
+}
+
+void enable(){
+	struct ttyb t;
+	gtty(&t);
+	t.tflags = ECHO;
+	stty(&t);
+}
+
+void disable(){
+	struct ttyb t;
+	gtty(&t);
+	t.tflags |= RAW;
+	t.tflags &= ~ECHO;
+	stty(&t);
+}
+
+void gotoxy(int x, int y) {
+	printf("\x1b[%d;%dH", y, x);
 }
 
 // int insline(char *ins, int l, int r) {
@@ -40,6 +64,55 @@ int resize_buff(int size) {
 //
 // }
 
+int printbuff() {
+	char s[1] = "a";
+
+	if (firstrun) {
+		firstrun = 0;
+		printf("\033[H\033[2J");
+		for (int row = 0; row < 24; row++) {
+			for (int col = 0; col < 80; col++) {
+				if (ibuff < strlen(buff)){
+					s[0] = buff[ibuff];
+					write(stdout, s, 1);
+				} else {
+					write(stdout, "\n", 1);
+					break;
+				}
+				ibuff++;
+				if (buff[ibuff] == '\n' || row >= 80) {
+					break;
+				}
+			}
+		}
+	} else {
+		if (scrollline < currline) {
+			scrollline = currline;
+			printf("\n");
+			gotoxy(0, 23);
+			printf("    ");
+			gotoxy(0, 22);
+			for (int col = 0; col < 80; col++) {
+				if (ibuff < strlen(buff)){
+					s[0] = buff[ibuff];
+					write(stdout, s, 1);
+				} else {
+					write(stdout, "\n", 1);
+					break;
+				}
+				ibuff++;
+				if (buff[ibuff] == '\n') {
+					break;
+				}
+			}
+			//printf("\n");
+		}
+		gotoxy(0, 24);
+	}
+	if (!interactive) printf("cmd>");
+	return 0;
+}
+
 int writebufftofd(int *fd){
 	char *writebuff = malloc(strlen(buff));
 	strcpy(writebuff, buff);
@@ -51,10 +124,12 @@ int writebufftofd(int *fd){
 
 int cmd(int *fd, struct stat st) {
 	char cmdline[512];
+	unsigned char c;
 
 	read(fd, buff, buffsize);
 	modchar = st.st_size;
-
+	printbuff();
+	/*
 	printf("\033[H\033[2J");
 	printf("%s\n", buff);
 
@@ -63,23 +138,51 @@ int cmd(int *fd, struct stat st) {
 	printf("modchar: %d\n", modchar);
 	printf("buffer size: %d\n", buffsize);
 	printf("buffer string length: %d\n", strlen(buff));
+	*/
 
-	printf("cmd>");
-	strcpy(cmdline, gets(stdin, sizeof(cmdline)));
+	//printf("cmd>");
 
-	switch (cmdline[0]) {
-		case 'q':
-			exit(0);
-			break;
-		case 'w':
-			writebufftofd(fd);
-			break;
-		default:
-			resize_buff(strlen(cmdline));
-			strcat(buff, cmdline);
+	if (!interactive) {
+		strcpy(cmdline, gets(stdin, sizeof(cmdline)));
+		switch (cmdline[0]) {
+			case 'q':
+				exit(0);
+				break;
+			case 'w':
+				writebufftofd(fd);
+				break;
+			case 'l':
+				currline++;
+				break;
+			case 'i':
+				interactive = 1;
+				break;
+			default:
+				resize_buff(strlen(cmdline));
+				strcat(buff, cmdline);
+		}
 
+	} else {
+		disable();
+		while (read(0, &c, 1) == 1) {
+			switch (c) {
+				case 0x00: // up
+					currline--;
+					break;
+				case 0x01: // down
+					currline++;
+					break;
+				case 0x02: // left
+					interactive = 0;
+					break;
+				// case 0x03: // right
+				// 	x++;
+				// 	break;
+				default:
+				 	break;
+			}
+		}
 	}
-
 	return 0;
 }
 
