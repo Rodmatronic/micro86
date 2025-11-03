@@ -420,8 +420,10 @@ void
 handle_ansi_clear(int param)
 {
 	if(param == 2 || param == 0) { // 2J = clear entire screen, 0J = clear from cursor
-		memset(crt, 0, sizeof(crt[0]) * 25 * 80);
 		setcursor(0, 0);
+		for (int i = 0; i < 80*24; i++) {
+			crt[i] = ' ' | 0x0700;
+		}
 	} else if(param == 1) { // clear from top to cursor
 		outb(CRTPORT, 14);
 		int pos = inb(CRTPORT+1) << 8;
