@@ -12,21 +12,21 @@ int x=0;
 int y=0;
 int tempfd;
 int sourcefd;
-char * filebuf = "\0";
-char * sourcefb = "\0";
+char filebuf[128];
+char sourcefb[128];
 int status;
 int exists;
 int aoffset=0;
 int newfile=0;
-int scrollup=0;
 
-char * writemsg = "\033[107m\033[30mFile modified since write; write or use ! to override.\033[0m";
-char * badcommand = "\033[107m\033[30mUnknown command.\033[0m";
-char * notimplemented = "\033[107m\033[30mNot implemented.\033[0m";
+char * writemsg = "\033[47m\033[30mFile modified since write; write or use ! to override.\033[0m";
+char * badcommand = "\033[47m\033[30mUnknown command.\033[0m";
+char * notimplemented = "\033[47m\033[30mNot implemented.\033[0m";
 
 void viexit(int s);
 void echoback();
 int copy(char *input, char *dest);
+void clearline();
 
 /*
  * sync the ansi cursor with reality
@@ -71,10 +71,9 @@ void disable() {
 void
 tobottom() {
 	gotoxy(1, 24);
-	for(int i=0;i<79;i++)
-		write(stdout, " ", 1);
+	clearline();
 	gotoxy(1, 24);
-	printf("\033[24;0H");
+	printf("\033[24;1H");
 }
 
 int cursor_offset(int line, int col) {
@@ -112,7 +111,8 @@ int cmp() {
 	char buf1[1024], buf2[1024];
 	ssize_t n1, n2;
 	int same = 0;
-
+	lseek(sourcefd, 0, SEEK_SET);
+	lseek(tempfd, 0, SEEK_SET);
 	while ((n1 = read(sourcefd, buf1, sizeof(buf1))) > 0 &&
 			(n2 = read(tempfd, buf2, sizeof(buf2))) > 0) {
 		if (n1 != n2 || memcmp(buf1, buf2, n1) != 0) {
@@ -217,12 +217,16 @@ commandmode() {
 			}
 			return;  // exit command mode
 		} else if (c == '\033') {
+			enable();
 			tobottom();
+			clearline();
 			disable();
 			return;
 		} else if (c == '\b') {  // backspace
 			if (len > 0) {
 				len--;
+				gotoxy(len+2, 24);
+				write(stdout, " ", 1);
 				gotoxy(len+2, 24);
 			}
 		} else if (len < (int)sizeof(buf) - 1) {
@@ -268,6 +272,13 @@ int seekline(int lines) {
 		}
 	}
 	return -1;
+}
+
+void
+clearline()
+{
+	for(int i=0;i<55;i++)
+		write(stdout, " ", 1);
 }
 
 /*
@@ -338,9 +349,9 @@ main(int argc, char ** argv)
 		fprintf(stderr, "Please provide a file\n");
 		exit(1);
 	}
-	char * buf = "\0";
+	char buf[256];
 	struct stat st;
-	sourcefb = argv[1];
+	strcpy(sourcefb, argv[1]);
 	if (stat(argv[1], &st) == -1) {
 		newfile = 1;
 		int fd = open(argv[1], O_RDONLY | O_CREAT);
@@ -348,12 +359,13 @@ main(int argc, char ** argv)
 	}
 	sourcefd = open(argv[1], O_RDONLY);
 	sprintf(buf, "/tmp/%s", basename(argv[1]));
-	filebuf = buf;
+	strcpy(filebuf, buf);
 	copy(argv[1], buf);
 	tempfd = open(buf, O_RDWR);
 	printf("\033[2J");
 	echoback();
 	tobottom();
+
 	if (!newfile)
 		printf("%s: %d bytes.", basename(sourcefb), st.st_size);
 	else
@@ -367,7 +379,6 @@ main(int argc, char ** argv)
 		case 0x00: // up
 			y--;
 			if (y == 0 && aoffset > 0) {
-				scrollup=1;
 				aoffset--;
 				y++;
 				echoback();
@@ -401,6 +412,9 @@ main(int argc, char ** argv)
 			insertmode();
 			break;
 		case 'd':
+			notim();
+			break;
+		case 'x':
 			notim();
 			break;
 		case 'H':

@@ -654,9 +654,6 @@ sys_open(void)
       errno = 2;
       return -2;
     }
-    if (omode & O_TRUNC) {
-      itrunc(ip);
-    }
   } else {
     if((ip = namei(path)) == 0){
       end_op();
@@ -671,6 +668,9 @@ sys_open(void)
       errno = 13;
       return -1;
     }
+  }
+  if (omode & O_TRUNC) {
+    itrunc(ip);
   }
   if((f = filealloc()) == 0 || (fd = fdalloc(f)) < 0){
     if(f){
