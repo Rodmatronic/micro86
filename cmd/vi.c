@@ -21,7 +21,8 @@ int newfile=0;
 int scrollup=0;
 
 char * writemsg = "\033[107m\033[30mFile modified since write; write or use ! to override.\033[0m";
-char * badcommand = "\033[107m\033[30mUnknown command\033[0m";
+char * badcommand = "\033[107m\033[30mUnknown command.\033[0m";
+char * notimplemented = "\033[107m\033[30mNot implemented.\033[0m";
 
 void viexit(int s);
 void echoback();
@@ -133,6 +134,7 @@ insertmode() {
 	unsigned char c;
 	while (read(0, &c, 1) == 1) {
 		switch (c) {
+		case 'k':
 		case 0x00: // up
 			y--;
 			if (y == 0 && aoffset > 0) {
@@ -141,6 +143,7 @@ insertmode() {
 				echoback();
 			}
 			break;
+		case 'j':
 		case 0x01: // down
 			y++;
 			if (y == 24) {
@@ -149,9 +152,11 @@ insertmode() {
 				echoback();
 			}
 			break;
+		case 'h':
 		case 0x02: // left
 			x--;
 			break;
+		case 'l':
 		case 0x03: // right
 			x++;
 		case '\033': // esc
@@ -205,9 +210,6 @@ commandmode() {
 				printf("%s: %d bytes written.", basename(sourcefb), st.st_size);
 				disable();
 				return;
-			} else if (strcmp(buf, "wq") == 0) {
-				copy(filebuf, sourcefb);
-				viexit(0);
 			} else {
 				tobottom();
 				printf(badcommand);
@@ -276,7 +278,7 @@ void
 echoback() {
 	enable();
 	clear();
-	gotoxy(1, 2);
+	gotoxy(1, 1);
 	char buf[1024];
 	ssize_t bytesread;
 	int line_count = 0;
@@ -320,6 +322,15 @@ copy(char * input, char * dest)
 	return 0;
 }
 
+void
+notim()
+{
+	enable();
+	tobottom();
+	printf(notimplemented);
+	disable();
+}
+
 int
 main(int argc, char ** argv)
 {
@@ -352,6 +363,7 @@ main(int argc, char ** argv)
 	unsigned char c;
 	while (read(0, &c, 1) == 1) {
 		switch (c) {
+		case 'k':
 		case 0x00: // up
 			y--;
 			if (y == 0 && aoffset > 0) {
@@ -361,6 +373,7 @@ main(int argc, char ** argv)
 				echoback();
 			}
 			break;
+		case 'j':
 		case 0x01: // down
 			y++;
 			if (y == 24) {
@@ -369,9 +382,11 @@ main(int argc, char ** argv)
 				echoback();
 			}
 			break;
+		case 'h':
 		case 0x02: // left
 			x--;
 			break;
+		case 'l':
 		case 0x03: // right
 			x++;
 			break;
@@ -384,6 +399,16 @@ main(int argc, char ** argv)
 		case 'a':
 			x++;
 			insertmode();
+			break;
+		case 'd':
+			notim();
+			break;
+		case 'H':
+			notim();
+			break;
+		case 'u':
+			notim();
+			break;
 		default:
 			break;
 		}
