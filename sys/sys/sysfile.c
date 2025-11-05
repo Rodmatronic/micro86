@@ -636,6 +636,7 @@ sys_open(void)
 {
   char *path;
   int fd, omode;
+  int mode = 0;
   struct file *f;
   struct inode *ip;
   //struct proc *p = myproc();
@@ -645,10 +646,16 @@ sys_open(void)
     return -1;
   }
 
+  if (omode & O_CREAT) {
+    argint(2, &mode);
+  }
+
   begin_op();
 
   if(omode & O_CREAT){
-    ip = create(path, S_IFREG | S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH, 0, 0);
+    if (mode == 2)
+      mode = 0666;
+    ip = create(path, S_IFREG | mode, 0, 0);
     if(ip == 0){
       end_op();
       errno = 2;

@@ -6,7 +6,6 @@ chmod		V7	----o // DONE(?) (needs -R)
 chown		V7	----o // DONE
 cmp		mocsysv	----o // DONE
 cp		V6	---o- // REPLACE (Make sysv-ish!)
-cron		V6	-o--- // REPLACE (not good)
 date		pou	---o- // DONE(?) (timezones!)
 dd		V7	----o // DONE(?) (status)
 dirname		openbsd	----o // DONE
@@ -24,7 +23,6 @@ kill		openbsd	----o // DONE
 ln		openbsd	----o // DONE
 login		mocsysv	----o // DONE(?) (pretty much done, just mocsysv)
 ls		mocsysv	----o // DONE(?) (nearly done, needs GID stuff)
-man		rod	--o-- // REPLACE (barely exists)
 mkdir		openbsd	----o // DONE
 mknod		openbsd	----o // DONE
 more		rod	---o- // DONE(?) (not nearly good enough, works)

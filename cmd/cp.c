@@ -13,7 +13,6 @@ char **argv;
 	static char pathbuf[256];
 	int fold, fnew, n;
 	register char *p1, *p2, *bp;
-//	int mode;
 
 	if(argc != 3) {
 		write(1, "Usage: cp oldfile newfile\n", 26);
@@ -24,7 +23,7 @@ char **argv;
 		exit(1);
 	}
 	fstat(fold, &buf);
-//	mode = buf[2];
+
 	/* is target a directory? */
 	if (stat(argv[2], &dirbuf) >= 0 && (dirbuf.st_mode & S_IFMT) == S_IFDIR) {
 		p1 = argv[1];
@@ -44,7 +43,7 @@ char **argv;
 			exit(1);
 		}
 	}
-	if ((fnew = open(argv[2], O_CREAT | O_WRONLY)) < 0) {
+	if ((fnew = open(argv[2], O_CREAT | O_WRONLY, 0666)) < 0) {
 		write(1, "Can't create new file.\n", 23);
 		exit(1);
 	}

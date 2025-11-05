@@ -194,7 +194,6 @@ UPROGS=\
 	$C/_chown\
 	$C/_cmp\
 	$C/_cp\
-	$C/_cron\
 	$C/_date\
 	$C/_dd\
 	$C/_du\
@@ -215,7 +214,6 @@ UPROGS=\
 	$C/_ln\
 	$C/_login\
 	$C/_ls\
-	$C/_man\
 	$C/_mkdir\
 	$C/_mknod\
 	$C/_more\
@@ -253,7 +251,7 @@ ETC=\
 
 $S/fs.img: $S/mkfs/mkfs $(UPROGS)
 	build/build.sh
-	$S/mkfs/mkfs $S/fs.img $M/cd.1 $(UPROGS) $(ETC)
+	$S/mkfs/mkfs $S/fs.img $(UPROGS) $(ETC)
 
 -include *.d
 
@@ -299,7 +297,6 @@ qemu: $S/fs.img xv6.img
 
 qemu-memfs: xv6memfs.img
 	$(QEMU) -cdrom frunix.iso -smp $(CPUS) -m 128 -serial mon:stdio -accel tcg
-
 qemu-nox: $S/fs.img xv6.img
 	$(QEMU) -nographic $(QEMUOPTS)
 

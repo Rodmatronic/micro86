@@ -65,7 +65,7 @@ sysinit(int argc, char** argv)
 
 	runsh(runc);
 
-	close(open(utmp, O_CREAT | O_RDWR));
+	close(open(utmp, O_CREAT | O_RDWR, 0666));
 	if ((i = open(wtmpf, 1)) >= 0) {
 		wtmp.tty = '~';
 		time(wtmp.time);

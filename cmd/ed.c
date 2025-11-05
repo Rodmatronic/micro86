@@ -337,7 +337,7 @@ commands()
 		filename(c);
 	caseread:
 //		if ((io = open(file, 0)) < 0) {
-                if ((io = open(file, O_CREAT | O_RDWR)) < 0) {
+                if ((io = open(file, O_CREAT | O_RDWR, 0666)) < 0) {
 			lastc = '\n';
 			ederror(file);
 		}
@@ -383,13 +383,13 @@ commands()
 			if ((io = open(file, O_RDWR)) >= 0) {
 				lseek(io, 0, 2);
 			} else {
-				if ((io = open(file, O_CREAT | O_RDWR)) < 0)
+				if ((io = open(file, O_CREAT | O_RDWR, 0666)) < 0)
 					ederror(file);
 			}
 		} else {
 			if (io >= 0) close(io);
 			unlink(file);
-			if ((io = open(file, O_CREAT | O_RDWR)) < 0)
+			if ((io = open(file, O_CREAT | O_RDWR, 0666)) < 0)
 				ederror(file);
 		}
 		wrapp = 0;
@@ -639,7 +639,7 @@ onhup(int _x)
 	if (dol > zero) {
 		addr1 = zero+1;
 		addr2 = dol;
-		io = open("ed.hup", O_CREAT | O_RDWR);
+		io = open("ed.hup", O_CREAT | O_RDWR, 0666);
 		if (io > 0)
 			putfile();
 	}
@@ -1044,7 +1044,7 @@ init()
 	iblock = -1;
 	oblock = -1;
 	ichanged = 0;
-	close(open(tfname, O_CREAT | O_RDWR));
+	close(open(tfname, O_CREAT | O_RDWR, 0666));
 	tfile = open(tfname, 2);
 	if(xflag) {
 		xtflag = 1;

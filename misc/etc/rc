@@ -23,7 +23,7 @@ echo -n "Welcome to FreeNIX version " > /etc/motd
 uname -r >> /etc/motd
 
 echo -n 'starting daemons:'
-echo -n ' cron';	cron
+# System daemons go here.
 echo '.'
 
 sh /etc/rc.local

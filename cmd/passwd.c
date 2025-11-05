@@ -121,7 +121,7 @@ tryagn:
 //		printf("Temporary file busy -- try again\n");
 //		goto bex;
 //	}
-	close(open(temp,O_CREAT | O_RDWR));
+	close(open(temp,O_CREAT | O_RDWR, 0666));
 	if((tf=open(temp,O_RDWR)) == NULL) {
 		printf("Cannot create temporary file\n");
 		goto bex;

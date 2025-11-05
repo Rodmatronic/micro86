@@ -249,7 +249,7 @@ char	**argv;
 		exit(0);
 	}
 	if (ofile)
-		obf = open(ofile, O_CREAT | O_RDWR);
+		obf = open(ofile, O_CREAT | O_RDWR, 0666);
 	else
 		obf = dup(1);
 	if(obf < 0) {

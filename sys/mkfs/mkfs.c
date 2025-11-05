@@ -181,12 +181,9 @@ main(int argc, char *argv[])
   uint usrbinino = create_directory(usrino, "bin");
   uint libino = create_directory(rootino, "lib");
   uint libgameino = create_directory(libino, "game");
-  uint usrmanino = create_directory(usrino, "man");
   uint usrgamesino = create_directory(usrino, "games");
-  uint manman1 = create_directory(usrmanino, "man1");
   uint homeino = create_directory(rootino, "home");
   uint homepouino = create_directory(homeino, "pou");
-  uint usrlibino = create_directory(usrino, "lib");
   uint optino = create_directory(rootino, "opt");
   uint optbinino = create_directory(optino, "bin");
   uint sbinino = create_directory(rootino, "sbin");
@@ -253,29 +250,22 @@ main(int argc, char *argv[])
 	    "banner",
 	    "basename",
 	    "cmp",
-	    "cron",
 	    "debugger",
 	    "dirname",
 	    "env",
 	    "find",
 	    "hexdump",
-	    "man",
 	    "more",
 	    "touch",
 	    "su",
 	    "uname",
-		"ved",
 	    "wc",
 	    "which",
 	    "whoami",
+	    "ved",
 	    "vi",
 	    "yes",
 	    NULL
-    };
-
-    char * usrlib_files[] = {
-	"crontab",
-	NULL
     };
 
     char * usrgames_files[] = {
@@ -285,11 +275,6 @@ main(int argc, char *argv[])
 
     char * libgame_files[] = {
 	"fortunes",
-	NULL
-    };
-
-    char * manman1_files[] = {
-	"cd.1",
 	NULL
     };
 
@@ -334,14 +319,10 @@ main(int argc, char *argv[])
 	iappend(binino, &de, sizeof(de));
     } else if (exists_in_list(name, usrbin_files)) {
 	iappend(usrbinino, &de, sizeof(de));
-    } else if (exists_in_list(name, usrlib_files)) {
- 	iappend(usrlibino, &de, sizeof(de));
     } else if (exists_in_list(name, usrgames_files)) {
 	iappend(usrgamesino, &de, sizeof(de));
     } else if (exists_in_list(name, libgame_files)) {
 	iappend(libgameino, &de, sizeof(de));
-    } else if (exists_in_list(name, manman1_files)) {
-	iappend(manman1, &de, sizeof(de));
     } else if (exists_in_list(name, optbin_files)) {
 	iappend(optbinino, &de, sizeof(de));
     } else if (exists_in_list(name, sbin_files)) {
