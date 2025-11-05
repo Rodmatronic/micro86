@@ -18,6 +18,8 @@ exec(char *path, char **argv)
   struct proghdr ph;
   pde_t *pgdir, *oldpgdir;
   struct proc *curproc = myproc();
+  char buf[128];
+  char *nargv[MAXARG];
 
   begin_op();
 
@@ -27,6 +29,28 @@ exec(char *path, char **argv)
   }
   ilock(ip);
   pgdir = 0;
+
+  if(readi(ip, buf, 0, sizeof(buf)) < 2)
+    goto bad;
+
+  if(buf[0] == '#' && buf[1] == '!'){
+    char *p = buf + 2;
+    while(*p == ' ' || *p == '\t') p++;
+    char *interp = p;
+    while(*p && *p != ' ' && *p != '\t' && *p != '\n')
+      p++;
+    *p = 0; // terminate interpreter path
+
+    nargv[0] = interp;
+    nargv[1] = path;
+    for(i = 1; argv[i] && i < MAXARG-2; i++)
+      nargv[i+1] = argv[i];
+    nargv[i+1] = 0;
+
+    iunlockput(ip);
+    end_op();
+    return exec(interp, nargv);
+  }
 
   // Check ELF header
   if(readi(ip, (char*)&elf, 0, sizeof(elf)) != sizeof(elf))

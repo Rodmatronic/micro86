@@ -134,7 +134,6 @@ insertmode() {
 	unsigned char c;
 	while (read(0, &c, 1) == 1) {
 		switch (c) {
-		case 'k':
 		case 0x00: // up
 			y--;
 			if (y == 0 && aoffset > 0) {
@@ -143,7 +142,6 @@ insertmode() {
 				echoback();
 			}
 			break;
-		case 'j':
 		case 0x01: // down
 			y++;
 			if (y == 24) {
@@ -152,11 +150,9 @@ insertmode() {
 				echoback();
 			}
 			break;
-		case 'h':
 		case 0x02: // left
 			x--;
 			break;
-		case 'l':
 		case 0x03: // right
 			x++;
 		case '\033': // esc
