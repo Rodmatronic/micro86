@@ -159,19 +159,6 @@ tags: $(OBJS) $S/boot/entryother.S $S/_init
 $S/pl/vectors.S: $S/pl/vectors.pl
 	$S/pl/vectors.pl > $S/pl/vectors.S
 
-ULIB = $L/ulib.o $S/sys/usys.o $L/printf.o $S/os/umalloc.o $L/udate.o $L/errno.o $C/font8x16.o $L/ucrypt.o $L/setmode.o $L/reallocarray.o $L/isctype.o $L/syslog.o $L/string.o
-
-_%: %.o $(ULIB)
-	$(LD) $(LDFLAGS) -N -e main -Ttext 0 -o $@ $^
-	$(OBJDUMP) -S $@ > $*.asm
-	$(OBJDUMP) -t $@ | sed '1,/SYMBOL TABLE/d; s/ .* / /; /^$$/d' > $*.sym
-
-$C/_forktest: $C/forktest.o $(ULIB)
-	# forktest has less library code linked in - needs to be small
-	# in order to be able to max out the proc table.
-	$(LD) $(LDFLAGS) -N -e main -Ttext 0 -o $C/_forktest $C/forktest.o $I/ulib.o $S/usys.o
-	$(OBJDUMP) -S $C/_forktest > $C/forktest.asm
-
 $S/mkfs/mkfs: $S/mkfs/mkfs.c $S/../include/fs.h
 	gcc -o $S/mkfs/mkfs $S/mkfs/mkfs.c
 
