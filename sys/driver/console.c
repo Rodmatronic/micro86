@@ -170,22 +170,14 @@ cprintf(char *fmt, ...)
 {
 	va_list ap;
 	int locking;
-	int prevcolour=0;
 
 	locking = cons.locking;
 	if(locking)
 		acquire(&cons.lock);
 
-	if (kerndcl) {
-		prevcolour=current_colour;
-		current_colour=0x0F00;
-	}
-
 	va_start(ap, fmt);
 	vcprintf(fmt, ap);
 	va_end(ap);
-
-	current_colour=prevcolour;
 
 	if(locking)
 		release(&cons.lock);
@@ -194,143 +186,6 @@ cprintf(char *fmt, ...)
 #define BACKSPACE 0x100
 #define CRTPORT 0x3d4
 //static ushort *crt = (ushort*)P2V(0xb8000);	// CGA memory
-
-#define CONSOLE_COLS 128
-#define CONSOLE_ROWS 96
-static char console_buffer[CONSOLE_COLS * CONSOLE_ROWS];
-static char old_console_buffer[CONSOLE_COLS * CONSOLE_ROWS];
-static int buffer_index = 0;
-
-void vbe_initdraw(void) {
-	for (int y = 0; y < CONSOLE_ROWS; y++) {
-		for (int x = 0; x < CONSOLE_COLS; x++) {
-			char c = console_buffer[y * CONSOLE_COLS + x];
-			if (c != ' ') {
-				graphical_putc(x * FONT_WIDTH, y * FONT_HEIGHT, c, rgb(255, 255, 255));
-			}
-		}
-	}
-}
-
-void vga_scroll(void) {
-	memcpy(old_console_buffer, console_buffer, CONSOLE_ROWS * CONSOLE_COLS);
-	memmove(console_buffer, console_buffer + CONSOLE_COLS, (CONSOLE_ROWS - 1) * CONSOLE_COLS);
-
-	memset(console_buffer + (CONSOLE_ROWS - 1) * CONSOLE_COLS, ' ', CONSOLE_COLS);
-	buffer_index -= CONSOLE_COLS;
-	if (buffer_index < 0) buffer_index = 0;
-
-	for (int y = 0; y < CONSOLE_ROWS; y++) {
-		for (int x = 0; x < CONSOLE_COLS; x++) {
-			char c = console_buffer[y * CONSOLE_COLS + x];
-			char old_c = old_console_buffer[y * CONSOLE_COLS + x];
-			if (old_c != ' ') {
-				graphical_putc(x * FONT_WIDTH, y * FONT_HEIGHT, old_c, rgb(0, 0, 0));
-			}
-			if (c != ' ') {
-				graphical_putc(x * FONT_WIDTH, y * FONT_HEIGHT, c, rgb(255, 255, 255));
-			}
-		}
-	}
-}
-
-void console_buffer_init(void) {
-	for (int i = 0; i < CONSOLE_COLS * CONSOLE_ROWS; i++) {
-		console_buffer[i] = ' ';
-	}
-}
-
-static int cursor_position = 0;
-
-void drawcursor(int x, int y, int visible) {
-	if (visible) {
-		const uint8_t* glyph = &fontdata_8x8[0xDB * FONT_HEIGHT];
-		for (int row = 0; row < FONT_HEIGHT; row++) {
-			uint8_t line = glyph[row];
-			for (int col = 0; col < FONT_WIDTH; col++) {
-				if (line & (1 << (7 - col))) {
-					putpixel(x + col, y + row, rgb(255, 255, 255));
-				}
-			}
-		}
-	} else {
-		char c = console_buffer[cursor_position];
-		if (c != ' ' && c != 0) {
-			graphical_putc(x, y, c, rgb(255, 255, 255));
-		} else {
-			for (int row = 0; row < FONT_HEIGHT; row++) {
-				for (int col = 0; col < FONT_WIDTH; col++) {
-					putpixel(x + col, y + row, rgb(0, 0, 0));
-				}
-			}
-		}
-	}
-}
-
-void oldcgaputc(int c) {
-	int cursor_x = (cursor_position % CONSOLE_COLS) * FONT_WIDTH;
-	int cursor_y = (cursor_position / CONSOLE_COLS) * FONT_HEIGHT;
-
-	oldcgaputc(c);
-
-	if (postvbe)
-		drawcursor(cursor_x, cursor_y, 0);
-
-	if (c == '\n') {
-		int current_row = buffer_index / CONSOLE_COLS;
-		buffer_index = (current_row + 1) * CONSOLE_COLS;
-	} else if (c == '\r') {
-		buffer_index = (buffer_index / CONSOLE_COLS) * CONSOLE_COLS;
-	} else if(c == '\t'){
-		for(int i = 0; i < 8; i++){
-			console_buffer[buffer_index++] = ' ';
-			int x = (buffer_index - 1) % CONSOLE_COLS;
-			int y = (buffer_index - 1) / CONSOLE_COLS;
-			if (!postvbe)
-				return;
-			graphical_putc(x * FONT_WIDTH, y * FONT_HEIGHT, ' ', rgb(255, 255, 255));
-			if(buffer_index >= CONSOLE_COLS * CONSOLE_ROWS)
-				vga_scroll();
-		}
-	} else if (c == BACKSPACE) {
-		if (buffer_index > 0) {
-			buffer_index--;
-			console_buffer[buffer_index] = ' '; // Clear in buffer
-			int x_pos = (buffer_index % CONSOLE_COLS) * FONT_WIDTH;
-			int y_pos = (buffer_index / CONSOLE_COLS) * FONT_HEIGHT;
-			if (!postvbe)
-				return;
-
-			for (int row = 0; row < FONT_HEIGHT; row++) {
-				for (int col = 0; col < FONT_WIDTH; col++) {
-					putpixel(x_pos + col, y_pos + row, 0x00);
-				}
-			}
-		}
-	} else {
-		console_buffer[buffer_index] = c;
-		buffer_index++;
-	}
-	if (buffer_index >= CONSOLE_COLS * CONSOLE_ROWS) {
-		vga_scroll();
-	}
-
-	if (c > 0 && c != '\n' && c != '\r' && c != BACKSPACE && c != '\t') {
-		int x = (buffer_index - 1) % CONSOLE_COLS;
-		int y = (buffer_index - 1) / CONSOLE_COLS;
-		if (!postvbe)
-			return;
-
-		color=rgb(255, 255, 255);
-		graphical_putc(x * FONT_WIDTH, y * FONT_HEIGHT, c, color);
-	}
-	cursor_position = buffer_index;
-	cursor_x = (cursor_position % CONSOLE_COLS) * FONT_WIDTH;
-	cursor_y = (cursor_position / CONSOLE_COLS) * FONT_HEIGHT;
-	if (!postvbe)
-		return;
-	drawcursor(cursor_x, cursor_y, 1);
-}
 
 enum ansi_state {
 	ANSI_NORMAL,

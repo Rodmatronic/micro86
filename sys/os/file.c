@@ -135,7 +135,6 @@ int mouseread(struct inode *ip, char *dst, int n) {
 void
 devinit()
 {
-  mouseinit();
   devsw[NULLDEV].read = nullread;
   devsw[NULLDEV].write = badwrite;
   devsw[RANDOM].read = rndread;

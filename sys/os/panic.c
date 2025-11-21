@@ -20,16 +20,7 @@ panic(char *fmt, ...)
         vcprintf(fmt, ap);
         va_end(ap);
 
-        consputc('\n'); cprintf("syncing filesystem\n");
-        sync();
-#if DEBUG
-        if (!debugger(0))
-        exit(0);
-#endif
-        cprintf("press any key to reboot.");
         panicked=1;             // Freeze other CPUs
-        kgetchar();
-        reboot(1);
         for(;;);
 }
 

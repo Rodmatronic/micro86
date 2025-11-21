@@ -16,6 +16,9 @@
 #include <file.h>
 #include <fcntl.h>
 #include <x86.h>
+#include <tty.h>
+#include <utsname.h>
+#include <version.h>
 
 // sysfile.c
 
@@ -722,4 +725,470 @@ sys_pipe(void)
   fd[0] = fd0;
   fd[1] = fd1;
   return 0;
+}
+
+int
+sys_environ(void)
+{
+  char *ubuf;
+  int buflen;
+  if (argptr(0, &ubuf, 1) < 0 || argint(1, &buflen) < 0) {
+    errno=1;
+    return -1;
+  }
+
+  struct proc *p = myproc();
+  int pos = 0;
+  for (int i = 0; i < p->env_count; i++) {
+    int n = strlen(p->env[i].name);
+    if (pos + n + 1 >= buflen) break;
+    safestrcpy(ubuf + pos, p->env[i].name, buflen - pos);
+    pos += n;
+    ubuf[pos++] = '=';
+    n = strlen(p->env[i].value);
+    if (pos + n + 1 >= buflen) break;
+    safestrcpy(ubuf + pos, p->env[i].value, buflen - pos);
+    pos += n;
+    ubuf[pos++] = '\n';
+  }
+  if (pos < buflen)
+    ubuf[pos] = 0;
+  return 0;
+}
+
+int
+sys_setenv(void)
+{
+  char *name, *value;
+  if (argstr(0, &name) < 0 || argstr(1, &value) < 0) {
+    errno=1;
+    return -1;
+  }
+
+  struct proc *p = myproc();
+  for (int i = 0; i < p->env_count; i++) {
+    if (strncmp(p->env[i].name, name, MAX_ENV_NAME) == 0) {
+      safestrcpy(p->env[i].value, value, MAX_ENV_VALUE);
+      return 0;
+    }
+  }
+
+  if (p->env_count >= MAX_ENV_VARS) {
+    errno=12;
+    return -1;
+  }
+
+  safestrcpy(p->env[p->env_count].name, name, MAX_ENV_NAME);
+  safestrcpy(p->env[p->env_count].value, value, MAX_ENV_VALUE);
+  p->env_count++;
+  return 0;
+}
+
+int
+sys_getenv(void)
+{
+  char *name, *value;
+  if (argstr(0, &name) < 0 || argptr(1, &value, MAX_ENV_VALUE) < 0) {
+    errno=1;
+    return -1;
+  }
+
+  struct proc *p = myproc();
+  for (int i = 0; i < p->env_count; i++) {
+    if (strncmp(p->env[i].name, name, MAX_ENV_NAME) == 0) {
+      safestrcpy(value, p->env[i].value, MAX_ENV_VALUE);
+      return 0;
+    }
+  }
+
+  safestrcpy(value, "", MAX_ENV_VALUE);
+  return 0;
+}
+
+extern struct ttyb ttyb;
+extern struct cons cons;
+
+int
+sys_gtty(void)
+{
+  struct ttyb *uttyb;
+  if (argptr(0, (char **)&uttyb, sizeof(struct ttyb)) < 0)
+    return -1;
+
+  acquire(&cons.lock);
+  *uttyb = ttyb;
+  release(&cons.lock);
+  return 0;
+}
+
+int
+sys_stty(void)
+{
+  struct ttyb *uttyb;
+  if (argptr(0, (char **)&uttyb, sizeof(struct ttyb)) < 0) {
+    errno=1;
+    return -1;
+  }
+
+  acquire(&cons.lock);
+  ttyb.speeds = uttyb->speeds;
+  ttyb.tflags = uttyb->tflags;
+  ttyb.erase = uttyb->erase;
+  ttyb.kill = uttyb->kill;
+  release(&cons.lock);
+  return 0;
+}
+
+#define MAX 255
+
+char sys_nodename[MAX] = "localhost";
+
+int
+sys_uname(void)
+{
+  struct utsname *u;
+  char *addr;
+
+  if(argptr(0, &addr, sizeof(*u)) < 0) {
+    errno=1;
+    return -1;
+  }
+
+  u = (struct utsname *)addr;
+  safestrcpy(u->sysname, sys_name, sizeof(u->sysname));
+  safestrcpy(u->nodename, sys_nodename, sizeof(u->nodename));
+  safestrcpy(u->release, sys_release, sizeof(u->release));
+  // version-candidate
+  safestrcpy(u->version, sys_version, sizeof(u->version));
+  safestrcpy(u->machine, "i386", sizeof(u->machine));
+  safestrcpy(u->domainname, "domainname", sizeof(u->domainname));
+  return 0;
+}
+
+
+int sys_sethostname(void) {
+    char *name;
+    int len;
+
+    if (argstr(0, &name) < 0 || argint(1, &len) < 0) {
+	errno=1;
+        return -1;
+    }
+
+    if (len <= 0 || len >= MAX) {
+	errno=12;
+        return -1;
+    }
+
+    if (myproc()->p_uid != 0) {
+	errno=1;
+        return -1;
+    }
+
+    if (safestrcpy(sys_nodename, name, MAX) < 0) {
+	errno=5;
+        return -1;
+    }
+
+    return 0;
+}
+
+int sys_stime(void) {
+    unsigned long epoch;
+    if (argint(0, (int*)&epoch) < 0) {
+	errno=1;
+        return -1;
+    }
+    struct proc *p = myproc();
+    if (p->p_uid != 0) return 1; // Operation not permitted
+    set_kernel_time((unsigned long)epoch);
+    return 0;
+}
+
+// seconds since epoch
+int
+sys_time(void)
+{
+  int esec;
+  if (argint(0, &esec) < 0) {
+    errno=1;
+    return -1;
+  }
+  return epoch_mktime();
+}
+
+int
+sys_usleep(void)
+{
+  int usec;
+  if (argint(0, &usec) < 0) {
+    errno=1;
+    return -1;
+  }
+  int ticks_needed = usec / 10000; // each tick ~10,000 us
+  if (ticks_needed == 0)
+    ticks_needed = 1; // minimum sleep = 1 tick
+  acquire(&tickslock);
+  uint ticks0 = ticks;
+  while (ticks - ticks0 < ticks_needed)
+    sleep(&ticks, &tickslock);
+  release(&tickslock);
+  return 0;
+}
+
+int
+sys_setgid(void) {
+  int gid;
+  if (argint(0, &gid) < 0) {
+    errno=1;
+    return -1;
+  }
+
+  struct proc *p = myproc();
+  p->p_gid = gid;
+  return 0;
+}
+
+int
+sys_setuid(void) {
+  int uid;
+  if (argint(0, &uid) < 0) {
+    errno=1;
+    return -1;
+  }
+
+  struct proc *p = myproc();
+  p->p_uid = uid;
+  return 0;
+}
+
+int
+sys_getgid(void)
+{
+  return myproc()->p_gid;
+}
+
+int
+sys_getuid(void)
+{
+  return myproc()->p_uid;
+}
+
+int
+sys_fork(void)
+{
+  return fork();
+}
+
+void
+sys_exit(void)
+{
+  int status;
+  if(argint(0, &status) < 0) { // Get exit status from first argument
+    errno=1;
+    return;
+  }
+  exit(status);
+}
+
+int
+sys_wait(void)
+{
+  int *status;
+  if(argptr(0, (void*)&status, sizeof(*status)) < 0) { // Get status pointer
+    errno=1;
+    return -1;
+  }
+  return wait(status);
+}
+
+int
+sys_kill(void)
+{
+  int pid;
+  int status;
+
+  if(argint(0, &pid) < 0 || argint(1, &status) < 0) {
+    errno=1;
+    return -1;
+  }
+
+  return kill(pid, status);
+}
+
+int
+sys_getpid(void)
+{
+  return myproc()->p_pid;
+}
+
+int
+sys_sbrk(void)
+{
+  int addr;
+  int n;
+
+  if(argint(0, &n) < 0) {
+    errno=1;
+    return -1;
+  }
+  addr = myproc()->sz;
+  if(growproc(n) < 0) {
+    errno=5;
+    return -1;
+  }
+  return addr;
+}
+
+int
+sys_sleep(void)
+{
+  int n;
+  uint ticks0;
+
+  if(argint(0, &n) < 0) {
+    errno=1;
+    return -1;
+  }
+  acquire(&tickslock);
+  ticks0 = ticks;
+  while(ticks - ticks0 < n){
+    if(myproc()->killed){
+      release(&tickslock);
+      return -1;
+    }
+    sleep(&ticks, &tickslock);
+  }
+  release(&tickslock);
+  return 0;
+}
+
+// return how many clock tick interrupts have occurred
+// since start.
+int
+sys_uptime(void)
+{
+  uint xticks;
+
+  acquire(&tickslock);
+  xticks = ticks;
+  release(&tickslock);
+  return xticks;
+}
+
+#define ENOSYS 78
+
+int sys_syscall(void){
+	return ENOSYS;
+}
+int sys_creat(void){
+	return ENOSYS;
+}
+int sys_break(void){
+	return ENOSYS;
+}
+int sys_stat(void){
+	return ENOSYS;
+}
+int sys_mount(void){
+	return ENOSYS;
+}
+int sys_umount(void){
+	return ENOSYS;
+}
+int sys_ptrace(void){
+	return ENOSYS;
+}
+int sys_alarm(void){
+	return ENOSYS;
+}
+int sys_pause(void){
+	return ENOSYS;
+}
+int sys_access(void){
+	return ENOSYS;
+}
+int sys_nice(void){
+	return ENOSYS;
+}
+int sys_ftime(void){
+	return ENOSYS;
+}
+int sys_rename(void){
+	return ENOSYS;
+}
+int sys_rmdir(void){
+	return ENOSYS;
+}
+int sys_times(void){
+	return ENOSYS;
+}
+int sys_prof(void){
+	return ENOSYS;
+}
+int sys_brk(void){
+	return ENOSYS;
+}
+int sys_signal(void){
+	return ENOSYS;
+}
+int sys_geteuid(void){
+	return ENOSYS;
+}
+int sys_getegid(void){
+	return ENOSYS;
+}
+int sys_acct(void){
+	return ENOSYS;
+}
+int sys_phys(void){
+	return ENOSYS;
+}
+int sys_lock(void){
+	return ENOSYS;
+}
+int sys_ioctl(void){
+	return ENOSYS;
+}
+int sys_fcntl(void){
+	return ENOSYS;
+}
+int sys_mpx(void){
+	return ENOSYS;
+}
+int sys_setpgid(void){
+	return ENOSYS;
+}
+int sys_ulimit(void){
+	return ENOSYS;
+}
+int sys_umask(void){
+	return ENOSYS;
+}
+int sys_chroot(void){
+	return ENOSYS;
+}
+int sys_ustat(void){
+	return ENOSYS;
+}
+int sys_dup2(void){
+	return ENOSYS;
+}
+int sys_getppid(void){
+	return ENOSYS;
+}
+int sys_getpgrp(void){
+	return ENOSYS;
+}
+int sys_setsid(void){
+	return ENOSYS;
+}
+int sys_sigaction(void){
+	return ENOSYS;
+}
+int sys_sgetmask(void){
+	return ENOSYS;
+}
+int sys_ssetmask(void){
+	return ENOSYS;
 }

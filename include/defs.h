@@ -16,11 +16,7 @@ extern int errno;
 extern int draw_blacks;
 extern int cprintf_flag;
 
-#define VGA_MAX_WIDTH 1024
-#define VGA_MAX_HEIGHT 768
 #define IRQ_IDE_SECONDARY 15
-
-extern int postvbe;
 
 extern unsigned long startup_time;
 extern unsigned long kernel_time;
@@ -240,14 +236,6 @@ void            switchkvm(void);
 int             copyout(pde_t*, uint, void*, uint);
 void            clearpteu(pde_t *pgdir, char *uva);
 int		mappages(pde_t *pgdir, void *va, uint size, uint pa, int perm);
-
-// vbe.c
-void		graphical_putc(uint16_t, uint16_t, char, uint32_t);
-void		vbeinit(void);
-void		putpixel(int x, int y, uint32_t color);
-uint32_t	rgb(uint8_t red, uint8_t green, uint8_t blue);
-
-void vga_scroll(void);
 
 // number of elements in fixed-size array
 #define NELEM(x) (sizeof(x)/sizeof((x)[0]))

@@ -1,44 +1,74 @@
 // System call numbers
-#define SYS_fork    1
-#define SYS_exit    2
-#define SYS_wait    3
-#define SYS_pipe    4
-#define SYS_read    5
-#define SYS_kill    6
-#define SYS_exec    7
-#define SYS_fstat   8
-#define SYS_chdir   9
-#define SYS_dup    10
-#define SYS_getpid 11
-#define SYS_sbrk   12
-#define SYS_sleep  13
-#define SYS_uptime 14
-#define SYS_open   15
-#define SYS_write  16
-#define SYS_mknod  17
-#define SYS_unlink 18
-#define SYS_link   19
-#define SYS_mkdir  20
-#define SYS_close  21
-#define SYS_getuid 22
-#define SYS_getgid 23
-#define SYS_setuid 24
-#define SYS_setgid 25
-#define SYS_usleep 26
-#define SYS_time   27
-#define SYS_uname  28
-#define SYS_sync   29
-#define SYS_stty   30
-#define SYS_gtty   31
-#define SYS_lseek  32
-#define SYS_devctl 33
-#define SYS_stime  34
-#define SYS_utime  35
-#define SYS_sethostname 36
-#define SYS_setenv 37
-#define SYS_secure_getenv 38
-#define SYS_environ 39
-#define SYS_chmod 40
-#define SYS_reboot 41
-#define SYS_chown 42
-#define SYS_getproc 43
+#define SYS_syscall	0
+#define SYS_exit	1
+#define SYS_fork	2
+#define SYS_read	3
+#define SYS_write	4
+#define SYS_open	5
+#define SYS_close	6
+#define SYS_wait	7 // replace with waitpid
+#define SYS_creat	8 // TODO
+#define SYS_link	9
+#define SYS_unlink	10
+#define SYS_exec	11 // replace with execve
+#define SYS_chdir	12
+#define SYS_time	13
+#define SYS_mknod	14
+#define SYS_chmod	15
+#define SYS_chown	16
+#define SYS_break	17 // TODO
+#define SYS_stat	18
+#define SYS_lseek	19
+#define SYS_getpid	20
+#define SYS_mount	21 // TODO
+#define SYS_umount	22 // TODO
+#define SYS_setuid	23
+#define SYS_getuid	24
+#define SYS_stime	25
+#define SYS_ptrace	26 // TODO
+#define SYS_alarm	27 // TODO
+#define SYS_fstat	28 // TODO
+#define SYS_pause	29 // TODO
+#define SYS_utime	30
+#define SYS_stty	31
+#define SYS_gtty	32
+#define SYS_access	33 // TODO
+#define SYS_nice	34 // TODO
+#define SYS_ftime	35 // TODO
+#define SYS_sync	36
+#define SYS_kill	37
+#define SYS_rename	38 // TODO
+#define SYS_mkdir	39
+#define SYS_rmdir	40 // TODO
+#define SYS_dup		41
+#define SYS_pipe	42
+#define SYS_times	43 // TODO
+#define SYS_prof	44 // TODO
+#define SYS_brk		45
+#define SYS_setgid	46
+#define SYS_getgid	47
+#define SYS_signal	48 // TODO
+#define SYS_geteuid	49 // TODO
+#define SYS_getegid	50 // TODO
+#define SYS_acct	51 // TODO
+#define SYS_phys	52 // TODO
+#define SYS_lock	53 // TODO
+#define SYS_ioctl	54 // TODO
+#define SYS_fcntl	55 // TODO
+#define SYS_mpx		56 // TODO
+#define SYS_setpgid	57 // TODO
+#define SYS_ulimit	58 // TODO
+#define SYS_uname	59
+#define SYS_umask	60 // TODO
+#define SYS_chroot	61 // TODO
+#define SYS_ustat	62 // TODO
+#define SYS_dup2	63 // TODO
+#define SYS_getppid	64 // TODO
+#define SYS_getpgrp	65 // TODO
+#define SYS_setsid	66 // TODO
+#define SYS_sigaction	67 // TODO
+#define SYS_sgetmask	68 // TODO
+#define SYS_ssetmask	69 // TODO
+// plenty
+
+

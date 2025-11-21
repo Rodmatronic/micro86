@@ -66,10 +66,6 @@ trap(struct trapframe *tf)
     kbdintr();
     lapiceoi();
     break;
-  case T_IRQ0 + IRQ_MOUSE:
-    mouse_handler();
-    lapiceoi();
-    break;
   case T_IRQ0 + IRQ_COM1:
     uartintr();
     lapiceoi();

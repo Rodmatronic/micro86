@@ -9,9 +9,7 @@ OBJS = \
 	$S/os/bio.o\
 	$S/driver/console.o\
 	$S/os/exec.o\
-	$S/os/debugger.o\
 	$S/os/file.o\
-	$S/graph/font8x8.o\
 	$S/os/fs.o\
 	$S/driver/ide.o\
 	$S/os/ioapic.o\
@@ -21,7 +19,6 @@ OBJS = \
 	$S/os/log.o\
 	$S/os/main.o\
 	$S/os/mp.o\
-	$S/driver/mouse.o\
 	$S/os/panic.o\
 	$S/os/picirq.o\
 	$S/os/pipe.o\
@@ -31,15 +28,13 @@ OBJS = \
 	$S/os/string.o\
 	$S/os/swtch.o\
 	$S/sys/syscall.o\
-	$S/sys/sysfile.o\
-	$S/sys/sysproc.o\
+	$S/sys/sys.o\
 	$S/boot/trapasm.o\
 	$S/os/trap.o\
 	$S/os/time.o\
 	$S/driver/uart.o\
 	$S/pl/vectors.o\
 	$S/os/vm.o\
-	$S/driver/vbe.o\
 
 # Cross-compiling (e.g., on Mac OS X)
 # TOOLPREFIX = i386-jos-elf
@@ -186,59 +181,6 @@ $S/mkfs/mkfs: $S/mkfs/mkfs.c $S/../include/fs.h
 # http://www.gnu.org/software/make/manual/html_node/Chained-Rules.html
 .PRECIOUS: %.o
 
-UPROGS=\
-        $C/_banner\
-        $C/_basename\
-	$C/_cat\
-	$C/_chmod\
-	$C/_chown\
-	$C/_cmp\
-	$C/_cp\
-	$C/_date\
-	$C/_dd\
-	$C/_du\
-	$C/_debugger\
-	$C/_dirname\
-	$C/_echo\
-	$C/_ed\
-	$C/_env\
-	$C/_find\
-	$C/_fortune\
-	$C/_getty\
-	$C/_grep\
-	$C/_hexdump\
-	$C/_hostname\
-	$C/_init\
-	$C/_kill\
-	$C/_line\
-	$C/_ln\
-	$C/_login\
-	$C/_ls\
-	$C/_mkdir\
-	$C/_mknod\
-	$C/_more\
-	$C/_mv\
-	$C/_nologin\
-	$C/_passwd\
-	$C/_ps\
-	$C/_pwd\
-	$C/_usertests\
-	$C/_rm\
-	$C/_rmdir\
-	$C/_sh\
-	$C/_su\
-	$C/_reboot\
-	$C/_sleep\
-	$C/_stressfs\
-	$C/_touch\
-	$C/_uname\
-	$C/_wc\
-	$C/_which\
-	$C/_whoami\
-	$C/_yes\
-	$C/_ved\
-	$C/_vi\
-
 ETC=\
     	$M/lib/fortunes\
 	$M/etc/gettytab\
@@ -251,7 +193,7 @@ ETC=\
 
 $S/fs.img: $S/mkfs/mkfs $(UPROGS)
 	build/build.sh
-	$S/mkfs/mkfs $S/fs.img $(UPROGS) $(ETC)
+	$S/mkfs/mkfs $S/fs.img $(ETC)
 
 -include *.d
 

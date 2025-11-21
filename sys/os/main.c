@@ -14,17 +14,6 @@ static void mpmain(void)  __attribute__((noreturn));
 extern pde_t *kpgdir;
 extern char end[]; // first address after kernel loaded from ELF file
 
-struct cpuident {
-	char	cpu_model[49];
-	char	cpu_vendor[49];
-	char 	*machine;
-	int	cliplevel;
-	int 	mhz;
-};
-
-char * copyrightbsd = "Copyright (c) 1989, 1993 The Regents of the University of California.  All rights reserved.\n";
-char * copyrightxv6 = "Copyright (c) 2006-2018 Frans Kaashoek, Robert Morris, Russ Cox, The Massachusetts Institute of Technology\n";
-
 // Bootstrap processor starts running C code here.
 // Allocate a real stack and switch to it, first
 // doing some setup required for memory allocator to work.
@@ -34,13 +23,10 @@ kmain(uint addr)
 {
   mbootinit(addr);
   kinit1(end, P2V(4*1024*1024)); // phys page allocator
-  cprintf("%s\n", sys_version);
-  cprintf(copyrightxv6);
-  cprintf(copyrightbsd);
+  cprintf("kmain: %c86", 0xE6);
   kvmalloc();      // kernel page table
   timeinit();	   // set up unix date&time
   mpinit();        // detect other processors
-  //vbeinit();
   lapicinit();     // interrupt controller
   seginit();       // segment descriptors
   picinit();       // disable pic
@@ -70,53 +56,10 @@ mpenter(void)
   mpmain();
 }
 
-void
-cpuid(uint eax_in, uint *eax, uint *ebx, uint *ecx, uint *edx) {
-    uint eax_val, ebx_val, ecx_val, edx_val;
-    asm volatile("cpuid"
-                 : "=a"(eax_val), "=b"(ebx_val), "=c"(ecx_val), "=d"(edx_val)
-                 : "a"(eax_in)
-                 :);
-    if (eax) *eax = eax_val;
-    if (ebx) *ebx = ebx_val;
-    if (ecx) *ecx = ecx_val;
-    if (edx) *edx = edx_val;
-}
-
-void
-identifycpu()
-{
-	struct cpuident cp;
-	cp.machine = MACHINE;
-
-	// Get the CPU model info
-	uint reg_values[12];
-	cpuid(0x80000000, &reg_values[0], &reg_values[1], &reg_values[2], &reg_values[3]);
-	if (reg_values[0] < 0x80000004){
-		cprintf("Nomodel ");
-	} else {
-		cpuid(0x80000002, &reg_values[0], &reg_values[1], &reg_values[2], &reg_values[3]);
-		cpuid(0x80000003, &reg_values[4], &reg_values[5], &reg_values[6], &reg_values[7]);
-		cpuid(0x80000004, &reg_values[8], &reg_values[9], &reg_values[10], &reg_values[11]);
-		memmove(cp.cpu_model, reg_values, sizeof(reg_values));
-		cp.cpu_model[48] = '\0';
-	}
-
-	// Get the CPU vendor info
-	uint eax, ebx, ecx, edx;
-	cpuid(0, &eax, &ebx, &ecx, &edx);
-	*((uint *)cp.cpu_vendor) = ebx;
-	*((uint *)(cp.cpu_vendor + 4)) = edx;
-	*((uint *)(cp.cpu_vendor + 8)) = ecx;
-	cp.cpu_vendor[12] = '\0';
-	cprintf("cpu%d: %s %s\n", cpunum(), cp.cpu_model, cp.cpu_vendor);
-}
-
 // Common CPU setup code.
 static void
 mpmain(void)
 {
-  identifycpu();
   idtinit();       // load idt register
   xchg(&(mycpu()->started), 1); // tell startothers() we're up
   scheduler();     // start running processes
