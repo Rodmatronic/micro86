@@ -86,12 +86,7 @@ trap(struct trapframe *tf)
     }
     // In user space, assume process misbehaved.
     if (tf->eip != -1){
-      cprintf("%s: Segmentation fault (%d)\n", myproc()->name, tf->trapno);
-      uint xticks;
-      acquire(&tickslock);
-      xticks = ticks;
-      release(&tickslock);
-      cprintf("Please report this dump!\n-- BEGIN CRASH DUMP --\n name  = %s\n trap  = %d\n eip   = 0x%x\n tics  = %d\n size  = %d\n pid   = %d\n state = %x\n tty   = %x\n", myproc()->name, tf->trapno, tf->eip, xticks, myproc()->sz, myproc()->p_pid, myproc()->state, myproc()->ttyflags);
+      cprintf("%s: fatal trap from PID %d (%d)\n", myproc()->name, myproc()->p_pid, tf->trapno);
     }
     myproc()->killed = 1;
   }
