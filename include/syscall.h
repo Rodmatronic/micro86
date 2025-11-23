@@ -7,7 +7,7 @@
 #define SYS_open	5
 #define SYS_close	6
 #define SYS_wait	7 // replace with waitpid
-#define SYS_creat	8 // TODO
+#define SYS_creat	8
 #define SYS_link	9
 #define SYS_unlink	10
 #define SYS_exec	11 // replace with execve
@@ -32,7 +32,7 @@
 #define SYS_utime	30
 #define SYS_stty	31
 #define SYS_gtty	32
-#define SYS_access	33 // TODO
+#define SYS_access	33
 #define SYS_nice	34 // TODO
 #define SYS_ftime	35 // TODO
 #define SYS_sync	36
