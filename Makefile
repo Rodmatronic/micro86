@@ -114,10 +114,9 @@ xv6memfs.img: $S/boot/bootblock $S/kernelmemfs
 	dd if=$S/boot/bootblock of=xv6memfs.img conv=notrunc
 	dd if=$S/kernelmemfs of=xv6memfs.img seek=1 conv=notrunc
 
-$S/boot/bootblock: $S/boot/bootasm.S $S/boot/bootmain.c
-	$(CC) $(CFLAGS) -fno-pic -O -nostdinc -I. -c $S/boot/bootmain.c -o $S/boot/bootmain.o
+$S/boot/bootblock: $S/boot/bootasm.S
 	$(CC) $(CFLAGS) -fno-pic -nostdinc -I. -c $S/boot/bootasm.S -o $S/boot/bootasm.o
-	$(LD) $(LDFLAGS) -N -e start -Ttext 0x7C00 -o $S/boot/bootblock.o $S/boot/bootasm.o $S/boot/bootmain.o
+	$(LD) $(LDFLAGS) -N -e start -Ttext 0x7C00 -o $S/boot/bootblock.o $S/boot/bootasm.o
 	$(OBJDUMP) -S $S/boot/bootblock.o > $S/boot/bootblock.asm
 	$(OBJCOPY) -S -O binary -j .text $S/boot/bootblock.o $S/boot/bootblock
 	$S/pl/sign.pl $S/boot/bootblock
