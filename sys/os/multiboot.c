@@ -21,6 +21,5 @@ void mbootinit(unsigned long addr) {
         panic("mbootinit: invalid boot info\n");
     }
     mbi_size = *(uint *)mbi_addr;
-    cprintf("mbootinit: mboot info addr=0x%08x\n", mbi_addr);
-    cprintf("mbootinit: mboot info size=%d bytes\n", mbi_size);
+    cprintf("mbootinit: mboot info addr=0x%08x, size=%d bytes\n", mbi_addr, mbi_size);
 }

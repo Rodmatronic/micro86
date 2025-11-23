@@ -23,7 +23,7 @@ kmain(uint addr)
 {
   mbootinit(addr);
   kinit1(end, P2V(4*1024*1024)); // phys page allocator
-  cprintf("kmain: %c86", 0xE6);
+  cprintf("%c86\n", 0xE6);
   kvmalloc();      // kernel page table
   timeinit();	   // set up unix date&time
   mpinit();        // detect other processors
@@ -100,20 +100,6 @@ startothers(void)
     while(c->started == 0)
       ;
   }
-}
-
-// reboot/halt kern
-int
-reboot(int flag)
-{
-  if (!flag) {
-    cprintf("system halted.\n");
-    asm volatile ("cli\n"
-                  "hlt");
-    return -1;
-  }
-  outb(0x64, 0xFE);
-  return -1;
 }
 
 // The boot page table used in entry.S and entryother.S.

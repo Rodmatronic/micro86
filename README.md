@@ -6,9 +6,6 @@ Issues with micro86:
 	- kernel does NOT do ENV correctly. It is usermode memory, not kernel.
 		- in fact, gut it all. It is abhorrent and dangerous.
 		- by proxy, does not have execve
-	- userspace/kernelspace are way to close together
-	- memory manager is janky, but workable. Don't rewrite
-		- and don't mess with multiboot. It works, don't touch it.
 	- janky console drivers, make compatible with ANYTHING besides stty/gtty.
 		- ECHO is terrible, and whatever I did to get that bash-like arrow keys working is absolutely aborrent.
 	- strip old Unix code, it is mangled and terrible.
@@ -37,8 +34,6 @@ Issues with micro86:
 		- I don't have a good name as of now... hmm, wait for inspiration to strike. FreeNIX sounds like penis
 	- clean up everything. Good god main.c hurts.
 		- mixes BSD code unnecessarily to get CPU name. Screw that.
-	- gut sysfile's devctl. It is a nonsense solution to a problem that deserves better treatment.
-		- in fact, clean up most syscalls in general. They should not be so large.
 	- code uses inconsistent tab spaces. A pet peeve of mine. Either make them all normal \t, or don't bother.
 		- \t saves on space, looks cleaner, and can help improve readability.
 Don't feature creep. Do what linux did by 0.01

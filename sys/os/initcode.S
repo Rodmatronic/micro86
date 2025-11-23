@@ -39,6 +39,13 @@ start:
 	movl	$0x0, %ebx
 	int	$T_SYSCALL
 
+	# write userland message
+	movl	$SYS_write, %eax
+	movl	$0x1, %ebx
+	movl	$message, %ecx
+	movl	$message_end - message -1, %edx
+	int	$T_SYSCALL
+
 	# exec("/sbin/init", argv)
 	movl	$SYS_exec, %eax
 	movl	$init, %ebx		# arg0 = path
@@ -55,6 +62,9 @@ init:
 	.string "/sbin/init\0"
 console:
 	.string "/dev/console\0"
+message:
+	.string "initcode: trying /sbin/init\n"
+message_end:
 
 .p2align 2
 argv:

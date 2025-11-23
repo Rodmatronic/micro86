@@ -21,6 +21,7 @@ kgetchar(void) {
 	}
 }
 
+int
 is_mouse_data()
 {
 		return (inb(0x64) & 0x20) != 0;

@@ -202,11 +202,7 @@ userinit(void)
   // writes to be visible, and the lock is also needed
   // because the assignment might not be atomic.
   acquire(&ptable.lock);
-
-  cprintf("userinit: starting init...\n");
-
   p->state = RUNNABLE;
-
   release(&ptable.lock);
 }
 

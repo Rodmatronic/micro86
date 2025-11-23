@@ -1,6 +1,4 @@
 S=sys
-C=cmd
-M=misc
 I=include
 L=lib
 
@@ -91,10 +89,10 @@ AS = $(TOOLPREFIX)gas
 LD = $(TOOLPREFIX)ld
 OBJCOPY = $(TOOLPREFIX)objcopy
 OBJDUMP = $(TOOLPREFIX)objdump
-CFLAGS = -fno-pic -static -fno-builtin -fno-strict-aliasing -Oz -Wall -MD -m32 -fno-omit-frame-pointer -Wno-infinite-recursion -Wno-implicit-int -Wno-char-subscripts -Wno-implicit-function-declaration -Wno-dangling-else -Wno-int-conversion -Wno-missing-braces -Waggressive-loop-optimizations -Wa,--noexecstack -Iinclude -Werror
+CFLAGS = -fno-pic -static -fno-builtin -Oz -Wall -MD -m32 -Wa,--noexecstack -Iinclude -Werror
 
 CFLAGS += $(shell $(CC) -fno-stack-protector -E -x c /dev/null >/dev/null 2>&1 && echo -fno-stack-protector)
-ASFLAGS = -m32 -gdwarf-2 -Wa,-divide -Wa,--noexecstack -Iinclude -DASM_FILE=1
+ASFLAGS = -m32 -gdwarf-2 -Wa,--noexecstack -Iinclude -DASM_FILE=1
 # FreeBSD ld wants ``elf_i386_fbsd''
 LDFLAGS += -m $(shell $(LD) -V | grep elf_i386 2>/dev/null | head -n 1) --no-warn-rwx-segment
 
@@ -168,19 +166,9 @@ $S/mkfs/mkfs: $S/mkfs/mkfs.c $S/../include/fs.h
 # http://www.gnu.org/software/make/manual/html_node/Chained-Rules.html
 .PRECIOUS: %.o
 
-ETC=\
-    	$M/lib/fortunes\
-	$M/etc/gettytab\
-	$M/etc/rc\
-	$M/etc/rc.local\
-	$M/etc/master.passwd\
-	$M/etc/group\
-	$M/etc/motd\
-	$M/etc/colortest\
-
 $S/fs.img: $S/mkfs/mkfs $(UPROGS)
 	build/build.sh
-	$S/mkfs/mkfs $S/fs.img $(ETC)
+	$S/mkfs/mkfs $S/fs.img
 
 -include *.d
 

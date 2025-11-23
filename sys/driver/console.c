@@ -15,7 +15,6 @@
 #include <proc.h>
 #include <x86.h>
 #include <tty.h>
-#include <font8x8.h>
 #include <config.h>
 #include <stdarg.h>
 

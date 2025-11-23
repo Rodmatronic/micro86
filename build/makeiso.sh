@@ -11,8 +11,8 @@ mkdir -p "$WORKDIR/boot/grub"
 cat > "$WORKDIR/boot/grub/grub.cfg" <<EOF
 set timeout=0
 
-menuentry "FreeNIX" {
-	echo 'Starting FreeNIX...'
+menuentry "micro86" {
+	echo -n 'Loading...'
 	multiboot2 /frunix
 	echo 'Done.'
 	boot

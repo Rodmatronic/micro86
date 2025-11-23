@@ -1,6 +1,8 @@
 #ifndef _DEFS_H
 #define _DEFS_H
 
+#include <stdarg.h>
+
 struct buf;
 struct context;
 struct file;
@@ -36,7 +38,7 @@ void            cprintf(char*, ...);
 void            consoleintr(int(*)(void));
 int		sprintf(char *buf, const char *fmt, ...);
 void		vbe_initdraw(void);
-extern int	kerndcl;
+void		vcprintf(const char *fmt, va_list ap);
 
 // exec.c
 int	      exec(char*, char**);
@@ -128,6 +130,9 @@ typedef struct {
 } MOUSE_STATUS;
 
 extern int g_mouse_x_pos, g_mouse_y_pos, left_button, right_button, middle_button;
+
+// multiboot.c
+void		mbootinit(unsigned long);
 
 // mp.c
 extern int      ismp;
