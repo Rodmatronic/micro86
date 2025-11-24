@@ -1259,3 +1259,33 @@ int sys_sgetmask(void){
 int sys_ssetmask(void){
 	return ENOSYS;
 }
+
+/*
+ * multiple buffer write
+ */
+int
+sys_writev(void)
+{
+	struct file *f;
+	int count;
+	unsigned int *vec;
+	int i;
+	int total;
+
+	if(argfd(0, 0, &f) < 0 || argint(2, &count) < 0)
+		return -1;
+	if(argptr(1, (char**)&vec, count * sizeof(unsigned int) * 2) < 0)
+		return -1;
+
+	total = 0;
+	for(i = 0; i < count; i++){
+		char *p = (char*)vec[i * 2];
+		int n = (int)vec[i * 2 + 1];
+		int r = filewrite(f, p, n);
+		if(r < 0)
+			return -1;
+		total += r;
+	}
+	return total;
+}
+

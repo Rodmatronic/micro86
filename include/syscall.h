@@ -69,6 +69,7 @@
 #define SYS_sigaction	67 // TODO
 #define SYS_sgetmask	68 // TODO
 #define SYS_ssetmask	69 // TODO
-// plenty
-
-
+/*
+  don't worry about it
+*/
+#define SYS_writev	146

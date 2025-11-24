@@ -104,10 +104,10 @@ ifneq ($(shell $(CC) -dumpspecs 2>/dev/null | grep -e '[^f]nopie'),)
 CFLAGS += -fno-pie -nopie
 endif
 
-xv6.img: $S/boot/bootblock $S/frunix
+xv6.img: $S/boot/bootblock $S/miunix
 	dd if=/dev/zero of=xv6.img count=10000
 	dd if=$S/boot/bootblock of=xv6.img conv=notrunc
-	dd if=$S/frunix of=xv6.img seek=1 conv=notrunc
+	dd if=$S/miunix of=xv6.img seek=1 conv=notrunc
 
 xv6memfs.img: $S/boot/bootblock $S/kernelmemfs
 	dd if=/dev/zero of=xv6memfs.img count=10000
@@ -133,10 +133,10 @@ $S/os/initcode: $S/os/initcode.S
 	$(OBJCOPY) -S -O binary $S/os/initcode.out $S/os/initcode
 	$(OBJDUMP) -S $S/os/initcode.o > $S/os/initcode.asm
 
-$S/frunix: $(OBJS) $S/boot/entry.o $S/boot/entryother $S/os/initcode $S/boot/kernel.ld
-	$(LD) $(LDFLAGS) -T $S/boot/kernel.ld -o $S/frunix $S/boot/entry.o $(OBJS) -b binary $S/os/initcode $S/boot/entryother
-	$(OBJDUMP) -S $S/frunix > $S/kernel.asm
-	$(OBJDUMP) -t $S/frunix | sed '1,/SYMBOL TABLE/d; s/ .* / /; /^$$/d' > $S/kernel.sym
+$S/miunix: $(OBJS) $S/boot/entry.o $S/boot/entryother $S/os/initcode $S/boot/kernel.ld
+	$(LD) $(LDFLAGS) -T $S/boot/kernel.ld -o $S/miunix $S/boot/entry.o $(OBJS) -b binary $S/os/initcode $S/boot/entryother
+	$(OBJDUMP) -S $S/miunix > $S/kernel.asm
+	$(OBJDUMP) -t $S/miunix | sed '1,/SYMBOL TABLE/d; s/ .* / /; /^$$/d' > $S/kernel.sym
 
 # kernelmemfs is a copy of kernel that maintains the
 # disk image in memory instead of writing to a disk.
@@ -174,8 +174,8 @@ $S/fs.img: $S/mkfs/mkfs $(UPROGS)
 clean:
 	find $S $C $L -type f \( -name '*.o' -o -name '*.asm' -o -name '*.sym' -o -name '*.tex' -o -name '*.dvi' -o -name '*.idx' -o -name '*.aux' -o -name '*.log' -o -name '*.ind' -o -name '*.ilg' -o -name '*.d' \) -delete
 	rm -rf $S/pl/vectors.S $S/boot/bootblock $S/boot/entryother \
-	$S/os/initcode $S/os/initcode.out $S/frunix xv6.img $S/fs.img $S/kernelmemfs \
-	xv6memfs.img $S/mkfs/mkfs .gdbinit frunix.iso include/version.h $(UPROGS)
+	$S/os/initcode $S/os/initcode.out $S/miunix xv6.img $S/fs.img $S/kernelmemfs \
+	xv6memfs.img $S/mkfs/mkfs .gdbinit microunix.iso include/version.h $(UPROGS)
 	rm -r isotree/
 
 # make a printout
@@ -212,7 +212,7 @@ qemu: $S/fs.img xv6.img
 	$(QEMU) -serial mon:stdio $(QEMUOPTS)
 
 qemu-memfs: xv6memfs.img
-	$(QEMU) -cdrom frunix.iso -smp $(CPUS) -m 128 -serial mon:stdio -accel tcg
+	$(QEMU) -cdrom microunix.iso -smp $(CPUS) -m 128 -serial mon:stdio -accel tcg
 qemu-nox: $S/fs.img xv6.img
 	$(QEMU) -nographic $(QEMUOPTS)
 

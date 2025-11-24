@@ -161,6 +161,7 @@ extern int sys_setsid(void);
 extern int sys_sigaction(void);
 extern int sys_sgetmask(void);
 extern int sys_ssetmask(void);
+extern int sys_writev(void);
 
 static int (*syscalls[])(void) = {
 	[SYS_syscall]	sys_syscall,
@@ -233,6 +234,7 @@ static int (*syscalls[])(void) = {
 	[SYS_sigaction]	sys_sigaction,
 	[SYS_sgetmask]	sys_sgetmask,
 	[SYS_ssetmask]	sys_ssetmask,
+	[SYS_writev]	sys_writev,
 };
 
 void
