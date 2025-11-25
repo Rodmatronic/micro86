@@ -32,6 +32,7 @@ typedef long int64_t;
 typedef int wchar_t;
 typedef unsigned int	u_int32_t;
 typedef unsigned short	u_int16_t;
+typedef size_t off_t;
 
 #define	UINTPTR_MAX		0xffffffffUL
 

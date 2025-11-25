@@ -7,7 +7,6 @@
 #include <x86.h>
 #include <config.h>
 #include <time.h>
-#include <version.h>
 
 static void startothers(void);
 static void mpmain(void)  __attribute__((noreturn));

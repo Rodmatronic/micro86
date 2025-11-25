@@ -19,6 +19,6 @@ menuentry "micro86" {
 }
 EOF
 
-cp sys/kernelmemfs "$WORKDIR/miunix"
+cp sys/miunix "$WORKDIR/miunix"
 grub-mkrescue -o "$ISO_NAME" "$WORKDIR"
 echo "ISO created: $ISO_NAME"

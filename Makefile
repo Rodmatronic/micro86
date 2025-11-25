@@ -77,12 +77,7 @@ QEMU = $(shell if which qemu > /dev/null; \
 	echo "***" 1>&2; exit 1)
 endif
 
-.PHONY: pre
-pre:
-	@./build/newvers.sh
-
-all: pre xv6.img
-
+#all: pre xv6.img
 
 CC = $(TOOLPREFIX)gcc
 AS = $(TOOLPREFIX)gas
@@ -167,7 +162,7 @@ $S/mkfs/mkfs: $S/mkfs/mkfs.c $S/../include/fs.h
 
 $S/fs.img: $S/mkfs/mkfs $(UPROGS)
 	build/build.sh
-	$S/mkfs/mkfs $S/fs.img
+	$S/mkfs/mkfs $S/fs.img _init
 
 -include *.d
 
@@ -175,7 +170,7 @@ clean:
 	find $S $C $L -type f \( -name '*.o' -o -name '*.asm' -o -name '*.sym' -o -name '*.tex' -o -name '*.dvi' -o -name '*.idx' -o -name '*.aux' -o -name '*.log' -o -name '*.ind' -o -name '*.ilg' -o -name '*.d' \) -delete
 	rm -rf $S/pl/vectors.S $S/boot/bootblock $S/boot/entryother \
 	$S/os/initcode $S/os/initcode.out $S/miunix xv6.img $S/fs.img $S/kernelmemfs \
-	xv6memfs.img $S/mkfs/mkfs .gdbinit microunix.iso include/version.h $(UPROGS)
+	xv6memfs.img $S/mkfs/mkfs .gdbinit microunix.iso $(UPROGS)
 	rm -r isotree/
 
 # make a printout
@@ -203,16 +198,13 @@ QEMUGDB = $(shell if $(QEMU) -help | grep -q '^-gdb'; \
 ifndef CPUS
 CPUS := 2
 endif
-QEMUOPTS = -accel tcg -drive file=$S/fs.img,index=1,media=disk,format=raw -drive file=xv6.img,index=0,media=disk,format=raw -m 512 $(QEMUEXTRA)
-
-image: xv6memfs.img
-	#awesome
+QEMUOPTS = -accel tcg -cdrom microunix.iso -boot d -drive file=sys/fs.img,index=1,media=disk,format=raw$(QEMUEXTRA)
 
 qemu: $S/fs.img xv6.img
 	$(QEMU) -serial mon:stdio $(QEMUOPTS)
 
-qemu-memfs: xv6memfs.img
-	$(QEMU) -cdrom microunix.iso -smp $(CPUS) -m 128 -serial mon:stdio -accel tcg
+#qemu-memfs: xv6memfs.img
+#	$(QEMU) -cdrom microunix.iso -smp $(CPUS) -m 128 -serial mon:stdio -accel tcg
 qemu-nox: $S/fs.img xv6.img
 	$(QEMU) -nographic $(QEMUOPTS)
 

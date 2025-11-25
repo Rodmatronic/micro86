@@ -546,13 +546,13 @@ dirlookup(struct inode *dp, char *name, uint *poff)
   for(off = 0; off < dp->size; off += sizeof(de)){
     if(readi(dp, (char*)&de, off, sizeof(de)) != sizeof(de))
       panic("dirlookup read");
-    if(de.inum == 0)
+    if(de.d_ino == 0)
       continue;
-    if(namecmp(name, de.name) == 0){
+    if(namecmp(name, de.d_name) == 0){
       // entry matches path element
       if(poff)
         *poff = off;
-      inum = de.inum;
+      inum = de.d_ino;
       return iget(dp->dev, inum);
     }
   }
@@ -578,12 +578,12 @@ dirlink(struct inode *dp, char *name, uint inum)
   for(off = 0; off < dp->size; off += sizeof(de)){
     if(readi(dp, (char*)&de, off, sizeof(de)) != sizeof(de))
       panic("dirlink read");
-    if(de.inum == 0)
+    if(de.d_ino == 0)
       break;
   }
 
-  strncpy(de.name, name, DIRSIZ);
-  de.inum = inum;
+  strncpy(de.d_name, name, DIRSIZ);
+  de.d_ino = inum;
   if(writei(dp, (char*)&de, off, sizeof(de)) != sizeof(de))
     panic("dirlink");
 

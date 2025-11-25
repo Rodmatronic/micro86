@@ -68,13 +68,13 @@ add_dot_entries(uint dir_ino, uint parent_ino)
 {
   struct dirent de;
   bzero(&de, sizeof(de));
-  de.inum = xshort(dir_ino);
-  strcpy(de.name, ".");
+  de.d_ino = xshort(dir_ino);
+  strcpy(de.d_name, ".");
   iappend(dir_ino, &de, sizeof(de));
 
   bzero(&de, sizeof(de));
-  de.inum = xshort(parent_ino);
-  strcpy(de.name, "..");
+  de.d_ino = xshort(parent_ino);
+  strcpy(de.d_name, "..");
   iappend(dir_ino, &de, sizeof(de));
 }
 
@@ -87,9 +87,9 @@ uint create_directory(uint parent_ino, const char *name) {
 
   // Add entry to parent directory
   bzero(&de, sizeof(de));
-  de.inum = xshort(new_ino);
-  strncpy(de.name, name, DIRSIZ);
-  de.name[DIRSIZ-1] = '\0'; // Ensure null-termination if truncated
+  de.d_ino = xshort(new_ino);
+  strncpy(de.d_name, name, DIRSIZ);
+  de.d_name[DIRSIZ-1] = '\0'; // Ensure null-termination if truncated
   iappend(parent_ino, &de, sizeof(de));
 
   add_dot_entries(new_ino, parent_ino);
@@ -162,13 +162,13 @@ main(int argc, char *argv[])
   assert(rootino == ROOTINO);
 
   bzero(&de, sizeof(de));
-  de.inum = xshort(rootino);
-  strcpy(de.name, ".");
+  de.d_ino = xshort(rootino);
+  strcpy(de.d_name, ".");
   iappend(rootino, &de, sizeof(de));
 
   bzero(&de, sizeof(de));
-  de.inum = xshort(rootino);
-  strcpy(de.name, "..");
+  de.d_ino = xshort(rootino);
+  strcpy(de.d_name, "..");
   iappend(rootino, &de, sizeof(de));
 
   uint binino = create_directory(rootino, "bin");
@@ -307,13 +307,13 @@ main(int argc, char *argv[])
 
     // Create directory entry
     bzero(&de, sizeof(de));
-    de.inum = xshort(inum);
-    strncpy(de.name, name, DIRSIZ);
+    de.d_ino = xshort(inum);
+    strncpy(de.d_name, name, DIRSIZ);
 
     // append files to disk
     if (exists_in_list(name, etc_files)) {
  	if (strcmp(name, "master.passwd") == 0) // prevent interfering
-		strncpy(de.name, "passwd", DIRSIZ);
+		strncpy(de.d_name, "passwd", DIRSIZ);
 	iappend(etcino, &de, sizeof(de));
     } else if (exists_in_list(name, bin_files)) {
 	iappend(binino, &de, sizeof(de));
