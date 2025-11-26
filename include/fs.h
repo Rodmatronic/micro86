@@ -61,9 +61,10 @@ struct dinode {
 
 struct dirent {
     ushort d_ino;
-//    ushort d_off;
-//    unsigned short d_reclen;
-//    unsigned char d_type;
+    ushort d_off;
+    unsigned short d_reclen;
+    unsigned char d_type;
     char d_name[DIRSIZ];
+    char _pad[32 - (2 + 2 + 2 + 1 + DIRSIZ)];
 };
 #endif

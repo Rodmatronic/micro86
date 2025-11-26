@@ -814,25 +814,6 @@ sys_time(void)
 }
 
 int
-sys_usleep(void)
-{
-	int usec;
-	if (argint(0, &usec) < 0) {
-		errno=EPERM;
-		return -1;
-	}
-	int ticks_needed = usec / 10000; // each tick ~10,000 us
-	if (ticks_needed == 0)
-		ticks_needed = 1; // minimum sleep = 1 tick
-	acquire(&tickslock);
-	uint ticks0 = ticks;
-	while (ticks - ticks0 < ticks_needed)
-		sleep(&ticks, &tickslock);
-	release(&tickslock);
-	return 0;
-}
-
-int
 sys_setgid(void) {
 	int gid;
 	if (argint(0, &gid) < 0) {
@@ -975,19 +956,6 @@ sys_sleep(void)
 	}
 	release(&tickslock);
 	return 0;
-}
-
-// return how many clock tick interrupts have occurred
-// since start.
-int
-sys_uptime(void)
-{
-	uint xticks;
-
-	acquire(&tickslock);
-	xticks = ticks;
-	release(&tickslock);
-	return xticks;
 }
 
 void notim(){
