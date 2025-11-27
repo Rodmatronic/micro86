@@ -1,38 +1,40 @@
+D=drivers
 S=sys
 I=include
 L=lib
 
+#kernel, then drivers
 OBJS = \
-	$S/os/multiboot.o \
-	$S/os/bio.o\
-	$S/driver/console.o\
-	$S/os/exec.o\
-	$S/os/file.o\
-	$S/os/fs.o\
-	$S/driver/ide.o\
-	$S/os/ioapic.o\
-	$S/os/kalloc.o\
-	$S/driver/kbd.o\
-	$S/os/lapic.o\
-	$S/os/log.o\
-	$S/os/main.o\
-	$S/os/mp.o\
-	$S/os/panic.o\
-	$S/os/picirq.o\
-	$S/os/pipe.o\
-	$S/os/proc.o\
-	$S/os/sleeplock.o\
-	$S/os/spinlock.o\
-	$S/os/string.o\
-	$S/os/swtch.o\
+	$S/bio.o\
+	$S/exec.o\
+	$S/file.o\
+	$S/fs.o\
+	$S/ioapic.o\
+	$S/kalloc.o\
+	$S/lapic.o\
+	$S/log.o\
+	$S/main.o\
+	$S/boot/multiboot.o\
+	$S/mp.o\
+	$S/panic.o\
+	$S/picirq.o\
+	$S/pipe.o\
+	$S/proc.o\
+	$S/sleeplock.o\
+	$S/spinlock.o\
+	$S/string.o\
+	$S/swtch.o\
 	$S/sys/syscall.o\
 	$S/sys/sys.o\
 	$S/boot/trapasm.o\
-	$S/os/trap.o\
-	$S/os/time.o\
-	$S/driver/uart.o\
+	$S/trap.o\
+	$S/time.o\
 	$S/pl/vectors.o\
-	$S/os/vm.o\
+	$S/vm.o\
+	$D/console.o\
+	$D/kbd.o\
+	$D/ide.o\
+	$D/uart.o\
 
 # Cross-compiling (e.g., on Mac OS X)
 # TOOLPREFIX = i386-jos-elf
@@ -99,7 +101,7 @@ ifneq ($(shell $(CC) -dumpspecs 2>/dev/null | grep -e '[^f]nopie'),)
 CFLAGS += -fno-pie -nopie
 endif
 
-xv6.img: $S/boot/bootblock $S/miunix
+xv6.img: $S/miunix
 	dd if=/dev/zero of=xv6.img count=10000
 	dd if=$S/boot/bootblock of=xv6.img conv=notrunc
 	dd if=$S/miunix of=xv6.img seek=1 conv=notrunc
@@ -109,27 +111,19 @@ xv6memfs.img: $S/boot/bootblock $S/kernelmemfs
 	dd if=$S/boot/bootblock of=xv6memfs.img conv=notrunc
 	dd if=$S/kernelmemfs of=xv6memfs.img seek=1 conv=notrunc
 
-$S/boot/bootblock: $S/boot/bootasm.S
-	$(CC) $(CFLAGS) -fno-pic -nostdinc -I. -c $S/boot/bootasm.S -o $S/boot/bootasm.o
-	$(LD) $(LDFLAGS) -N -e start -Ttext 0x7C00 -o $S/boot/bootblock.o $S/boot/bootasm.o
-	$(OBJDUMP) -S $S/boot/bootblock.o > $S/boot/bootblock.asm
-	$(OBJCOPY) -S -O binary -j .text $S/boot/bootblock.o $S/boot/bootblock
-	$S/pl/sign.pl $S/boot/bootblock
-
 $S/boot/entryother: $S/boot/entryother.S
 	$(CC) $(CFLAGS) -fno-pic -nostdinc -I. -c $S/boot/entryother.S -o $S/boot/entryother.o
-	$(LD) $(LDFLAGS) -N -e start -Ttext 0x7000 -o $S/boot/bootblockother.o $S/boot/entryother.o
-	$(OBJCOPY) -S -O binary -j .text $S/boot/bootblockother.o $S/boot/entryother
-	$(OBJDUMP) -S $S/boot/bootblockother.o > $S/boot/entryother.asm
+	$(OBJCOPY) -S -O binary -j .text $S/boot/entryother.o $S/boot/entryother
+	$(OBJDUMP) -S $S/boot/entryother.o > $S/boot/entryother.asm
 
-$S/os/initcode: $S/os/initcode.S
-	$(CC) $(CFLAGS) -nostdinc -I. -c $S/os/initcode.S -o $S/os/initcode.o
-	$(LD) $(LDFLAGS) -N -e start -Ttext 0 -o $S/os/initcode.out $S/os/initcode.o
-	$(OBJCOPY) -S -O binary $S/os/initcode.out $S/os/initcode
-	$(OBJDUMP) -S $S/os/initcode.o > $S/os/initcode.asm
+$S/initcode: $S/initcode.S
+	$(CC) $(CFLAGS) -nostdinc -I. -c $S/initcode.S -o $S/initcode.o
+	$(LD) $(LDFLAGS) -N -e start -Ttext 0 -o $S/initcode.out $S/initcode.o
+	$(OBJCOPY) -S -O binary $S/initcode.out $S/initcode
+	$(OBJDUMP) -S $S/initcode.o > $S/initcode.asm
 
-$S/miunix: $(OBJS) $S/boot/entry.o $S/boot/entryother $S/os/initcode $S/boot/kernel.ld
-	$(LD) $(LDFLAGS) -T $S/boot/kernel.ld -o $S/miunix $S/boot/entry.o $(OBJS) -b binary $S/os/initcode $S/boot/entryother
+$S/miunix: $(OBJS) $S/boot/entry.o $S/boot/entryother $S/initcode $S/boot/kernel.ld
+	$(LD) $(LDFLAGS) -T $S/boot/kernel.ld -o $S/miunix $S/boot/entry.o $(OBJS) -b binary $S/initcode $S/boot/entryother
 	$(OBJDUMP) -S $S/miunix > $S/kernel.asm
 	$(OBJDUMP) -t $S/miunix | sed '1,/SYMBOL TABLE/d; s/ .* / /; /^$$/d' > $S/kernel.sym
 
@@ -140,8 +134,8 @@ $S/miunix: $(OBJS) $S/boot/entry.o $S/boot/entryother $S/os/initcode $S/boot/ker
 # great for testing the kernel on real hardware without
 # needing a scratch disk.
 MEMFSOBJS = $(filter-out $S/driver/ide.o,$(OBJS)) $S/driver/memide.o
-$S/kernelmemfs: $(MEMFSOBJS) $S/boot/entry.o $S/boot/entryother $S/os/initcode $S/boot/kernel.ld $S/fs.img
-	$(LD) $(LDFLAGS) -T $S/boot/kernel.ld -o $S/kernelmemfs $S/boot/entry.o  $(MEMFSOBJS) -b binary $S/os/initcode $S/boot/entryother $S/fs.img
+$S/kernelmemfs: $(MEMFSOBJS) $S/boot/entry.o $S/boot/entryother $S/initcode $S/boot/kernel.ld $S/fs.img
+	$(LD) $(LDFLAGS) -T $S/boot/kernel.ld -o $S/kernelmemfs $S/boot/entry.o  $(MEMFSOBJS) -b binary $S/initcode $S/boot/entryother $S/fs.img
 	$(OBJDUMP) -S $S/kernelmemfs > $S/kernelmemfs.asm
 	$(OBJDUMP) -t $S/kernelmemfs | sed '1,/SYMBOL TABLE/d; s/ .* / /; /^$$/d' > $S/kernelmemfs.sym
 
@@ -168,10 +162,10 @@ $S/fs.img: $S/mkfs/mkfs $(UPROGS)
 
 clean:
 	find $S $C $L -type f \( -name '*.o' -o -name '*.asm' -o -name '*.sym' -o -name '*.tex' -o -name '*.dvi' -o -name '*.idx' -o -name '*.aux' -o -name '*.log' -o -name '*.ind' -o -name '*.ilg' -o -name '*.d' \) -delete
-	rm -rf $S/pl/vectors.S $S/boot/bootblock $S/boot/entryother \
-	$S/os/initcode $S/os/initcode.out $S/miunix xv6.img $S/fs.img $S/kernelmemfs \
+	rm -rf $S/pl/vectors.S $S/boot/entryother \
+	$S/initcode $S/initcode.out $S/miunix xv6.img $S/fs.img $S/kernelmemfs \
 	xv6memfs.img $S/mkfs/mkfs .gdbinit microunix.iso $(UPROGS)
-	rm -r isotree/
+	rm -rf isotree/
 
 # make a printout
 FILES = $(shell grep -v '^\#' runoff.list)
