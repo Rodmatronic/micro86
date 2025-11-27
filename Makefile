@@ -103,7 +103,6 @@ endif
 
 xv6.img: $S/miunix
 	dd if=/dev/zero of=xv6.img count=10000
-	dd if=$S/boot/bootblock of=xv6.img conv=notrunc
 	dd if=$S/miunix of=xv6.img seek=1 conv=notrunc
 
 xv6memfs.img: $S/boot/bootblock $S/kernelmemfs
