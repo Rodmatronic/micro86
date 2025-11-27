@@ -7,11 +7,13 @@
 #include <x86.h>
 #include <config.h>
 #include <time.h>
+#include <version.h>
 
 static void startothers(void);
 static void mpmain(void)  __attribute__((noreturn));
 extern pde_t *kpgdir;
 extern char end[]; // first address after kernel loaded from ELF file
+char * banner = sys_version "\n";
 
 // Bootstrap processor starts running C code here.
 // Allocate a real stack and switch to it, first
@@ -20,9 +22,9 @@ extern char end[]; // first address after kernel loaded from ELF file
 int
 kmain(uint addr)
 {
+  cprintf(banner);
   mbootinit(addr);
   kinit1(end, P2V(4*1024*1024)); // phys page allocator
-  cprintf("%c86\n", 0xE6);
   kvmalloc();      // kernel page table
   timeinit();	   // set up unix date&time
   mpinit();        // detect other processors

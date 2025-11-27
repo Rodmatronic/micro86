@@ -55,6 +55,8 @@ ideinit(void)
   initlock(&idelock, "ide");
   ioapicenable(IRQ_IDE, ncpu - 1);
 
+  cprintf("ideinit: waiting on root device...\n");
+
   // Explicitly select drive 0
   outb(0x1f6, 0xe0 | (0<<4));  // Select drive 0, LBA mode
   idewait(0);  // Wait for drive 0 to be ready

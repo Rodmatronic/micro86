@@ -47,7 +47,7 @@ kinit2(void *vstart, void *vend)
   uint pa_end_aligned = PGROUNDUP(pa_end);
   uint total_mem = PHYSTOP - pa_end_aligned;
 
-  cprintf("kinit2: found %dM of memory\n", total_mem / 1048576);
+  cprintf("kinit2: found %dM of memory\n", total_mem / 1048576 + 2);
 }
 
 void

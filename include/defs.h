@@ -17,6 +17,7 @@ struct superblock;
 extern int errno;
 extern int draw_blacks;
 extern int cprintf_flag;
+extern uint PHYSTOP;
 
 #define IRQ_IDE_SECONDARY 15
 
@@ -161,7 +162,6 @@ int             kill(int, int);
 struct cpu*     mycpu(void);
 struct proc*    myproc();
 void            pinit(void);
-void            procdump(void);
 void            scheduler(void) __attribute__((noreturn));
 void            sched(void);
 void            setproc(struct proc*);
