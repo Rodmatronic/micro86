@@ -1,0 +1,40 @@
+#include <types.h>
+#include <defs.h>
+#include <x86.h>
+
+uint64_t
+rdtsc(void)
+{
+	uint32_t lo, hi;
+	asm volatile("rdtsc" : "=a"(lo), "=d"(hi));
+	return ((unsigned long long)hi << 32) | lo;
+}
+
+uint64_t tsc_freq_hz = 0;
+
+void
+tscinit(void)
+{
+	uint64_t tsc_start, tsc_end;
+
+	outb(0x61, (inb(0x61) & ~0x02) | 0x01);
+	outb(0x43, 0xB0);
+	outb(0x42, 0x9B);	// Low byte
+	outb(0x42, 0x2E);	// High byte
+
+	tsc_start = rdtsc();
+
+	// Wait for PIT to count down
+	while(!(inb(0x61) & 0x20));
+	tsc_end = rdtsc();
+	tsc_freq_hz = (tsc_end - tsc_start) * 100;
+	tsc_calibrated = 0;
+
+	cprintf("calibrate_tsc: using TSC with PIT clocksource\n");
+}
+
+uint64_t
+tsc_to_us(uint64_t tsc)
+{
+	return (tsc * 1000000) / tsc_freq_hz;
+}

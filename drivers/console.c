@@ -161,10 +161,31 @@ cprintf(char *fmt, ...)
 {
 	va_list ap;
 	int locking;
+	uint us, s, rem;
 
 	locking = cons.locking;
 	if(locking)
 		acquire(&cons.lock);
+
+	// time message
+	consputc('[');
+	consputc(' ');
+
+	if(tsc_calibrated) {
+		us = 0;
+	} else {
+		us = tsc_to_us(rdtsc());
+	}
+
+	s = us / 1000000;
+	rem = us % 1000000;
+
+	printint(s, 10, 0, 3, 0);
+	consputc('.');
+	printint(rem, 10, 0, 6, 1);
+
+	consputc(']');
+	consputc(' ');
 
 	va_start(ap, fmt);
 	vcprintf(fmt, ap);
@@ -617,12 +638,12 @@ consoleinit(void)
 	devsw[CONSOLE].read = consoleread;
 	cons.locking = 1;
 	ttyb.tflags = ECHO;
-#if BLOCK_CURSOR
+
 	outb(0x3D4, 0x0A);
 	outb(0x3D5, (inb(0x3D5) & 0xC0) | 0);
 	outb(0x3D4, 0x0B);
 	outb(0x3D5, (inb(0x3D5) & 0xE0) | 0x0E);
-#endif
+
 	ioapicenable(IRQ_KBD, 0);
 }
 

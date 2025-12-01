@@ -28,6 +28,7 @@ OBJS = \
 	$S/sys/sys.o\
 	$S/boot/trapasm.o\
 	$S/trap.o\
+	$S/tsc.o\
 	$S/time.o\
 	$S/pl/vectors.o\
 	$S/vm.o\

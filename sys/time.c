@@ -11,6 +11,7 @@ inb(0x71); \
 
 #define BCD_TO_BIN(val) ((val)=((val)&15) + ((val)>>4)*10)
 
+int tsc_calibrated = 1;
 unsigned long startup_time = 0;
 unsigned long kernel_time = 0;
 

@@ -15,8 +15,7 @@ struct sleeplock;
 struct stat;
 struct superblock;
 extern int errno;
-extern int draw_blacks;
-extern int cprintf_flag;
+extern int tsc_calibrated;
 extern uint PHYSTOP;
 
 #define IRQ_IDE_SECONDARY 15
@@ -219,6 +218,11 @@ void            idtinit(void);
 extern uint     ticks;
 void            tvinit(void);
 extern struct spinlock tickslock;
+
+// tsc.c
+uint64_t	rdtsc(void);
+void		tscinit(void);
+uint64_t	tsc_to_us(uint64_t);
 
 // uart.c
 void            uartinit(void);

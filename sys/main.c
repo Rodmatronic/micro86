@@ -27,6 +27,7 @@ kmain(uint addr)
   kinit1(end, P2V(4*1024*1024)); // phys page allocator
   kvmalloc();      // kernel page table
   timeinit();	   // set up unix date&time
+  tscinit();       // TSC/PIT granular time
   mpinit();        // detect other processors
   lapicinit();     // interrupt controller
   seginit();       // segment descriptors
@@ -115,4 +116,21 @@ pde_t entrypgdir[NPDENTRIES] = {
   // Map VA's [KERNBASE, KERNBASE+4MB) to PA's [0, 4MB)
   [KERNBASE>>PDXSHIFT] = (0) | PTE_P | PTE_W | PTE_PS,
 };
+
+uint64_t
+__udivdi3(uint64_t dividend, uint64_t divisor)
+{
+	uint64_t quotient = 0;
+	uint64_t remainder = 0;
+
+	for(int i = 63; i >= 0; i--) {
+		remainder <<= 1;
+		remainder |= (dividend >> i) & 1;
+		if(remainder >= divisor) {
+			remainder -= divisor;
+			quotient |= (1ULL << i);
+		}
+	}
+	return quotient;
+}
 
