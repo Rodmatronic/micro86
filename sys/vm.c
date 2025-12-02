@@ -92,9 +92,9 @@ mappages(pde_t *pgdir, void *va, uint size, uint pa, int perm)
 //								phys memory allocated by the kernel
 //	 KERNBASE..KERNBASE+EXTMEM: mapped to 0..EXTMEM (for I/O space)
 //	 KERNBASE+EXTMEM..data: mapped to EXTMEM..V2P(data)
-//								for the kernel's instructions and r/o data
+//		for the kernel's instructions and r/o data
 //	 data..KERNBASE+PHYSTOP: mapped to V2P(data)..PHYSTOP,
-//																	rw data + free physical memory
+//		rw data + free physical memory
 //	 0xfe000000..0: mapped direct (devices such as ioapic)
 //
 // The kernel allocates physical memory for its heap and for user memory

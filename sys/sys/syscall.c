@@ -19,12 +19,12 @@ int errno=0;
 int
 fetchint(uint addr, int *ip)
 {
-  struct proc *curproc = myproc();
+	struct proc *curproc = myproc();
 
-  if(addr >= curproc->sz || addr+4 > curproc->sz)
-    return -1;
-  *ip = *(int*)(addr);
-  return 0;
+	if(addr >= curproc->sz || addr+4 > curproc->sz)
+		return -1;
+	*ip = *(int*)(addr);
+	return 0;
 }
 
 // Fetch the nul-terminated string at addr from the current process.
@@ -33,18 +33,18 @@ fetchint(uint addr, int *ip)
 int
 fetchstr(uint addr, char **pp)
 {
-  char *s, *ep;
-  struct proc *curproc = myproc();
+	char *s, *ep;
+	struct proc *curproc = myproc();
 
-  if(addr >= curproc->sz)
-    return -1;
-  *pp = (char*)addr;
-  ep = (char*)curproc->sz;
-  for(s = *pp; s < ep; s++){
-    if(*s == 0)
-      return s - *pp;
-  }
-  return -1;
+	if(addr >= curproc->sz)
+		return -1;
+	*pp = (char*)addr;
+	ep = (char*)curproc->sz;
+	for(s = *pp; s < ep; s++){
+		if(*s == 0)
+			return s - *pp;
+	}
+	return -1;
 }
 
 int
@@ -244,7 +244,6 @@ syscall(void)
 	int num;
 
 	p = myproc();
-
 	num = p->tf->eax;
 
 	if(num >= 0 && num < NELEM(syscalls) && syscalls[num]){
@@ -252,6 +251,5 @@ syscall(void)
 	} else {
 		p->tf->eax = -1;
 	}
-
 }
 

@@ -37,18 +37,18 @@ static int month[12] = {
 };
 
 void set_kernel_time(unsigned long new_epoch) {
-    acquire(&tickslock);
-    uint ticks_since_boot = ticks;
-    kernel_time = new_epoch - (ticks_since_boot / 100);
-    release(&tickslock);
+	acquire(&tickslock);
+	uint ticks_since_boot = ticks;
+	kernel_time = new_epoch - (ticks_since_boot / 100);
+	release(&tickslock);
 }
 
 uint epoch_mktime(void) {
-  uint ticks_since_boot;
-  acquire(&tickslock);
-  ticks_since_boot = ticks;
-  release(&tickslock);
-  return kernel_time + (ticks_since_boot / 100);
+	uint ticks_since_boot;
+	acquire(&tickslock);
+	ticks_since_boot = ticks;
+	release(&tickslock);
+	return kernel_time + (ticks_since_boot / 100);
 }
 
 unsigned long mktime(struct tm * tm)
