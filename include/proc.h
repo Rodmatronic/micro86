@@ -2,6 +2,7 @@
 #define PROC_H
 
 #include "../include/param.h"
+#include <signal.h>
 
 // Per-CPU state
 struct cpu {
@@ -57,6 +58,10 @@ struct proc {
   unsigned short gid, egid, sgid; // Group ID
   int exitstatus;	       // Exit status number
   int ttyflags;       	       // TTY flags
+  int signal;                  // Signal number
+  uint sighandlers[NSIG];      // Signal handlers
+  int alarmticks;              // Ticks until alarm fires
+  int alarminterval;           // Original alarm interval
 };
 
 // for userspace proc shenanigans

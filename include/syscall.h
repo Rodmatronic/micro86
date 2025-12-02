@@ -26,7 +26,7 @@
 #define SYS_getuid	24
 #define SYS_stime	25
 #define SYS_ptrace	26 // TODO
-#define SYS_alarm	27 // TODO
+#define SYS_alarm	27
 #define SYS_fstat	28 // TODO
 #define SYS_pause	29 // TODO
 #define SYS_utime	30
@@ -47,13 +47,13 @@
 #define SYS_brk		45
 #define SYS_setgid	46
 #define SYS_getgid	47
-#define SYS_signal	48 // TODO
+#define SYS_signal	48
 #define SYS_geteuid	49
 #define SYS_getegid	50
 #define SYS_acct	51 // TODO
 #define SYS_phys	52 // TODO
 #define SYS_lock	53 // TODO
-#define SYS_ioctl	54
+#define SYS_ioctl	54 // FIXME
 #define SYS_fcntl	55 // TODO
 #define SYS_mpx		56 // TODO
 #define SYS_setpgid	57 // TODO

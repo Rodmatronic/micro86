@@ -17,6 +17,7 @@
 #include <tty.h>
 #include <config.h>
 #include <stdarg.h>
+#include <signal.h>
 
 struct ttyb ttyb = {
 	.speeds = 0,			 // Initial speeds
@@ -537,6 +538,9 @@ consoleintr(int (*getc)(void))
 				input.e--;
 				consputc(BACKSPACE);
 			}
+			break;
+		case C('C'):	// Send interrupt signal
+			myproc()->signal = SIGINT;
 			break;
 		case C('H'): case '\x7f':	// Backspace
 			if(input.e != input.w){

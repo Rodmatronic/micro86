@@ -139,6 +139,11 @@ found:
   p->pid = nextpid++;
   p->uid = 0;
   p->gid = 0;
+  p->signal = 0;
+  p->alarmticks = 0;
+  p->alarminterval = 0;
+  for(int i = 0; i < NSIG; i++)
+    p->sighandlers[i] = 0;
 
 //  p->ttyflags = ECHO;
 
@@ -248,6 +253,13 @@ fork(void)
   np->egid = curproc->egid;
   np->sgid = curproc->egid;
 
+  for(int i = 0; i < NSIG; i++)
+    np->sighandlers[i] = curproc->sighandlers[i];
+  
+  np->alarmticks = 0;
+  np->alarminterval = 0;
+  np->signal = 0;
+
   // Copy process state from proc.
   if((np->pgdir = copyuvm(curproc->pgdir, curproc->sz)) == 0){
     kfree(np->kstack);
@@ -294,7 +306,7 @@ exit(int status)  // Changed to accept status argument
   if(curproc == initproc) {
     if (strncmp(curproc->name, "initcode", sizeof(curproc->name)) == 0)
       panic("no init program found!");
-    panic("init died (exit %d)", curproc->exitstatus);
+    panic("attempted to kill init (exit %d)", curproc->exitstatus);
   }
 
   // Close all open files.
@@ -573,7 +585,7 @@ kill(int pid, int status)
       if(p->state != ZOMBIE) {
         p->exitstatus = status;
       }
-      p->killed = 1;
+      p->signal = status;
 
       // Wake process if sleeping
       if(p->state == SLEEPING)

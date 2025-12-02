@@ -893,15 +893,18 @@ sys_wait(void)
 int
 sys_kill(void)
 {
-	int pid;
-	int status;
+	int pid, signo;
 
-	if(argint(0, &pid) < 0 || argint(1, &status) < 0) {
-		errno=EPERM;
+	if(argint(0, &pid) < 0)
 		return -1;
-	}
 
-	return kill(pid, status);
+	if(argint(1, &signo) < 0)
+		signo = SIGTERM;
+
+	if(signo < 1 || signo >= NSIG)
+		return -1;
+
+	return kill(pid, signo);
 }
 
 int
@@ -1040,8 +1043,21 @@ int sys_ptrace(void){
 	return -1;
 }
 int sys_alarm(void){
-	notim();
-	return -1;
+	int ticks;
+
+	if(argint(0, &ticks) < 0)
+		return -1;
+
+	if(ticks < 0)
+		return -1;
+
+	struct proc *p = myproc();
+	int old = p->alarminterval;
+
+	p->alarmticks = ticks;
+	p->alarminterval = ticks;
+
+	return old;
 }
 int sys_pause(void){
 	notim();
@@ -1224,8 +1240,20 @@ sys_brk(void)
 }
 
 int sys_signal(void){
-	notim();
-	return -1;
+	int signum;
+	uint handler;
+	struct proc *p = myproc();
+
+	if(argint(0, &signum) < 0 || argint(1, (int*)&handler) < 0)
+		return -1;
+
+	if(signum < 1 || signum >= NSIG || signum == SIGKILL)
+		return -1;  // Can't catch SIGKILL
+
+	uint old = p->sighandlers[signum];
+	p->sighandlers[signum] = handler;
+
+	return old;
 }
 int sys_acct(void){
 	notim();

@@ -33,8 +33,43 @@ idtinit(void)
 }
 
 void
+dosignal(int signo)
+{
+  struct proc *p = myproc();
+  struct trapframe *tf = p->tf;
+
+  if(signo < 1 || signo >= NSIG)
+    return;
+
+  uint handler = p->sighandlers[signo];
+  p->signal = 0;
+
+  if(signo == SIGKILL || handler == 0) { // no exceptions
+    p->killed = 1;
+    return;
+  }
+
+  if(handler == 1) {
+    return;
+  }
+
+  uint sp = tf->esp;
+
+  sp -= 4;
+  *(uint*)sp = tf->eip;
+  sp -= 4;
+  *(uint*)sp = signo;
+  sp -= 4;
+  *(uint*)sp = 0xFFFFFFFF;
+
+  tf->esp = sp;
+  tf->eip = handler;
+}
+
+void
 trap(struct trapframe *tf)
 {
+  struct proc *p = myproc();
   if(tf->trapno == T_SYSCALL){
     if(myproc()->killed)
       exit(0);
@@ -54,6 +89,17 @@ trap(struct trapframe *tf)
       release(&tickslock);
     }
     lapiceoi();
+    if(myproc() != 0 && (tf->cs&3) == DPL_USER) {
+      if(p->alarmticks > 0) {
+        p->alarmticks--;
+
+        if(p->alarmticks == 0) {
+          if(p->signal == 0) {
+            p->signal = SIGALRM;
+          }
+        }
+      }
+    }
     break;
   case T_IRQ0 + IRQ_IDE:
     ideintr();
@@ -96,6 +142,10 @@ trap(struct trapframe *tf)
   // until it gets to the regular system call return.)
   if(myproc() && myproc()->killed && (tf->cs&3) == DPL_USER)
     exit(0);
+
+  if(myproc() && myproc()->signal > 0 && (tf->cs&3) == DPL_USER) {
+	dosignal(myproc()->signal);
+  }
 
   // Force process to give up CPU on clock tick.
   // If interrupts were on while locks held, would need to check nlock.
