@@ -1203,7 +1203,7 @@ int sys_prof(void){
 }
 
 /*
- * change the location of the program break
+ * change the location of the program break (and return the new address)
  */
 int
 sys_brk(void)
@@ -1220,7 +1220,7 @@ sys_brk(void)
 	old = myproc()->sz;
 
 	if(addr == 0)
-		return 0;
+		return old;
 
 	if(addr < 0) {
 		errno = EINVAL;
@@ -1236,7 +1236,7 @@ sys_brk(void)
 		}
 	}
 
-	return 0;
+	return addr;
 }
 
 int sys_signal(void){
