@@ -11,6 +11,7 @@ rdtsc(void)
 }
 
 uint64_t tsc_freq_hz = 0;
+uint64_t tsc_offset = 0;
 
 void
 tscinit(void)
@@ -30,11 +31,13 @@ tscinit(void)
 	tsc_freq_hz = (tsc_end - tsc_start) * 100;
 	tsc_calibrated = 0;
 
-	cprintf("calibrate_tsc: using TSC with PIT clocksource\n");
+	tsc_offset = rdtsc();
+
+	cprintf("tscinit: using TSC with PIT clocksource\n");
 }
 
 uint64_t
 tsc_to_us(uint64_t tsc)
 {
-	return (tsc * 1000000) / tsc_freq_hz;
+	return ((tsc - tsc_offset) * 1000000) / tsc_freq_hz;
 }
