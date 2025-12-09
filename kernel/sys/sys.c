@@ -782,6 +782,10 @@ sys_uname(void)
 	return 0;
 }
 
+int sys_oldolduname(void)
+{
+	return sys_uname();
+}
 
 int sys_stime(void) {
 	unsigned long epoch;

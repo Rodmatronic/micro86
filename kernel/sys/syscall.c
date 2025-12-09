@@ -151,7 +151,7 @@ extern int sys_fcntl(void);
 extern int sys_mpx(void);
 extern int sys_setpgid(void);
 extern int sys_ulimit(void);
-extern int sys_uname(void);
+extern int sys_oldolduname(void);
 extern int sys_umask(void);
 extern int sys_chroot(void);
 extern int sys_ustat(void);
@@ -164,6 +164,7 @@ extern int sys_sgetmask(void);
 extern int sys_ssetmask(void);
 extern int sys_writev(void);
 extern int sys_wait4(void);
+extern int sys_uname(void);
 extern int sys_rt_sigprocmask(void);
 extern int sys_set_tid_address(void);
 extern int sys_exit_group(void);
@@ -228,7 +229,7 @@ static int (*syscalls[])(void) = {
 	[SYS_mpx]	sys_mpx,
 	[SYS_setpgid]	sys_setpgid,
 	[SYS_ulimit]	sys_ulimit,
-	[SYS_uname]	sys_uname,
+	[SYS_oldolduname]	sys_oldolduname,
 	[SYS_umask]	sys_umask,
 	[SYS_chroot]	sys_chroot,
 	[SYS_ustat]	sys_ustat,
@@ -240,6 +241,7 @@ static int (*syscalls[])(void) = {
 	[SYS_sgetmask]	sys_sgetmask,
 	[SYS_ssetmask]	sys_ssetmask,
 	[SYS_wait4]	sys_wait4,
+	[SYS_uname]	sys_uname,
 	[SYS_writev]	sys_writev,
 	[SYS_rt_sigprocmask]	sys_rt_sigprocmask,
 	[SYS_exit_group]	sys_exit_group,

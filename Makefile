@@ -1,5 +1,5 @@
 D=drivers
-S=sys
+S=kernel
 I=include
 L=lib
 
@@ -191,7 +191,7 @@ QEMUGDB = $(shell if $(QEMU) -help | grep -q '^-gdb'; \
 ifndef CPUS
 CPUS := 2
 endif
-QEMUOPTS = -accel tcg -cdrom microunix.iso -boot d -drive file=sys/fs.img,index=1,media=disk,format=raw$(QEMUEXTRA)
+QEMUOPTS = -accel tcg -cdrom microunix.iso -boot d -drive file=$S/fs.img,index=1,media=disk,format=raw$(QEMUEXTRA)
 
 qemu: $S/fs.img xv6.img
 	$(QEMU) -serial mon:stdio $(QEMUOPTS)

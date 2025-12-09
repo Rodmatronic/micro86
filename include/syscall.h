@@ -58,7 +58,7 @@
 #define SYS_mpx		56 // TODO
 #define SYS_setpgid	57 // TODO
 #define SYS_ulimit	58 // TODO
-#define SYS_uname	59
+#define SYS_oldolduname	59
 #define SYS_umask	60 // TODO
 #define SYS_chroot	61 // TODO
 #define SYS_ustat	62 // TODO
@@ -73,6 +73,7 @@
   don't worry about it
 */
 #define SYS_wait4	114
+#define SYS_uname	122
 #define SYS_writev	146
 #define SYS_rt_sigprocmask	175
 /*
