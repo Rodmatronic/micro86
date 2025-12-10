@@ -22,7 +22,7 @@ void set_phystop(void) {
 	uint32_t max_top = 0;
 	extern char end[];
 
-	cprintf("using multiboot2 provided memory map\n");
+	printk("using multiboot2 provided memory map\n");
 	tag = (struct multiboot_tag *)modget(MULTIBOOT_TAG_TYPE_MMAP);
 	if (!tag)
 		return;
@@ -37,7 +37,7 @@ void set_phystop(void) {
 		uint32_t len   = e->len;
 		uint32_t end   = start + len;
 
-		cprintf("set_phystop: [start=%08x end=%8x len=%08x type=%u]\n", start, end, len, e->type);
+		printk("[start=%08x end=%8x len=%08x type=%u]\n", start, end, len, e->type);
 		/* type 1 means available RAM per Multiboot2 spec */
 		if (e->type == 1) {
 			if (end > max_top)
@@ -57,7 +57,7 @@ void set_phystop(void) {
 	uint pa_end = V2P(end);
 	uint pa_end_aligned = PGROUNDUP(pa_end);
 	uint total_mem = PHYSTOP - pa_end_aligned;
-	cprintf("set_phystop: found %dM of memory\n", total_mem / 1048576 + 2);
+	printk("found %dM of memory\n", total_mem / 1048576 + 2);
 }
 
 void mbootinit(unsigned long addr) {
@@ -66,9 +66,9 @@ void mbootinit(unsigned long addr) {
 		panic("mbootinit: invalid boot info\n");
 	}
 	mbi_size = *(uint *)mbi_addr;
-	cprintf("mbootinit: mboot info addr=0x%08x, size=%d bytes\n", mbi_addr, mbi_size);
+	printk("mboot info addr=0x%08x, size=%d bytes\n", mbi_addr, mbi_size);
 
 	set_phystop();
-	cprintf("mbootinit: PHYSTOP set to 0x%08x\n", PHYSTOP);
+	printk("PHYSTOP set to 0x%08x\n", PHYSTOP);
 
 }

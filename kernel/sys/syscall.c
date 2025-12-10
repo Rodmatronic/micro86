@@ -257,12 +257,12 @@ syscall(void)
 	p = myproc();
 	num = p->tf->eax;
 #ifdef CONFIG_DEBUG
-	cprintf("debug: syscall: eax=%d ebx=%d ecx=%d edx=%d esp=%d\n", p->tf->eax, p->tf->ebx, p->tf->ecx, p->tf->edx, p->tf->esp);
+	printk("debug: eax=%d ebx=%d ecx=%d edx=%d esp=%d\n", p->tf->eax, p->tf->ebx, p->tf->ecx, p->tf->edx, p->tf->esp);
 #endif
 	if(num >= 0 && num < NELEM(syscalls) && syscalls[num]){
 		p->tf->eax = syscalls[num]();
 	} else {
-		cprintf("!!FIXME!!: unknown syscall %d\n", num);
+		printk("!!FIXME!!: unknown syscall %d\n", num);
 		p->tf->eax = -1;
 	}
 }

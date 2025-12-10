@@ -33,7 +33,7 @@ tscinit(void)
 
 	tsc_offset = rdtsc();
 
-	cprintf("tscinit: using TSC with PIT clocksource\n");
+	printk("using TSC with PIT clocksource\n");
 }
 
 uint64_t

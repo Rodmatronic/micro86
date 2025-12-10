@@ -102,7 +102,7 @@ mpinit(void)
 
 	conf = mpconfig(&mp);
 	if(conf == 0){
-		cprintf("mpinit: no MP config found\n");
+		printk("mpinit: no MP config found\n");
 		ncpu = 1;
 		lapic = (uint*)0xfee00000;	 // standard local APIC address
 		return;

@@ -15,9 +15,9 @@
 #include <proc.h>
 #include <x86.h>
 #include <tty.h>
-#include <config.h>
 #include <stdarg.h>
 #include <signal.h>
+#include <config.h>
 
 struct ttyb ttyb = {
 	.speeds = 0,			 // Initial speeds
@@ -26,7 +26,7 @@ struct ttyb ttyb = {
 	.tflags = ECHO		 // Enable echo by default
 };
 
-static int current_colour = 0x0700;
+static int current_color = 0x0700;
 struct cons cons;
 
 static void
@@ -131,7 +131,7 @@ vprintf(int fd, const char *fmt, va_list ap)
 }
 
 void
-vcprintf(const char *fmt, va_list ap)
+vkprintf(const char *fmt, va_list ap)
 {
 	vprintf(1, fmt, ap);
 }
@@ -158,17 +158,23 @@ sprintf(char *buf, const char *fmt, ...)
 }
 
 void
-cprintf(char *fmt, ...)
+_printf(char *func, char *fmt, ...)
 {
 	va_list ap;
 	int locking;
+#ifdef CONFIG_PRINTK_TIME
 	uint us, s, rem;
+#endif
 
 	locking = cons.locking;
 	if(locking)
 		acquire(&cons.lock);
 
-	// time message
+#ifdef CONFIG_PRINTK_TIME
+#ifdef CONFIG_COLORFUL_KMESG
+	current_color = 0x0200;
+#endif
+
 	consputc('[');
 	consputc(' ');
 
@@ -188,8 +194,18 @@ cprintf(char *fmt, ...)
 	consputc(']');
 	consputc(' ');
 
+#ifdef CONFIG_COLORFUL_KMESG
+	current_color = 0x600;
+#endif
+
+	vkprintf(func, 0);
+	consputc(':');
+	consputc(' ');
+#endif
+	current_color = 0x700;
+
 	va_start(ap, fmt);
-	vcprintf(fmt, ap);
+	vkprintf(fmt, ap);
 	va_end(ap);
 
 	if(locking)
@@ -231,7 +247,7 @@ cgaputc(int c)
 		case ('\t'):
 			int spaces = 8 - (pos % 8);
 			for(int i = 0; i < spaces; i++) {
-			crt[pos++] = ' ' | current_colour;
+			crt[pos++] = ' ' | current_color;
 				if((pos/80) >= 25){
 					memmove(crt, crt+80, sizeof(crt[0])*24*80);
 					pos -= 80;
@@ -241,7 +257,7 @@ cgaputc(int c)
 			break;
 		
 		default:
-			crt[pos++] = (c&0xff) | current_colour;	// black on white
+			crt[pos++] = (c&0xff) | current_color;	// black on white
 			break;
 	}
 
@@ -305,109 +321,109 @@ handle_ansi_sgr(int param)
 {
 	switch(param) {
 		case 0:	// reset
-			current_colour = 0x0700; // white on black
+			current_color = 0x0700; // white on black
 			break;
 		case 1:	// bold
-			current_colour = (current_colour & 0x0F00) | 0x0800;
+			current_color = (current_color & 0x0F00) | 0x0800;
 			break;
 		case 30: // black foreground
-			current_colour = (current_colour & 0xF0FF) | 0x0000;
+			current_color = (current_color & 0xF0FF) | 0x0000;
 			break;
 		case 31: // red foreground
-			current_colour = (current_colour & 0xF0FF) | 0x0400;
+			current_color = (current_color & 0xF0FF) | 0x0400;
 			break;
 		case 32: // green foreground
-			current_colour = (current_colour & 0xF0FF) | 0x0200;
+			current_color = (current_color & 0xF0FF) | 0x0200;
 			break;
 		case 33: // yellow foreground
-			current_colour = (current_colour & 0xF0FF) | 0x0600;
+			current_color = (current_color & 0xF0FF) | 0x0600;
 			break;
 		case 34: // blue foreground
-			current_colour = (current_colour & 0xF0FF) | 0x0100;
+			current_color = (current_color & 0xF0FF) | 0x0100;
 			break;
 		case 35: // magenta foreground
-			current_colour = (current_colour & 0xF0FF) | 0x0500;
+			current_color = (current_color & 0xF0FF) | 0x0500;
 			break;
 		case 36: // cyan foreground
-			current_colour = (current_colour & 0xF0FF) | 0x0300;
+			current_color = (current_color & 0xF0FF) | 0x0300;
 			break;
 		case 37: // white foreground
-			current_colour = (current_colour & 0xF0FF) | 0x0700;
+			current_color = (current_color & 0xF0FF) | 0x0700;
 			break;
 
 		case 40: // black background
-			current_colour = (current_colour & 0x0FFF) | 0x0000;
+			current_color = (current_color & 0x0FFF) | 0x0000;
 			break;
 		case 41: // red background
-			current_colour = (current_colour & 0x0FFF) | 0x4000;
+			current_color = (current_color & 0x0FFF) | 0x4000;
 			break;
 		case 42: // green background
-			current_colour = (current_colour & 0x0FFF) | 0x2000;
+			current_color = (current_color & 0x0FFF) | 0x2000;
 			break;
 		case 43: // yellow background
-			current_colour = (current_colour & 0x0FFF) | 0x6000;
+			current_color = (current_color & 0x0FFF) | 0x6000;
 			break;
 		case 44: // blue background
-			current_colour = (current_colour & 0x0FFF) | 0x1000;
+			current_color = (current_color & 0x0FFF) | 0x1000;
 			break;
 		case 45: // magenta background
-			current_colour = (current_colour & 0x0FFF) | 0x5000;
+			current_color = (current_color & 0x0FFF) | 0x5000;
 			break;
 		case 46: // cyan background
-			current_colour = (current_colour & 0x0FFF) | 0x3000;
+			current_color = (current_color & 0x0FFF) | 0x3000;
 			break;
 		case 47: // white background
-			current_colour = (current_colour & 0x0FFF) | 0x7000;
+			current_color = (current_color & 0x0FFF) | 0x7000;
 			break;
 
 		case 90: // hi black foreground
-			current_colour = (current_colour & 0xF0FF) | 0x0800;
+			current_color = (current_color & 0xF0FF) | 0x0800;
 			break;
 		case 91: // hi red foreground
-			current_colour = (current_colour & 0xF0FF) | 0x0C00;
+			current_color = (current_color & 0xF0FF) | 0x0C00;
 			break;
 		case 92: // hi green foreground
-			current_colour = (current_colour & 0xF0FF) | 0x0A00;
+			current_color = (current_color & 0xF0FF) | 0x0A00;
 			break;
 		case 93: // hi yellow foreground
-			current_colour = (current_colour & 0xF0FF) | 0x0E00;
+			current_color = (current_color & 0xF0FF) | 0x0E00;
 			break;
 		case 94: // hi blue foreground
-			current_colour = (current_colour & 0xF0FF) | 0x0900;
+			current_color = (current_color & 0xF0FF) | 0x0900;
 			break;
 		case 95: // hi magenta foreground
-			current_colour = (current_colour & 0xF0FF) | 0x0D00;
+			current_color = (current_color & 0xF0FF) | 0x0D00;
 			break;
 		case 96: // hi cyan foreground
-			current_colour = (current_colour & 0xF0FF) | 0x0B00;
+			current_color = (current_color & 0xF0FF) | 0x0B00;
 			break;
 		case 97: // hi white foreground
-			current_colour = (current_colour & 0xF0FF) | 0x0F00;
+			current_color = (current_color & 0xF0FF) | 0x0F00;
 			break;
 
 		case 100: // hi black background
-			current_colour = (current_colour & 0x0FFF) | 0x0000;
+			current_color = (current_color & 0x0FFF) | 0x0000;
 			break;
 		case 101: // hi red background
-			current_colour = (current_colour & 0x0FFF) | 0xC000;
+			current_color = (current_color & 0x0FFF) | 0xC000;
 			break;
 		case 102: // hi green background
-			current_colour = (current_colour & 0x0FFF) | 0xA000;
+			current_color = (current_color & 0x0FFF) | 0xA000;
 			break;
 		case 103: // hi yellow background
-			current_colour = (current_colour & 0x0FFF) | 0xE000;
+			current_color = (current_color & 0x0FFF) | 0xE000;
 			break;
 		case 104: // hi blue background
-			current_colour = (current_colour & 0x0FFF) | 0x9000;
+			current_color = (current_color & 0x0FFF) | 0x9000;
 			break;
 		case 105: // hi magenta background
-			current_colour = (current_colour & 0x0FFF) | 0xD000;
+			current_color = (current_color & 0x0FFF) | 0xD000;
 			break;
 		case 106: // hi cyan background
-			current_colour = (current_colour & 0x0FFF) | 0xB000;
+			current_color = (current_color & 0x0FFF) | 0xB000;
 			break;
 		case 107: // hi white background
-			current_colour = (current_colour & 0x0FFF) | 0xF000;
+			current_color = (current_color & 0x0FFF) | 0xF000;
 			break;
 	}
 }

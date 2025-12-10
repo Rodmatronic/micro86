@@ -14,10 +14,10 @@ panic(char *fmt, ...)
 
         cli();
         console.locking = 0;        // Disable console locking during panic
-        cprintf("panic[%d]: ", lapicid());
+        printk("Kernel panic: ");
 
         va_start(ap, fmt);
-        vcprintf(fmt, ap);
+        vkprintf(fmt, ap);
         va_end(ap);
 
         panicked=1;             // Freeze other CPUs

@@ -977,7 +977,7 @@ sys_sleep(void)
 }
 
 void notim(){
-	cprintf("syscall %d: Not Implemented.\n", myproc()->tf->eax);
+	printk("syscall %d: Not Implemented.\n", myproc()->tf->eax);
 	errno=ENOSYS;
 }
 

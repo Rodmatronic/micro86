@@ -123,7 +123,7 @@ trap(struct trapframe *tf)
 		break;
 	case T_IRQ0 + 7:
 	case T_IRQ0 + IRQ_SPURIOUS:
-		cprintf("cpu%d: spurious interrupt at %x:%x\n",
+		printk("cpu%d: spurious interrupt at %x:%x\n",
 						cpunum(), tf->cs, tf->eip);
 		lapiceoi();
 		break;
@@ -131,13 +131,13 @@ trap(struct trapframe *tf)
 	default:
 		if(myproc() == 0 || (tf->cs&3) == 0){
 			// In kernel, it must be our mistake.
-			cprintf("unexpected trap %d from cpu %d eip %x (cr2=0x%x)\n",
+			printk("unexpected trap %d from cpu %d eip %x (cr2=0x%x)\n",
 							tf->trapno, cpunum(), tf->eip, rcr2());
 			panic("trap");
 		}
 		// In user space, assume process misbehaved.
 		if (tf->eip != -1){
-			cprintf("%s: fatal trap from PID %d (%d)\n", myproc()->name, myproc()->pid, tf->trapno);
+			printk("%s: fatal trap from PID %d (%d)\n", myproc()->name, myproc()->pid, tf->trapno);
 		}
 		myproc()->signal = SIGSEGV;
 	}

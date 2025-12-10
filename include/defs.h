@@ -32,13 +32,15 @@ void            bwrite(struct buf*);
 void		sync();
 
 // console.c
+#define		printk(fmt, ...) \
+			_printf((char *)__func__, fmt, ##__VA_ARGS__)
 void            consoleinit(void);
 void		consputc(int);
-void            cprintf(char*, ...);
+void		_printf(char *func, char *fmt, ...);
 void            consoleintr(int(*)(void));
 int		sprintf(char *buf, const char *fmt, ...);
 void		vbe_initdraw(void);
-void		vcprintf(const char *fmt, va_list ap);
+void		vkprintf(const char *fmt, va_list ap);
 
 // exec.c
 int	      exec(char*, char**);

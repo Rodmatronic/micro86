@@ -86,7 +86,7 @@ AS = $(TOOLPREFIX)gas
 LD = $(TOOLPREFIX)ld
 OBJCOPY = $(TOOLPREFIX)objcopy
 OBJDUMP = $(TOOLPREFIX)objdump
-CFLAGS = -fno-pic -static -fno-builtin -Oz -Wall -MD -m32 -Wa,--noexecstack -Iinclude -Werror
+CFLAGS = -MMD -MP -fno-pic -static -fno-builtin -Oz -Wall -MD -m32 -Wa,--noexecstack -Iinclude -Werror
 
 CFLAGS += $(shell $(CC) -fno-stack-protector -E -x c /dev/null >/dev/null 2>&1 && echo -fno-stack-protector)
 ASFLAGS = -m32 -gdwarf-2 -Wa,--noexecstack -Iinclude -DASM_FILE=1
@@ -120,6 +120,9 @@ $S/initcode: $S/initcode.S
 	$(LD) $(LDFLAGS) -N -e start -Ttext 0 -o $S/initcode.out $S/initcode.o
 	$(OBJCOPY) -S -O binary $S/initcode.out $S/initcode
 	$(OBJDUMP) -S $S/initcode.o > $S/initcode.asm
+
+include $(wildcard kernel/*.d)
+include $(wildcard drivers/*.d)
 
 $S/miunix: $(OBJS) $S/boot/entry.o $S/boot/entryother $S/initcode $S/boot/kernel.ld
 	$(LD) $(LDFLAGS) -T $S/boot/kernel.ld -o $S/miunix $S/boot/entry.o $(OBJS) -b binary $S/initcode $S/boot/entryother
