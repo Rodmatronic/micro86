@@ -7,6 +7,9 @@
 #include <x86.h>
 #include <syscall.h>
 #include <config.h>
+#ifdef CONFIG_DEBUG
+	#include <debug.h>
+#endif
 
 int errno=0;
 
@@ -256,9 +259,11 @@ syscall(void)
 
 	p = myproc();
 	num = p->tf->eax;
-#ifdef CONFIG_DEBUG
-	printk("debug: eax=%d ebx=%d ecx=%d edx=%d esp=%d\n", p->tf->eax, p->tf->ebx, p->tf->ecx, p->tf->edx, p->tf->esp);
-#endif
+
+	#ifdef CONFIG_DEBUG
+		printk("%s(ebx=%d ecx=%d edx=%d esp=%d\n", syscall_list[p->tf->eax], p->tf->ebx, p->tf->ecx, p->tf->edx, p->tf->esp);
+	#endif
+
 	if(num >= 0 && num < NELEM(syscalls) && syscalls[num]){
 		p->tf->eax = syscalls[num]();
 	} else {
