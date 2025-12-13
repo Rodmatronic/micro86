@@ -169,6 +169,7 @@ extern int sys_uname(void);
 extern int sys_getpgid(void);
 extern int sys_writev(void);
 extern int sys_rt_sigprocmask(void);
+extern int sys_getcwd(void);
 extern int sys_getuid32(void);
 extern int sys_getgid32(void);
 extern int sys_geteuid32(void);
@@ -252,6 +253,7 @@ static int (*syscalls[])(void) = {
 	[SYS_getpgid]	sys_getpgid,
 	[SYS_writev]	sys_writev,
 	[SYS_rt_sigprocmask]	sys_rt_sigprocmask,
+	[SYS_getcwd]	sys_getcwd,
 	[SYS_getuid32]	sys_getuid32,
 	[SYS_getgid32]	sys_getgid32,
 	[SYS_geteuid32]	sys_geteuid32,

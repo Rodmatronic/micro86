@@ -1480,6 +1480,55 @@ sys_rt_sigprocmask(void)
 	return 0;
 }
 
+/*
+ * build a path from the proc's cwd
+ */
+int sys_getcwd(void){
+    char *buf;
+    size_t size;
+
+    if(argptr(0, (void*)&buf, sizeof(*buf)) < 0)
+        return -1;
+    if(argint(1, (int*)&size) < 0)
+        return -1;
+
+    struct proc *curproc = myproc();
+    struct inode *cwd = curproc->cwd;
+    char path[128];
+    int pos = 127;
+    path[pos] = '\0';
+
+    ilock(cwd);
+    struct inode *root = namei("/");
+
+    while(cwd->inum != root->inum) {
+        struct inode *parent = dirlookup(cwd, "..", 0);
+        if(!parent) break;
+
+        ilock(parent);
+        struct dirent de;
+        for(unsigned int off = 0; off < parent->size; off += sizeof(de)) {
+            readi(parent, (char*)&de, off, sizeof(de));
+            if(de.d_ino == cwd->inum) {
+                int len = strlen(de.d_name);
+                pos -= len + 1;
+                path[pos] = '/';
+                memmove(&path[pos + 1], de.d_name, len);
+                break;
+            }
+        }
+        iunlock(cwd);
+        cwd = parent;
+    }
+    iunlock(cwd);
+    iput(root);
+
+    if(path[pos] == '\0') path[--pos] = '/';
+
+    memmove(buf, &path[pos], 128 - pos);
+    return (int)buf;
+}
+
 int sys_getuid32(void){
 	return myproc()->uid;
 }
