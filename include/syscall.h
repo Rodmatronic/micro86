@@ -87,3 +87,7 @@
  */
 #define SYS_exit_group	252
 #define SYS_set_tid_address	258
+/*
+ * another rather large gap
+ */
+#define SYS_statx	383

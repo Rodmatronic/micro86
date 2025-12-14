@@ -686,7 +686,6 @@ sys_exec(void)
 	if (!can_exec) {
 		iunlockput(ip);
 		end_op();
-		errno=EACCES;
 		return -1;
 	}
 
@@ -1080,6 +1079,7 @@ int sys_pause(void){
 	notim();
 	return -1;
 }
+
 int sys_access(void){
 	char *path;
 	int mode;
@@ -1099,7 +1099,6 @@ int sys_access(void){
 	ip = namei(path);
 	if (!ip) {
 		end_op();
-		errno=EACCES;
 		return -1;
 	}
 
@@ -1119,8 +1118,7 @@ int sys_access(void){
 
 	iunlock(ip);
 	end_op();
-	errno=EACCES;
-	return -1;
+	return -13;
 }
 
 int sys_nice(void){
@@ -1484,49 +1482,49 @@ sys_rt_sigprocmask(void)
  * build a path from the proc's cwd
  */
 int sys_getcwd(void){
-    char *buf;
-    size_t size;
+	char *buf;
+	size_t size;
 
-    if(argptr(0, (void*)&buf, sizeof(*buf)) < 0)
-        return -1;
-    if(argint(1, (int*)&size) < 0)
-        return -1;
+	if(argptr(0, (void*)&buf, sizeof(*buf)) < 0)
+		return -1;
+	if(argint(1, (int*)&size) < 0)
+		return -1;
 
-    struct proc *curproc = myproc();
-    struct inode *cwd = curproc->cwd;
-    char path[128];
-    int pos = 127;
-    path[pos] = '\0';
+	struct proc *curproc = myproc();
+	struct inode *cwd = curproc->cwd;
+	char path[128];
+	int pos = 127;
+	path[pos] = '\0';
 
-    ilock(cwd);
-    struct inode *root = namei("/");
+	ilock(cwd);
+	struct inode *root = namei("/");
 
-    while(cwd->inum != root->inum) {
-        struct inode *parent = dirlookup(cwd, "..", 0);
-        if(!parent) break;
+	while(cwd->inum != root->inum) {
+		struct inode *parent = dirlookup(cwd, "..", 0);
+		if(!parent) break;
 
-        ilock(parent);
-        struct dirent de;
-        for(unsigned int off = 0; off < parent->size; off += sizeof(de)) {
-            readi(parent, (char*)&de, off, sizeof(de));
-            if(de.d_ino == cwd->inum) {
-                int len = strlen(de.d_name);
-                pos -= len + 1;
-                path[pos] = '/';
-                memmove(&path[pos + 1], de.d_name, len);
-                break;
-            }
-        }
-        iunlock(cwd);
-        cwd = parent;
-    }
-    iunlock(cwd);
-    iput(root);
+		ilock(parent);
+		struct dirent de;
+		for(unsigned int off = 0; off < parent->size; off += sizeof(de)) {
+			readi(parent, (char*)&de, off, sizeof(de));
+			if(de.d_ino == cwd->inum) {
+				int len = strlen(de.d_name);
+				pos -= len + 1;
+				path[pos] = '/';
+				memmove(&path[pos + 1], de.d_name, len);
+				break;
+			}
+		}
+		iunlock(cwd);
+		cwd = parent;
+	}
+	iunlock(cwd);
+	iput(root);
 
-    if(path[pos] == '\0') path[--pos] = '/';
+	if(path[pos] == '\0') path[--pos] = '/';
 
-    memmove(buf, &path[pos], 128 - pos);
-    return (int)buf;
+	memmove(buf, &path[pos], 128 - pos);
+	return (int)buf;
 }
 
 int sys_getuid32(void){
@@ -1548,9 +1546,7 @@ int sys_getegid32(void){
 /*
  * we aint got no threads
  */
-int
-sys_exit_group(void)
-{
+int sys_exit_group(void){
 	int status;
 
 	if(argint(0, &status) < 0)
@@ -1564,13 +1560,61 @@ sys_exit_group(void)
  * this syscall SHOULD return the thread ID, but we don't got that.
  * return PID.
  */
-int
-sys_set_tid_address(void)
-{
-    int *tidptr;
+int sys_set_tid_address(void){
+	int *tidptr;
 
-    if(argptr(0, (void*)&tidptr, sizeof(*tidptr)) < 0)
-        return -1;
+	if(argptr(0, (void*)&tidptr, sizeof(*tidptr)) < 0)
+		return -1;
 
-    return myproc()->pid;
+	return myproc()->pid;
+}
+
+int sys_statx(void){
+	int dirfd;
+	char *pathname;
+	int flags;
+	unsigned int mask;
+	struct statx *user_statxbuf;
+	struct statx stxbuf;
+	struct inode *ip;
+	struct stat st;
+
+	if(argint(0, &dirfd) < 0 || argstr(1, &pathname) < 0 || argint(2, &flags) < 0 || argint(3, (int*)&mask) < 0 || argptr(4, (char**)&user_statxbuf, sizeof(struct statx)) < 0)
+		return -1;
+
+	if((ip = namei(pathname)) == 0)
+		return -1;
+
+	ilock(ip);
+
+	memset(&st, 0, sizeof(st));
+	stati(ip, &st);
+	memset(&stxbuf, 0, sizeof(stxbuf));
+
+	stxbuf.stx_mask = mask;
+	stxbuf.stx_blksize = BSIZE;
+	stxbuf.stx_nlink = st.st_nlink;
+	stxbuf.stx_uid = st.st_uid;
+	stxbuf.stx_gid = st.st_gid;
+	stxbuf.stx_mode = st.st_mode | S_IFREG;
+	stxbuf.stx_ino = st.st_ino;
+	stxbuf.stx_size = st.st_size;
+	stxbuf.stx_blocks = (st.st_size + BSIZE -1) / BSIZE;
+	stxbuf.stx_ctime.tv_sec = st.st_ctime;
+	stxbuf.stx_ctime.tv_nsec = 0;
+	stxbuf.stx_mtime.tv_sec = st.st_lmtime;
+	stxbuf.stx_mtime.tv_nsec = 0;
+	stxbuf.stx_btime.tv_sec = st.st_ctime;
+	stxbuf.stx_btime.tv_nsec = 0;
+	stxbuf.stx_atime.tv_sec = st.st_lmtime;
+	stxbuf.stx_atime.tv_nsec = 0;
+	stxbuf.stx_dev_major = st.st_dev;
+	stxbuf.stx_dev_minor = 0;
+
+	iunlockput(ip);
+
+	if(copyout(myproc()->pgdir, (unsigned int)user_statxbuf, &stxbuf, sizeof(stxbuf)) < 0)
+		return -1;
+
+	return 0;
 }
