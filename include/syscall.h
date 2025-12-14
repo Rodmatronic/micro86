@@ -54,7 +54,7 @@
 #define SYS_phys	52 // TODO
 #define SYS_lock	53 // TODO
 #define SYS_ioctl	54 // FIXME
-#define SYS_fcntl	55 // TODO
+#define SYS_fcntl	55
 #define SYS_mpx		56 // TODO
 #define SYS_setpgid	57 // TODO
 #define SYS_ulimit	58 // TODO
@@ -86,6 +86,7 @@
 #define SYS_getgid32	200
 #define SYS_geteuid32	201
 #define SYS_getegid32	202
+#define SYS_fcntl64	221
 /*
  * rather large gap
  */

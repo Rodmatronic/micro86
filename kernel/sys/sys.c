@@ -19,7 +19,6 @@
 #include <tty.h>
 #include <utsname.h>
 #include <version.h>
-#include <fcntl.h>
 #include <errno.h>
 #include <time.h>
 
@@ -1338,10 +1337,30 @@ sys_ioctl(void)
 		return -1;
 	}
 }
-
 int sys_fcntl(void){
-	notim();
-	return -1;
+	int fd;
+	int cmd;
+	unsigned long arg;
+	struct file *f;
+
+	if(argfd(0, &fd, &f) < 0)
+		return -1;
+	if(argint(1, &cmd) < 0)
+		return -1;
+	if(argint(2, (int*)&arg) < 0)
+		return -1;
+	switch(cmd){
+	case F_GETFL:
+		return f->flags;
+	case F_SETFL:
+		// only allow changing O_APPEND for now
+		if(arg & ~O_APPEND)
+			return -1;
+		f->flags = (f->flags & ~O_APPEND) | (arg & O_APPEND);
+		return 0;
+	default:
+		return -1;
+	}
 }
 int sys_mpx(void){
 	notim();
@@ -1593,6 +1612,10 @@ int sys_geteuid32(void){
 
 int sys_getegid32(void){
 	return myproc()->egid;
+}
+
+int sys_fcntl64(void){
+	return sys_fcntl();
 }
 
 /*
