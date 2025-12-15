@@ -172,6 +172,9 @@ int             waitpid(int pid, int *status, int options);
 void            wakeup(void*);
 void            yield(void);
 
+// signal.c
+void		dosignal(void);
+
 // swtch.S
 void            swtch(struct context**, struct context*);
 
@@ -215,7 +218,6 @@ void 		set_kernel_time(unsigned long);
 void            timerinit(void);
 
 // trap.c
-void		dosignal(void);
 void            idtinit(void);
 extern unsigned int     ticks;
 void            tvinit(void);

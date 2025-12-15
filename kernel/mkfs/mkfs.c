@@ -2,13 +2,21 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
-#include <../include/fcntl.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <fcntl.h>
 #include <assert.h>
 #include <time.h>
+#include <libgen.h>
 
-#define stat xv6_stat  // avoid clash with host struct stat
+#include <dirent.h>
+#define dirent xv6_dirent
+
+#define stat xv6_stat	// avoid clash with host struct stat
 #include "../../include/fs.h"
 #include "../../include/param.h"
+#undef stat
+#undef dirent
 
 #ifndef static_assert
 #define static_assert(a, b) do { switch (0) case 0: case (a): ; } while (0)
@@ -22,8 +30,8 @@
 int nbitmap = FSSIZE/(BSIZE*8) + 1;
 int ninodeblocks = NINODES / IPB + 1;
 int nlog = LOGSIZE;
-int nmeta;    // Number of meta blocks (boot, sb, nlog, inode, bitmap)
-int nblocks;  // Number of data blocks
+int nmeta;	// Number of meta blocks (boot, sb, nlog, inode, bitmap)
+int nblocks;	// Number of data blocks
 
 int fsfd;
 struct superblock sb;
@@ -43,398 +51,323 @@ void iappend(unsigned int inum, void *p, int n);
 ushort
 xshort(ushort x)
 {
-  ushort y;
-  u_char *a = (u_char*)&y;
-  a[0] = x;
-  a[1] = x >> 8;
-  return y;
+	ushort y;
+	unsigned char *a = (unsigned char*)&y;
+	a[0] = x;
+	a[1] = x >> 8;
+	return y;
 }
 
 unsigned int
 xint(unsigned int x)
 {
-  unsigned int y;
-  u_char *a = (u_char*)&y;
-  a[0] = x;
-  a[1] = x >> 8;
-  a[2] = x >> 16;
-  a[3] = x >> 24;
-  return y;
+	unsigned int y;
+	unsigned char *a = (unsigned char*)&y;
+	a[0] = x;
+	a[1] = x >> 8;
+	a[2] = x >> 16;
+	a[3] = x >> 24;
+	return y;
 }
 
 // Add "." and ".." entries to a directory inode
 void
 add_dot_entries(unsigned int dir_ino, unsigned int parent_ino)
 {
-  struct dirent de;
-  bzero(&de, sizeof(de));
-  de.d_ino = xshort(dir_ino);
-  strcpy(de.d_name, ".");
-  iappend(dir_ino, &de, sizeof(de));
+	struct xv6_dirent de;
+	memset(&de, 0, sizeof(de));
+	de.d_ino = xshort(dir_ino);
+	strcpy(de.d_name, ".");
+	iappend(dir_ino, &de, sizeof(de));
 
-  bzero(&de, sizeof(de));
-  de.d_ino = xshort(parent_ino);
-  strcpy(de.d_name, "..");
-  iappend(dir_ino, &de, sizeof(de));
+	memset(&de, 0, sizeof(de));
+	de.d_ino = xshort(parent_ino);
+	strcpy(de.d_name, "..");
+	iappend(dir_ino, &de, sizeof(de));
 }
 
-unsigned int create_directory(unsigned int parent_ino, const char *name) {
-  // Allocate inode for the new directory
-  unsigned int new_ino = ialloc(S_IFDIR | S_IRUSR | S_IXUSR | S_IWUSR | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH);
-  if (new_ino == 0) return 0; // Allocation failure
+unsigned int create_directory(unsigned int parent_ino, ushort mode) {
+	// Allocate inode for the new directory
+	unsigned int new_ino = ialloc(mode);
+	if (new_ino == 0) return 0; // Allocation failure
 
-  struct dirent de;
+	add_dot_entries(new_ino, parent_ino);
+	return new_ino;
+}
 
-  // Add entry to parent directory
-  bzero(&de, sizeof(de));
-  de.d_ino = xshort(new_ino);
-  strncpy(de.d_name, name, DIRSIZ);
-  de.d_name[DIRSIZ-1] = '\0'; // Ensure null-termination if truncated
-  iappend(parent_ino, &de, sizeof(de));
+// Convert host mode to XV6 filesystem mode
+ushort convert_mode(mode_t host_mode) {
+	ushort xv6_mode = 0;
 
-  add_dot_entries(new_ino, parent_ino);
+	if (S_ISDIR(host_mode))
+		xv6_mode |= S_IFDIR;
+	else if (S_ISREG(host_mode))
+		xv6_mode |= 0;
 
-  return new_ino;
+	if (host_mode & S_IRUSR) xv6_mode |= S_IRUSR;
+	if (host_mode & S_IWUSR) xv6_mode |= S_IWUSR;
+	if (host_mode & S_IXUSR) xv6_mode |= S_IXUSR;
+	if (host_mode & S_IRGRP) xv6_mode |= S_IRGRP;
+	if (host_mode & S_IXGRP) xv6_mode |= S_IXGRP;
+	if (host_mode & S_IROTH) xv6_mode |= S_IROTH;
+	if (host_mode & S_IXOTH) xv6_mode |= S_IXOTH;
+
+	return xv6_mode;
 }
 
 int
-exists_in_list(char *name, char **list)
+scan_directory(const char *host_path, unsigned int xv6_ino)
 {
-    for (int i = 0; list[i] != NULL; i++) {
-        if (strcmp(name, list[i]) == 0) {
-            return 1;
-        }
-    }
-    return 0;
+	DIR *dir;
+	struct dirent *entry;	// Host dirent
+	struct stat st;
+	char path[1024];
+	int fd;
+	char buf[BSIZE];
+	ssize_t cc;
+
+	dir = opendir(host_path);
+	if (!dir) {
+		perror(host_path);
+		return -1;
+	}
+
+	while ((entry = readdir(dir)) != NULL) {
+		if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0)
+			continue;
+
+		// Build full path
+		snprintf(path, sizeof(path), "%s/%s", host_path, entry->d_name);
+
+		if (stat(path, &st) < 0) {
+			perror(path);
+			continue;
+		}
+
+		if (strlen(entry->d_name) >= DIRSIZ) {
+			fprintf(stderr, "Warning: filename too long, truncating: %s\n", entry->d_name);
+		}
+
+		ushort mode = convert_mode(st.st_mode);
+		unsigned int new_ino;
+
+		if (S_ISDIR(st.st_mode)) {
+			new_ino = create_directory(xv6_ino, mode);
+			if (new_ino == 0) {
+				fprintf(stderr, "Failed to create directory: %s\n", entry->d_name);
+				continue;
+			}
+
+			// Add directory entry to parent
+			struct xv6_dirent de;
+			memset(&de, 0, sizeof(de));
+			de.d_ino = xshort(new_ino);
+			strncpy(de.d_name, entry->d_name, DIRSIZ);
+			de.d_name[DIRSIZ-1] = '\0';
+			iappend(xv6_ino, &de, sizeof(de));
+
+			printf("	%s/\n", path);
+			if (scan_directory(path, new_ino) < 0) {
+				closedir(dir);
+				return -1;
+			}
+
+		} else if (S_ISREG(st.st_mode)) {
+			new_ino = ialloc(mode);
+
+			struct xv6_dirent de;
+			memset(&de, 0, sizeof(de));
+			de.d_ino = xshort(new_ino);
+			strncpy(de.d_name, entry->d_name, DIRSIZ);
+			de.d_name[DIRSIZ-1] = '\0';
+			iappend(xv6_ino, &de, sizeof(de));
+
+			fd = open(path, O_RDONLY);
+			if (fd < 0) {
+				perror(path);
+				continue;
+			}
+
+			printf("	%s (%ld bytes, mode %o)\n", path, st.st_size, mode);
+
+			while ((cc = read(fd, buf, sizeof(buf))) > 0) {
+				iappend(new_ino, buf, cc);
+			}
+
+			close(fd);
+		} else {
+			fprintf(stderr, "Warning: skipping special file: %s\n", path);
+		}
+	}
+
+	closedir(dir);
+	return 0;
 }
 
 int
 main(int argc, char *argv[])
 {
-  int i, cc, fd;
-  unsigned int rootino, inum, off;
-  struct dirent de;
-  char buf[BSIZE];
-  struct dinode din;
+	int i;
+	unsigned int rootino;
+	struct dinode din;
+	unsigned int off;
+	char buf[BSIZE];
 
+	static_assert(sizeof(int) == 4, "Integers must be 4 bytes!");
 
-  static_assert(sizeof(int) == 4, "Integers must be 4 bytes!");
+	if (argc != 3) {
+		fprintf(stderr, "Usage: mkfs fs.img root_directory\n");
+		fprintf(stderr, "	fs.img				 - Output filesystem image\n");
+		fprintf(stderr, "	root_directory - Directory to use as filesystem root\n");
+		exit(1);
+	}
 
-  if(argc < 2){
-    fprintf(stderr, "Usage: mkfs fs.img files...\n");
-    exit(1);
-  }
+	assert((BSIZE % sizeof(struct xv6_dirent)) == 0);
 
-// assert((BSIZE % sizeof(struct dinode)) == 0);
- assert((BSIZE % sizeof(struct dirent)) == 0);
+	fsfd = open(argv[1], O_RDWR|O_CREAT|O_TRUNC, 0666);
+	if (fsfd < 0) {
+		perror(argv[1]);
+		exit(1);
+	}
 
-  fsfd = open(argv[1], O_RDWR|O_CREAT|O_TRUNC, 0666);
-  if(fsfd < 0){
-    perror(argv[1]);
-    exit(1);
-  }
+	nmeta = 2 + nlog + ninodeblocks + nbitmap;
+	nblocks = FSSIZE - nmeta;
 
-  // 1 fs block = 1 disk sector
-  nmeta = 2 + nlog + ninodeblocks + nbitmap;
-  nblocks = FSSIZE - nmeta;
+	sb.size = xint(FSSIZE);
+	sb.nblocks = xint(nblocks);
+	sb.ninodes = xint(NINODES);
+	sb.nlog = xint(nlog);
+	sb.logstart = xint(2);
+	sb.inodestart = xint(2+nlog);
+	sb.bmapstart = xint(2+nlog+ninodeblocks);
 
-  sb.size = xint(FSSIZE);
-  sb.nblocks = xint(nblocks);
-  sb.ninodes = xint(NINODES);
-  sb.nlog = xint(nlog);
-  sb.logstart = xint(2);
-  sb.inodestart = xint(2+nlog);
-  sb.bmapstart = xint(2+nlog+ninodeblocks);
+	printf("mkfs: creating filesystem image %s\n", argv[1]);
+	printf("	meta blocks: %d (boot=1, super=1, log=%u, inode=%u, bitmap=%u)\n",
+				 nmeta, nlog, ninodeblocks, nbitmap);
+	printf("	data blocks: %d\n", nblocks);
+	printf("	total blocks: %d\n", FSSIZE);
 
-  printf("nmeta %d (boot, super, log blocks %u inode blocks %u, bitmap blocks %u) blocks %d total %d\n",
-         nmeta, nlog, ninodeblocks, nbitmap, nblocks, FSSIZE);
+	freeblock = nmeta;
 
-  freeblock = nmeta;     // the first free block that we can allocate
+	for(i = 0; i < FSSIZE; i++)
+		wsect(i, zeroes);
 
-  for(i = 0; i < FSSIZE; i++)
-    wsect(i, zeroes);
+	memset(buf, 0, sizeof(buf));
+	memmove(buf, &sb, sizeof(sb));
+	wsect(1, buf);
 
-  memset(buf, 0, sizeof(buf));
-  memmove(buf, &sb, sizeof(sb));
-  wsect(1, buf);
+	rootino = ialloc(S_IFDIR | S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH);
+	assert(rootino == ROOTINO);
+	add_dot_entries(rootino, rootino);
 
-  rootino = ialloc(S_IFDIR);
-  assert(rootino == ROOTINO);
+	printf("\nroot directory: %s\n", argv[2]);
+	if (scan_directory(argv[2], rootino) < 0) {
+		fprintf(stderr, "error scanning directory tree\n");
+		exit(1);
+	}
 
-  bzero(&de, sizeof(de));
-  de.d_ino = xshort(rootino);
-  strcpy(de.d_name, ".");
-  iappend(rootino, &de, sizeof(de));
+	// fix size of root inode dir
+	rinode(rootino, &din);
+	off = xint(din.size);
+	off = ((off/BSIZE) + 1) * BSIZE;
+	din.size = xint(off);
+	winode(rootino, &din);
 
-  bzero(&de, sizeof(de));
-  de.d_ino = xshort(rootino);
-  strcpy(de.d_name, "..");
-  iappend(rootino, &de, sizeof(de));
+	balloc(freeblock);
 
-  unsigned int binino = create_directory(rootino, "bin");
-  create_directory(rootino, "dev");
-  unsigned int etcino = create_directory(rootino, "etc");
-  create_directory(rootino, "root");
-  create_directory(rootino, "tmp");
-  unsigned int usrino = create_directory(rootino, "usr");
-  create_directory(usrino, "adm");
-  unsigned int usrbinino = create_directory(usrino, "bin");
-  unsigned int libino = create_directory(rootino, "lib");
-  unsigned int libgameino = create_directory(libino, "game");
-  unsigned int usrgamesino = create_directory(usrino, "games");
-  unsigned int homeino = create_directory(rootino, "home");
-  unsigned int homepouino = create_directory(homeino, "pou");
-  unsigned int optino = create_directory(rootino, "opt");
-  unsigned int optbinino = create_directory(optino, "bin");
-  unsigned int sbinino = create_directory(rootino, "sbin");
+	printf("done!\n");
+	printf("	%d blocks (%.1f%% of %d)\n",
+				 freeblock, (float)freeblock * 100 / FSSIZE, FSSIZE);
+	printf("	%d inodes (%.1f%% of %d)\n",
+				 freeinode - 1, (float)(freeinode - 1) * 100 / NINODES, NINODES);
 
-  for (i = 2; i < argc; i++) {
-    if ((fd = open(argv[i], 0)) < 0) {
-        perror(argv[i]);
-        exit(1);
-    }
-
-    char *path = argv[i];
-    char *base = strrchr(path, '/');
-    if (base) base++;
-    else base = path;
-
-    // Handle leading '_'
-    char *name = base;
-    if (name[0] == '_')
-        name++;
-
-    char * bin_files[] = {
-	"cat",
-	"cp",
-	"chmod",
-	"chown",
-	"date",
-	"dd",
-	"du",
-	"echo",
-	"ed",
-	"grep",
-	"hostname",
-	"kill",
-	"line",
-	"ln",
-	"ls",
-	"mkdir",
-	"mv",
-	"passwd",
-	"ps",
-	"pwd",
-	"rm",
-	"rmdir",
-	"sleep",
-	"sh",
-	NULL
-    };
-
-    char * etc_files[] = {
-	"gettytab",
-	"group",
-	"motd",
-	"master.passwd",
-	"rc",
-	"rc.local",
-	"stressfs",
-	"usertests",
-	"unlink",
-	"colortest",
-	NULL
-    };
-
-    char * usrbin_files[] = {
-	    "banner",
-	    "basename",
-	    "cmp",
-	    "debugger",
-	    "dirname",
-	    "env",
-	    "find",
-	    "hexdump",
-	    "more",
-	    "touch",
-	    "su",
-	    "uname",
-	    "wc",
-	    "which",
-	    "whoami",
-	    "ved",
-	    "vi",
-	    "yes",
-	    NULL
-    };
-
-    char * usrgames_files[] = {
-	"fortune",
-	NULL
-    };
-
-    char * libgame_files[] = {
-	"fortunes",
-	NULL
-    };
-
-    char * optbin_files[] = {
-	NULL
-    };
-
-    char * sbin_files[] = {
-	    "getty",
-	    "init",
-	    "login",
-	    "mknod",
-	    "nologin",
-	    "reboot",
-	    NULL
-    };
-
-    unsigned int mode;
-    if (exists_in_list(name, bin_files) ||
-        exists_in_list(name, usrbin_files) ||
-        exists_in_list(name, optbin_files) ||
-        exists_in_list(name, sbin_files) ||
-    	exists_in_list(name, usrgames_files)){
-        mode = S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH;
-    } else {
-        mode = S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH;
-    }
-
-    inum = ialloc(mode);
-
-    // Create directory entry
-    bzero(&de, sizeof(de));
-    de.d_ino = xshort(inum);
-    strncpy(de.d_name, name, DIRSIZ);
-
-    // append files to disk
-    if (exists_in_list(name, etc_files)) {
- 	if (strcmp(name, "master.passwd") == 0) // prevent interfering
-		strncpy(de.d_name, "passwd", DIRSIZ);
-	iappend(etcino, &de, sizeof(de));
-    } else if (exists_in_list(name, bin_files)) {
-	iappend(binino, &de, sizeof(de));
-    } else if (exists_in_list(name, usrbin_files)) {
-	iappend(usrbinino, &de, sizeof(de));
-    } else if (exists_in_list(name, usrgames_files)) {
-	iappend(usrgamesino, &de, sizeof(de));
-    } else if (exists_in_list(name, libgame_files)) {
-	iappend(libgameino, &de, sizeof(de));
-    } else if (exists_in_list(name, optbin_files)) {
-	iappend(optbinino, &de, sizeof(de));
-    } else if (exists_in_list(name, sbin_files)) {
-	iappend(sbinino, &de, sizeof(de));
-    } else {
-        iappend(rootino, &de, sizeof(de));
-    }
-
-    // Append file contents
-    while ((cc = read(fd, buf, sizeof(buf))) > 0)
-        iappend(inum, buf, cc);
-
-    close(fd);
-  }
-
-  // fix size of root inode dir
-  rinode(rootino, &din);
-  off = xint(din.size);
-  off = ((off/BSIZE) + 1) * BSIZE;
-  din.size = xint(off);
-  winode(rootino, &din);
-
-  balloc(freeblock);
-
-  exit(0);
+	close(fsfd);
+	exit(0);
 }
-
 
 void
 wsect(unsigned int sec, void *buf)
 {
-  if(lseek(fsfd, sec * BSIZE, 0) != sec * BSIZE){
-    perror("lseek");
-    exit(1);
-  }
-  if(write(fsfd, buf, BSIZE) != BSIZE){
-    perror("write");
-    exit(1);
-  }
+	if (lseek(fsfd, sec * BSIZE, 0) != sec * BSIZE) {
+		perror("lseek");
+		exit(1);
+	}
+	if (write(fsfd, buf, BSIZE) != BSIZE) {
+		perror("write");
+		exit(1);
+	}
 }
 
 void
 winode(unsigned int inum, struct dinode *ip)
 {
-  char buf[BSIZE];
-  unsigned int bn;
-  struct dinode *dip;
+	char buf[BSIZE];
+	unsigned int bn;
+	struct dinode *dip;
 
-  bn = IBLOCK(inum, sb);
-  rsect(bn, buf);
-  dip = ((struct dinode*)buf) + (inum % IPB);
-  *dip = *ip;
-  wsect(bn, buf);
+	bn = IBLOCK(inum, sb);
+	rsect(bn, buf);
+	dip = ((struct dinode*)buf) + (inum % IPB);
+	*dip = *ip;
+	wsect(bn, buf);
 }
 
 void
 rinode(unsigned int inum, struct dinode *ip)
 {
-  char buf[BSIZE];
-  unsigned int bn;
-  struct dinode *dip;
+	char buf[BSIZE];
+	unsigned int bn;
+	struct dinode *dip;
 
-  bn = IBLOCK(inum, sb);
-  rsect(bn, buf);
-  dip = ((struct dinode*)buf) + (inum % IPB);
-  *ip = *dip;
+	bn = IBLOCK(inum, sb);
+	rsect(bn, buf);
+	dip = ((struct dinode*)buf) + (inum % IPB);
+	*ip = *dip;
 }
 
 void
 rsect(unsigned int sec, void *buf)
 {
-  if(lseek(fsfd, sec * BSIZE, 0) != sec * BSIZE){
-    perror("lseek");
-    exit(1);
-  }
-  if(read(fsfd, buf, BSIZE) != BSIZE){
-    perror("read");
-    exit(1);
-  }
+	if (lseek(fsfd, sec * BSIZE, 0) != sec * BSIZE) {
+		perror("lseek");
+		exit(1);
+	}
+	if (read(fsfd, buf, BSIZE) != BSIZE) {
+		perror("read");
+		exit(1);
+	}
 }
 
 unsigned int
 ialloc(ushort type)
 {
-  unsigned int inum = freeinode++;
-  struct dinode din;
+	unsigned int inum = freeinode++;
+	struct dinode din;
 
-  bzero(&din, sizeof(din));
-  din.mode = xshort(type);
-  din.nlink = xshort(1);
-  din.size = xint(0);
-  time_t now = time(NULL); // current epoch
-  din.ctime = xint((unsigned int)now);
-  din.lmtime = xint((unsigned int)now);
-  winode(inum, &din);
-  return inum;
+	memset(&din, 0, sizeof(din));
+	din.mode = xshort(type);
+	din.nlink = xshort(1);
+	din.size = xint(0);
+	time_t now = time(NULL);
+	din.ctime = xint((unsigned int)now);
+	din.lmtime = xint((unsigned int)now);
+	winode(inum, &din);
+	return inum;
 }
 
 void
 balloc(int used)
 {
-  u_char buf[BSIZE];
-  int i;
+	unsigned char buf[BSIZE];
+	int i;
 
-  printf("balloc: first %d blocks have been allocated\n", used);
-  assert(used < BSIZE*8);
-  bzero(buf, BSIZE);
-  for(i = 0; i < used; i++){
-    buf[i/8] = buf[i/8] | (0x1 << (i%8));
-  }
-  printf("balloc: write bitmap block at sector %d\n", sb.bmapstart);
-  wsect(sb.bmapstart, buf);
+	printf("balloc: allocated %d blocks\n", used);
+	assert(used < BSIZE*8);
+	memset(buf, 0, BSIZE);
+	for (i = 0; i < used; i++) {
+		buf[i/8] = buf[i/8] | (0x1 << (i%8));
+	}
+	wsect(sb.bmapstart, buf);
 }
 
 #define min(a, b) ((a) < (b) ? (a) : (b))
@@ -442,43 +375,46 @@ balloc(int used)
 void
 iappend(unsigned int inum, void *xp, int n)
 {
-  char *p = (char*)xp;
-  unsigned int fbn, off, n1;
-  struct dinode din;
-  char buf[BSIZE];
-  unsigned int indirect[NINDIRECT];
-  unsigned int x;
+	char *p = (char*)xp;
+	unsigned int fbn, off, n1;
+	struct dinode din;
+	char buf[BSIZE];
+	unsigned int indirect[NINDIRECT];
+	unsigned int x;
 
-  rinode(inum, &din);
-  off = xint(din.size);
-  // printf("append inum %d at off %d sz %d\n", inum, off, n);
-  while(n > 0){
-    fbn = off / BSIZE;
-    assert(fbn < MAXFILE);
-    if(fbn < NDIRECT){
-      if(xint(din.addrs[fbn]) == 0){
-        din.addrs[fbn] = xint(freeblock++);
-      }
-      x = xint(din.addrs[fbn]);
-    } else {
-      if(xint(din.addrs[NDIRECT]) == 0){
-        din.addrs[NDIRECT] = xint(freeblock++);
-      }
-      rsect(xint(din.addrs[NDIRECT]), (char*)indirect);
-      if(indirect[fbn - NDIRECT] == 0){
-        indirect[fbn - NDIRECT] = xint(freeblock++);
-        wsect(xint(din.addrs[NDIRECT]), (char*)indirect);
-      }
-      x = xint(indirect[fbn-NDIRECT]);
-    }
-    n1 = min(n, (fbn + 1) * BSIZE - off);
-    rsect(x, buf);
-    bcopy(p, buf + off - (fbn * BSIZE), n1);
-    wsect(x, buf);
-    n -= n1;
-    off += n1;
-    p += n1;
-  }
-  din.size = xint(off);
-  winode(inum, &din);
+	rinode(inum, &din);
+	off = xint(din.size);
+
+	while (n > 0) {
+		fbn = off / BSIZE;
+		assert(fbn < MAXFILE);
+
+		if (fbn < NDIRECT) {
+			if (xint(din.addrs[fbn]) == 0) {
+				din.addrs[fbn] = xint(freeblock++);
+			}
+			x = xint(din.addrs[fbn]);
+		} else {
+			if (xint(din.addrs[NDIRECT]) == 0) {
+				din.addrs[NDIRECT] = xint(freeblock++);
+			}
+			rsect(xint(din.addrs[NDIRECT]), (char*)indirect);
+			if (indirect[fbn - NDIRECT] == 0) {
+				indirect[fbn - NDIRECT] = xint(freeblock++);
+				wsect(xint(din.addrs[NDIRECT]), (char*)indirect);
+			}
+			x = xint(indirect[fbn-NDIRECT]);
+		}
+
+		n1 = min(n, (fbn + 1) * BSIZE - off);
+		rsect(x, buf);
+		memcpy(buf + off - (fbn * BSIZE), p, n1);
+		wsect(x, buf);
+		n -= n1;
+		off += n1;
+		p += n1;
+	}
+
+	din.size = xint(off);
+	winode(inum, &din);
 }

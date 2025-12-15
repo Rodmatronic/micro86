@@ -19,6 +19,7 @@ OBJS = \
 	$S/panic.o\
 	$S/pipe.o\
 	$S/proc.o\
+	$S/signal.o\
 	$S/sleeplock.o\
 	$S/spinlock.o\
 	$S/string.o\
@@ -159,7 +160,7 @@ $S/mkfs/mkfs: $S/mkfs/mkfs.c $S/../include/fs.h
 
 $S/fs.img: $S/mkfs/mkfs $(UPROGS)
 	build/build.sh
-	$S/mkfs/mkfs $S/fs.img
+	$S/mkfs/mkfs $S/fs.img root
 
 -include *.d
 
