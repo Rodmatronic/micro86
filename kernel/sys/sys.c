@@ -31,18 +31,15 @@ sys_utime(void)
 	struct inode *ip;
 	unsigned int now;
 
-	if(argstr(0, &path) < 0) {
-		errno=EPERM;
-		return -1;
-	}
+	if(argstr(0, &path) < 0)
+		return -EPERM;
 
 	begin_op();
 
 	ip = namei(path);
 	if(ip == 0){
 		end_op();
-		errno=ENOENT;
-		return -1;
+		return -ENOENT;
 	}
 
 	ilock(ip);
@@ -72,14 +69,12 @@ argfd(int n, int *pfd, struct file **pf)
 	int fd;
 	struct file *f;
 
-	if(argint(n, &fd) < 0){
-		errno=EPERM;
-		return -1;
-	}
-	if(fd < 0 || fd >= NOFILE || (f = myproc()->ofile[fd]) == 0){
-		errno=ENOENT;
-		return -1;
-	}
+	if(argint(n, &fd) < 0)
+		return -EPERM;
+
+	if(fd < 0 || fd >= NOFILE || (f = myproc()->ofile[fd]) == 0)
+		return -ENOENT;
+
 	if(pfd)
 		*pfd = fd;
 	if(pf)
@@ -94,24 +89,20 @@ sys_chmod(void)
 	int mode;
 	struct inode *ip;
 
-	if (argstr(0, &path) < 0 || argint(1, &mode) < 0){
-		errno=EPERM;
-		return -1;
-	}
+	if (argstr(0, &path) < 0 || argint(1, &mode) < 0)
+		return -EPERM;
 
 	begin_op();
 	if ((ip = namei(path)) == 0) {
 		end_op();
-		errno=ENOENT;
-		return -1;
+		return -ENOENT;
 	}
 
 	ilock(ip);
 	if (myproc()->uid != 0 && myproc()->uid != ip->uid) {
 		iunlock(ip);
 		end_op();
-		errno=EACCES;
-		return -1;
+		return -EACCES;
 	}
 	ip->mode = (ip->mode & ~0777) | (mode & 0777);
 	iupdate(ip);
@@ -128,25 +119,20 @@ sys_chown(void)
 	int owner, group;
 	struct inode *ip;
 
-	// Fetch syscall arguments: path, uid, gid
-	if (argstr(0, &path) < 0 || argint(1, &owner) < 0 || argint(2, &group) < 0){
-		errno=EPERM;
-		return -1;
-	}
+	if (argstr(0, &path) < 0 || argint(1, &owner) < 0 || argint(2, &group) < 0)
+		return -EPERM;
 
 	begin_op();
 	if ((ip = namei(path)) == 0) {
 		end_op();
-		errno=ENOENT;
-		return -1;
+		return -ENOENT;
 	}
 
 	ilock(ip);
 	if (myproc()->uid != 0 && myproc()->uid != ip->uid) {
 		iunlock(ip);
 		end_op();
-		errno=EACCES;
-		return -1;
+		return -EACCES;
 	}
 
 	ip->uid = owner;
@@ -166,16 +152,11 @@ sys_lseek(void)
 	int offset;
 	int whence;
 
-	if (argfd(0, 0, &f) < 0 ||
-		argint(1, &offset) < 0 ||
-		argint(2, &whence) < 0){
-		errno=EPERM;
-		return -1;
-	}
-	if (f->type == FD_PIPE) {
-		errno=EPERM;
-		return -1;
-	}
+	if (argfd(0, 0, &f) < 0 || argint(1, &offset) < 0 || argint(2, &whence) < 0)
+		return -EPERM;
+
+	if (f->type == FD_PIPE)
+		return -EPERM;
 
 	ilock(f->ip);
 
@@ -184,15 +165,14 @@ sys_lseek(void)
 			f->off = offset;
 			break;
 		case SEEK_CUR:
-				f->off += offset;
-				break;
+			f->off += offset;
+			break;
 		case SEEK_END:
 			f->off = f->ip->size + offset;
 			break;
 		default:
 			iunlock(f->ip);
-			errno=ENOENT;
-			return -1;
+			return -ENOENT;
 		}
 
 		iunlock(f->ip);
@@ -222,14 +202,12 @@ sys_dup(void)
 	struct file *f;
 	int fd;
 
-	if(argfd(0, 0, &f) < 0) {
-		errno=EPERM;
-		return -1;
-	}
-	if((fd=fdalloc(f)) < 0){
-		errno=ENOENT;
-		return -1;
-	}
+	if(argfd(0, 0, &f) < 0)
+		return -EPERM;
+
+	if((fd=fdalloc(f)) < 0)
+		return -ENOENT;
+
 	filedup(f);
 	return fd;
 }
@@ -241,10 +219,9 @@ sys_read(void)
 	int n;
 	char *p;
 
-	if(argfd(0, 0, &f) < 0 || argint(2, &n) < 0 || argptr(1, &p, n) < 0){
-		errno=EPERM;
-		return -1;
-	}
+	if(argfd(0, 0, &f) < 0 || argint(2, &n) < 0 || argptr(1, &p, n) < 0)
+		return -EPERM;
+
 	return fileread(f, p, n);
 }
 
@@ -255,10 +232,9 @@ sys_write(void)
 	int n;
 	char *p;
 
-	if(argfd(0, 0, &f) < 0 || argint(2, &n) < 0 || argptr(1, &p, n) < 0){
-		errno=EPERM;
-		return -1;
-	}
+	if(argfd(0, 0, &f) < 0 || argint(2, &n) < 0 || argptr(1, &p, n) < 0)
+		return -EPERM;
+
 	return filewrite(f, p, n);
 }
 
@@ -269,7 +245,8 @@ sys_close(void)
 	struct file *f;
 
 	if(argfd(0, &fd, &f) < 0)
-		return -1;
+		return -EPERM;
+
 	myproc()->ofile[fd] = 0;
 	fileclose(f);
 	return 0;
@@ -280,22 +257,16 @@ int sys_fstat(void) {
 	struct stat st;
 	struct stat *user_st;
 
-	if(argfd(0, 0, &f) < 0 ||
-		argptr(1, (void*)&user_st, sizeof(struct stat)) < 0){
-		errno=EPERM;
-		return -1;
-		}
+	if(argfd(0, 0, &f) < 0 || argptr(1, (void*)&user_st, sizeof(struct stat)) < 0)
+		return -EPERM;
 
 	// Use memset to ensure padding is zeroed
 	memset(&st, 0, sizeof(st));
-
 	stati(f->ip, &st);
 
 	// Copy entire struct including padding
-	if(copyout(myproc()->pgdir, (unsigned int)user_st, &st, sizeof(st)) < 0){
-		errno=ENOENT;
-		return -1;
-	}
+	if(copyout(myproc()->pgdir, (unsigned int)user_st, &st, sizeof(st)) < 0)
+		return -ENOENT;
 
 	return 0;
 }
@@ -307,24 +278,20 @@ sys_link(void)
 	char name[DIRSIZ], *new, *old;
 	struct inode *dp, *ip;
 
-	if(argstr(0, &old) < 0 || argstr(1, &new) < 0){
-		errno=EPERM;
-		return -1;
-	}
+	if(argstr(0, &old) < 0 || argstr(1, &new) < 0)
+		return -EPERM;
 
 	begin_op();
 	if((ip = namei(old)) == 0){
 		end_op();
-		errno=ENOENT;
-		return -1;
+		return -ENOENT;
 	}
 
 	ilock(ip);
 	if ((ip->mode & S_IFMT) != S_IFDIR){
 		iunlockput(ip);
 		end_op();
-		errno=EISDIR;
-		return -1;
+		return -EISDIR;
 	}
 
 	ip->nlink++;
@@ -351,8 +318,7 @@ bad:
 	iupdate(ip);
 	iunlockput(ip);
 	end_op();
-	errno=ENOENT;
-	return -1;
+	return -ENOENT;
 }
 
 // Is the directory dp empty except for "." and ".." ?
@@ -379,46 +345,36 @@ sys_unlink(void)
 	char name[DIRSIZ], *path;
 	unsigned int off;
 
-	if(argstr(0, &path) < 0){
-		errno=EPERM;
-		return -1;
-	}
+	if(argstr(0, &path) < 0)
+		return -EPERM;
 
 	begin_op();
 	if((dp = nameiparent(path, name)) == 0){
 		end_op();
-		errno=ENOENT;
-		return -1;
+		return -ENOENT;
 	}
 
 	ilock(dp);
 
-	if (myproc()->uid != dp->uid &&
-			((dp->mode & S_IFMT) != S_IFCHR) &&
-			((dp->mode & S_IFMT) != S_IFBLK)) {
+	if (myproc()->uid != dp->uid && ((dp->mode & S_IFMT) != S_IFCHR) && ((dp->mode & S_IFMT) != S_IFBLK)) {
 		iunlock(dp);
 		end_op();
-		errno=EACCES;
-		return -1;
+		return -EACCES;
 	}
 
 	// Cannot unlink "." or "..".
-	if(namecmp(name, ".") == 0 || namecmp(name, "..") == 0) {
-		errno=EPERM;
+	if(namecmp(name, ".") == 0 || namecmp(name, "..") == 0)
 		goto bad;
-	}
 
-	if((ip = dirlookup(dp, name, &off)) == 0) {
-		errno=ENOENT;
+	if((ip = dirlookup(dp, name, &off)) == 0)
 		goto bad;
-	}
+
 	ilock(ip);
 
 	if(ip->nlink < 1)
 		panic("unlink: nlink < 1");
 	if(((ip->mode & S_IFMT) == S_IFDIR) && !isdirempty(ip)) {
 		iunlockput(ip);
-		errno=ENOENT;
 		goto bad;
 	}
 
@@ -434,7 +390,6 @@ sys_unlink(void)
 	ip->nlink--;
 	iupdate(ip);
 	iunlockput(ip);
-
 	end_op();
 
 	return 0;
@@ -442,7 +397,7 @@ sys_unlink(void)
 bad:
 	iunlockput(dp);
 	end_op();
-	return -1;
+	return -ENOENT;
 }
 
 static struct inode*
@@ -452,9 +407,9 @@ create(char *path, short type, short major, short minor)
 	struct inode *ip, *dp;
 	char name[DIRSIZ];
 
-	if((dp = nameiparent(path, name)) == 0) {
+	if((dp = nameiparent(path, name)) == 0)
 		return 0;
-	}
+
 	ilock(dp);
 
 	if ((ip = dirlookup(dp, name, 0)) != 0) {
@@ -507,15 +462,11 @@ sys_open(void)
 	struct inode *ip;
 	//struct proc *p = myproc();
 
-	if(argstr(0, &path) < 0 || argint(1, &omode) < 0){
-		errno=EPERM;
-		return -1;
-	}
+	if(argstr(0, &path) < 0 || argint(1, &omode) < 0)
+		return -EPERM;
 
-	if (omode & O_CREAT) {
+	if (omode & O_CREAT)
 		argint(2, &mode);
-	}
-
 
 	begin_op();
 
@@ -525,27 +476,24 @@ sys_open(void)
 		ip = create(path, S_IFREG | mode, 0, 0);
 		if(ip == 0){
 			end_op();
-			errno=ENOENT;
-			return -2;
+			return -ENOENT;
 		}
 	} else {
 		if((ip = namei(path)) == 0){
 			end_op();
-			errno=ENOENT;
-			return -2;
+			return -ENOENT;
 		}
 		ilock(ip);
 
 		if (((ip->mode & S_IFMT) == S_IFDIR) && omode != O_RDONLY) {
 			iunlockput(ip);
 			end_op();
-			errno=EACCES;
-			return -1;
+			return -EACCES;
 		}
 	}
-	if (omode & O_TRUNC) {
+	if (omode & O_TRUNC)
 		itrunc(ip);
-	}
+
 	if((f = filealloc()) == 0 || (fd = fdalloc(f)) < 0){
 		if(f){
 			ip->lmtime = epoch_mktime();
@@ -579,8 +527,7 @@ sys_mkdir(void)
 	begin_op();
 	if(argstr(0, &path) < 0 || (ip = create(path, S_IFDIR | S_IRUSR | S_IXUSR | S_IWUSR | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, 0, 0)) == 0){
 		end_op();
-		errno=EEXIST;
-		return -1;
+		return -EEXIST;
 	}
 	iunlockput(ip);
 	end_op();
@@ -595,13 +542,9 @@ sys_mknod(void)
 	int major, minor;
 
 	begin_op();
-	if((argstr(0, &path)) < 0 ||
-		argint(1, &major) < 0 ||
-		argint(2, &minor) < 0 ||
-		(ip = create(path, S_IFCHR | S_IRUSR | S_IWUSR, major, minor)) == 0){
+	if((argstr(0, &path)) < 0 || argint(1, &major) < 0 || argint(2, &minor) < 0 || (ip = create(path, S_IFCHR | S_IRUSR | S_IWUSR, major, minor)) == 0){
 		end_op();
-		errno=EACCES;
-		return -1;
+		return -EACCES;
 	}
 	iunlockput(ip);
 	end_op();
@@ -618,15 +561,13 @@ sys_chdir(void)
 	begin_op();
 	if(argstr(0, &path) < 0 || (ip = namei(path)) == 0){
 		end_op();
-		errno=ENOENT;
-		return -1;
+		return -ENOENT;
 	}
 	ilock(ip);
 	if ((ip->mode & S_IFMT) != S_IFDIR) {
 		iunlockput(ip);
 		end_op();
-		errno=EISDIR;
-		return -1;
+		return -EISDIR;
 	}
 	iunlock(ip);
 	iput(curproc->cwd);
@@ -642,31 +583,28 @@ sys_exec(void)
 	int i;
 	unsigned int uargv, uarg;
 
-	if(argstr(0, &path) < 0 || argint(1, (int*)&uargv) < 0){
-		return -1;
-	}
+	if(argstr(0, &path) < 0 || argint(1, (int*)&uargv) < 0)
+		return -EPERM;
+
 	memset(argv, 0, sizeof(argv));
 	for(i=0;; i++){
-		if(i >= NELEM(argv)){
-			return -1;
-		}
-		if(fetchint(uargv+4*i, (int*)&uarg) < 0){
-			return -12;
-		}
+		if(i >= NELEM(argv))
+			return -EPERM;
+		if(fetchint(uargv+4*i, (int*)&uarg) < 0)
+			return -ENOMEM;
 		if(uarg == 0){
 			argv[i] = 0;
 			break;
 		}
-		if(fetchstr(uarg, &argv[i]) < 0){
-			return -1;
-		}
+		if(fetchstr(uarg, &argv[i]) < 0)
+			return -EPERM;
 	}
 	struct inode *ip;
 	begin_op();
 	ip = namei(path);
 	if(ip == 0){
 		end_op();
-		return -2;
+		return -ENOENT;
 	}
 
 	ilock(ip);
@@ -686,7 +624,7 @@ sys_exec(void)
 	if (!can_exec) {
 		iunlockput(ip);
 		end_op();
-		return -1;
+		return -EPERM;
 	}
 
 	iunlockput(ip);
@@ -702,22 +640,19 @@ sys_pipe(void)
 	struct file *rf, *wf;
 	int fd0, fd1;
 
-	if(argptr(0, (void*)&fd, 2*sizeof(fd[0])) < 0){
-		errno=EPERM;
-		return -1;
-	}
-	if(pipealloc(&rf, &wf) < 0){
-		errno=ENOMEM;
-		return -1;
-	}
+	if(argptr(0, (void*)&fd, 2*sizeof(fd[0])) < 0)
+		return -EPERM;
+
+	if(pipealloc(&rf, &wf) < 0)
+		return -ENOMEM;
+
 	fd0 = -1;
 	if((fd0 = fdalloc(rf)) < 0 || (fd1 = fdalloc(wf)) < 0){
 		if(fd0 >= 0)
 			myproc()->ofile[fd0] = 0;
 		fileclose(rf);
 		fileclose(wf);
-		errno=ENOMEM;
-		return -1;
+		return -ENOMEM;
 	}
 	fd[0] = fd0;
 	fd[1] = fd1;
@@ -731,10 +666,8 @@ int
 sys_gtty(void)
 {
 	struct ttyb *uttyb;
-	if (argptr(0, (char **)&uttyb, sizeof(struct ttyb)) < 0) {
-		errno=EPERM;
-		return -1;
-	}
+	if (argptr(0, (char **)&uttyb, sizeof(struct ttyb)) < 0)
+		return -EPERM;
 
 	acquire(&cons.lock);
 	*uttyb = ttyb;
@@ -746,10 +679,8 @@ int
 sys_stty(void)
 {
 	struct ttyb *uttyb;
-	if (argptr(0, (char **)&uttyb, sizeof(struct ttyb)) < 0) {
-		errno=EPERM;
-		return -1;
-	}
+	if (argptr(0, (char **)&uttyb, sizeof(struct ttyb)) < 0)
+		return -EPERM;
 
 	acquire(&cons.lock);
 	ttyb.speeds = uttyb->speeds;
@@ -767,10 +698,8 @@ sys_uname(void)
 {
 	struct utsname *u;
 
-	if(argptr(0, (char**)&u, sizeof(struct utsname)) < 0){
-		errno=EPERM;
-		return -1;
-	}
+	if(argptr(0, (char**)&u, sizeof(struct utsname)) < 0)
+		return -EPERM;
 
 	safestrcpy(u->sysname, sys_name, sizeof(u->sysname));
 	safestrcpy(u->nodename, sys_nodename, sizeof(u->nodename));
@@ -788,12 +717,12 @@ int sys_oldolduname(void)
 
 int sys_stime(void) {
 	unsigned long epoch;
-	if (argint(0, (int*)&epoch) < 0) {
-		errno=EPERM;
-		return -1;
-	}
 	struct proc *p = myproc();
-	if (p->uid != 0) return 1; // Operation not permitted
+	if (argint(0, (int*)&epoch) < 0)
+		return -EPERM;
+
+	if (p->uid != 0)
+		return -EPERM;
 	set_kernel_time((unsigned long)epoch);
 	return 0;
 }
@@ -803,22 +732,19 @@ int
 sys_time(void)
 {
 	int esec;
-	if (argint(0, &esec) < 0) {
-		errno=EPERM;
-		return -1;
-	}
+	if (argint(0, &esec) < 0)
+		return -EPERM;
+
 	return epoch_mktime();
 }
 
 int
 sys_setgid(void) {
 	int gid;
-	if (argint(0, &gid) < 0) {
-		errno=EPERM;
-		return -1;
-	}
-
 	struct proc *p = myproc();
+	if (argint(0, &gid) < 0)
+		return -EPERM;
+
 	p->gid = p->egid = p->sgid = gid;
 	return 0;
 }
@@ -826,12 +752,10 @@ sys_setgid(void) {
 int
 sys_setuid(void) {
 	int uid;
-	if (argint(0, &uid) < 0) {
-		errno=EPERM;
-		return -1;
-	}
-
 	struct proc *p = myproc();
+	if (argint(0, &uid) < 0)
+		return -EPERM;
+
 	p->uid = p->euid = p->suid = uid;
 	return 0;
 }
@@ -870,19 +794,17 @@ void
 sys_exit(void)
 {
 	int status;
-	if(argint(0, &status) < 0) { // Get exit status from first argument
-		errno=EPERM;
+	if(argint(0, &status) < 0)
 		return;
-	}
+
 	exit(status);
 }
 
 int sys_waitpid(void){
 	int *status;
-	if(argptr(0, (void*)&status, sizeof(*status)) < 0) {
-		errno = EFAULT;
-		return -1;
-	}
+	if(argptr(0, (void*)&status, sizeof(*status)) < 0)
+		return -EPERM;
+
 	return (waitpid(-1, status, 0)); // Wait for any child
 }
 
@@ -898,11 +820,11 @@ sys_wait4(void)
 	int options;
 
 	if(argint(0, &pid) < 0)
-		return -1;
+		return -EPERM;
 	if(argptr(1, (void*)&status, sizeof(*status)) < 0)
-		return -1;
+		return -EPERM;
 	if(argint(2, &options) < 0)
-		return -1;
+		return -EPERM;
 
 	return waitpid(pid, status, options);
 }
@@ -921,13 +843,13 @@ sys_kill(void)
 	int pid, signo;
 
 	if(argint(0, &pid) < 0)
-		return -1;
+		return -EPERM;
 
 	if(argint(1, &signo) < 0)
 		signo = SIGTERM;
 
 	if(signo < 1 || signo >= NSIG)
-		return -1;
+		return -EPERM;
 
 	return kill(pid, signo);
 }
@@ -950,15 +872,13 @@ sys_sbrk(void)
 	int addr;
 	int n;
 
-	if(argint(0, &n) < 0) {
-		errno=EPERM;
-		return -1;
-	}
+	if(argint(0, &n) < 0)
+		return -EPERM;
+
 	addr = myproc()->sz;
-	if(growproc(n) < 0) {
-		errno=5;
-		return -1;
-	}
+	if(growproc(n) < 0)
+		return -ENOMEM;
+
 	return addr;
 }
 
@@ -968,10 +888,9 @@ sys_sleep(void)
 	int n;
 	unsigned int ticks0;
 
-	if(argint(0, &n) < 0) {
-		errno=EPERM;
-		return -1;
-	}
+	if(argint(0, &n) < 0)
+		return -EPERM;
+
 	acquire(&tickslock);
 	ticks0 = ticks;
 	while(ticks - ticks0 < n){
@@ -987,7 +906,6 @@ sys_sleep(void)
 
 void notim(){
 	printk("syscall %d: Not Implemented.\n", myproc()->tf->eax);
-	errno=ENOSYS;
 }
 
 int sys_syscall(void){
@@ -998,7 +916,6 @@ int sys_syscall(void){
 /*
  * I would call sys_open, but I don't know how.
  */
-
 int
 sys_creat(void)
 {
@@ -1008,10 +925,8 @@ sys_creat(void)
 	struct inode *ip;
 	struct file *f;
 
-	if(argstr(0,&path)<0 || argint(1,&mode)<0){
-		errno=EPERM;
-		return -1;
-	}
+	if(argstr(0,&path)<0 || argint(1,&mode)<0)
+		return -EPERM;
 
 	begin_op();
 
@@ -1019,8 +934,7 @@ sys_creat(void)
 	ip=create(path,S_IFREG|mode,0,0);
 	if(ip==0){
 		end_op();
-		errno=ENOENT;
-		return -1;
+		return -ENOENT;
 	}
 
 	itrunc(ip);
@@ -1032,7 +946,7 @@ sys_creat(void)
 		}
 		iunlockput(ip);
 		end_op();
-		return -1;
+		return -EPERM;
 	}
 
 	iunlock(ip);
@@ -1069,14 +983,14 @@ int sys_ptrace(void){
 }
 int sys_alarm(void){
 	int ticks;
+	struct proc *p = myproc();
 
 	if(argint(0, &ticks) < 0)
-		return -1;
+		return -EPERM;
 
 	if(ticks < 0)
-		return -1;
+		return -EPERM;
 
-	struct proc *p = myproc();
 	int old = p->alarminterval;
 
 	p->alarmticks = ticks;
@@ -1098,10 +1012,8 @@ int sys_access(void){
 	int uid = myproc()->uid;
 	int gid = myproc()->gid;
 
-	if (argstr(0, &path) < 0 || argint(1, &mode) < 0) {
-		errno=EPERM;
-		return -1;
-	}
+	if (argstr(0, &path) < 0 || argint(1, &mode) < 0)
+		return -EPERM;
 
 	mode &= 0007;
 
@@ -1109,7 +1021,7 @@ int sys_access(void){
 	ip = namei(path);
 	if (!ip) {
 		end_op();
-		return -1;
+		return -EBADF;
 	}
 
 	ilock(ip);
@@ -1128,7 +1040,7 @@ int sys_access(void){
 
 	iunlock(ip);
 	end_op();
-	return -13;
+	return -EACCES;
 }
 
 int sys_nice(void){
@@ -1149,16 +1061,13 @@ int sys_rmdir(void){
 	char name[DIRSIZ], *path;
 	unsigned int off;
 
-	if(argstr(0, &path) < 0){
-		errno=EPERM;
-		return -1;
-	}
+	if(argstr(0, &path) < 0)
+		return -EPERM;
 
 	begin_op();
 	if((dp = nameiparent(path, name)) == 0){
 		end_op();
-		errno=ENOENT;
-		return -1;
+		return -ENOENT;
 	}
 
 	ilock(dp);
@@ -1166,22 +1075,19 @@ int sys_rmdir(void){
 	if (myproc()->uid != dp->uid) {
 		iunlockput(dp);
 		end_op();
-		errno=EPERM;
-		return -1;
+		return -EPERM;
 	}
 
 	if(namecmp(name, ".") == 0 || namecmp(name, "..") == 0) {
 		iunlockput(dp);
 		end_op();
-		errno=EPERM;
-		return -1;
+		return -EPERM;
 	}
 
 	if((ip = dirlookup(dp, name, &off)) == 0) {
 		iunlockput(dp);
 		end_op();
-		errno=ENOENT;
-		return -1;
+		return -ENOENT;
 	}
 	ilock(ip);
 
@@ -1189,16 +1095,14 @@ int sys_rmdir(void){
 		iunlockput(ip);
 		iunlockput(dp);
 		end_op();
-		errno=ENOTDIR;
-		return -1;
+		return -ENOTDIR;
 	}
 
 	if(!isdirempty(ip)) { // ensure the directory is empty
 		iunlockput(ip);
 		iunlockput(dp);
 		end_op();
-		errno=ENOTEMPTY;
-		return -1;
+		return -ENOTEMPTY;
 	}
 
 	memset(&de, 0, sizeof(de));
@@ -1237,28 +1141,22 @@ sys_brk(void)
 	int old;
 	int delta;
 
-	if(argint(0, &addr) < 0) {
-		errno = EPERM;
-		return -1;
-	}
+	if(argint(0, &addr) < 0)
+		return -EPERM;
 
 	old = myproc()->sz;
 
 	if(addr == 0)
 		return old;
 
-	if(addr < 0) {
-		errno = EINVAL;
-		return -1;
-	}
+	if(addr < 0)
+		return -EINVAL;
 
 	delta = addr - old;
 
 	if(delta != 0) {
-		if(growproc(delta) < 0) {
-			errno = ENOMEM;
-			return -1;
-		}
+		if(growproc(delta) < 0)
+			return -ENOMEM;
 	}
 
 	return addr;
@@ -1270,10 +1168,10 @@ int sys_signal(void){
 	struct proc *p = myproc();
 
 	if(argint(0, &signum) < 0 || argint(1, (int*)&handler) < 0)
-		return -1;
+		return -EPERM;
 
 	if(signum < 1 || signum >= NSIG || signum == SIGKILL)
-		return -1;  // Can't catch SIGKILL
+		return -EPERM;  // Can't catch SIGKILL
 
 	unsigned int old = p->sighandlers[signum];
 	p->sighandlers[signum] = handler;
@@ -1325,11 +1223,11 @@ sys_ioctl(void)
 	void *arg;
 
 	if(argfd(0, 0, &f) < 0)
-		return -1;
+		return -EPERM;
 	if(argint(1, &req) < 0)
-		return -1;
+		return -EPERM;
 	if(argptr(2, (char**)&arg, sizeof(struct winsize)) < 0)
-		return -1;
+		return -EPERM;
 
 	switch(req){
 		case 19258: // graphics/console
@@ -1342,7 +1240,7 @@ sys_ioctl(void)
 		case 21523: // winsize
 			return tty_get_winsize((struct winsize*)arg);
 	default:
-		return -1;
+		return -EPERM;
 	}
 }
 int sys_fcntl(void){
@@ -1352,22 +1250,22 @@ int sys_fcntl(void){
 	struct file *f;
 
 	if(argfd(0, &fd, &f) < 0)
-		return -1;
+		return -EPERM;
 	if(argint(1, &cmd) < 0)
-		return -1;
+		return -EPERM;
 	if(argint(2, (int*)&arg) < 0)
-		return -1;
+		return -EPERM;
 	switch(cmd){
 	case F_GETFL:
 		return f->flags;
 	case F_SETFL:
 		// only allow changing O_APPEND for now
 		if(arg & ~O_APPEND)
-			return -1;
+			return -EPERM;
 		f->flags = (f->flags & ~O_APPEND) | (arg & O_APPEND);
 		return 0;
 	default:
-		return -1;
+		return -EPERM;
 	}
 }
 int sys_mpx(void){
@@ -1395,7 +1293,7 @@ int sys_dup2(void){
 	struct file *f;
 
 	if(argfd(0, &fd, &f) < 0)
-		return -1;
+		return -EPERM;
 	myproc()->ofile[fd] = 0;
 	fileclose(f);
 
@@ -1439,9 +1337,9 @@ sys_writev(void)
 	int total;
 
 	if(argfd(0, 0, &f) < 0 || argint(2, &count) < 0)
-		return -1;
+		return -EPERM;
 	if(argptr(1, (char**)&vec, count * sizeof(unsigned int) * 2) < 0)
-		return -1;
+		return -EPERM;
 
 	total = 0;
 	for(i = 0; i < count; i++){
@@ -1449,7 +1347,7 @@ sys_writev(void)
 		int n = (int)vec[i * 2 + 1];
 		int r = filewrite(f, p, n);
 		if(r < 0)
-			return -1;
+			return -EIO;
 		total += r;
 	}
 	return total;
@@ -1485,7 +1383,7 @@ sys_rt_sigprocmask(void)
 	size_t sigsetsize;
 
 	if(argint(0, &how) < 0)
-		return -1;
+		return -EPERM;
 	if(argptr(1, (void*)&set, sizeof(*set)) < 0)
 		set = 0;
 	if(argptr(2, (void*)&oldset, sizeof(*oldset)) < 0)
@@ -1496,9 +1394,8 @@ sys_rt_sigprocmask(void)
 	struct proc *curproc = myproc();
 
 	// return old mask if requested
-	if(oldset != 0) {
+	if(oldset != 0)
 		*oldset = curproc->sigmask;
-	}
 
 	// apply new mask if provided
 	if(set != 0) {
@@ -1515,7 +1412,7 @@ sys_rt_sigprocmask(void)
 				curproc->sigmask = newmask;
 				break;
 			default:
-				return -1;
+				return -EPERM;
 		}
 	}
 
@@ -1535,14 +1432,14 @@ sys_rt_sigaction(void)
 	unsigned int old;
 
 	if(argint(0, &signum) < 0)
-		return -1;
+		return -EPERM;
 	if(argptr(1, (void*)&act, sizeof(*act)) < 0)
 		act = 0;
 	if(argint(2, (int*)&old) < 0)
 		old = 0;
 
 	if(signum < 1 || signum >= NSIG || signum == SIGKILL)
-		return -1;
+		return -EPERM;
 
 	struct proc *p = myproc();
 
@@ -1565,14 +1462,14 @@ int sys_getcwd(void){
 	size_t size;
 
 	if(argptr(0, (void*)&buf, sizeof(*buf)) < 0)
-		return -1;
+		return -EPERM;
 	if(argint(1, (int*)&size) < 0)
-		return -1;
+		return -EPERM;
 
 	struct proc *curproc = myproc();
 	struct inode *cwd = curproc->cwd;
-	char path[128];
-	int pos = 127;
+	char path[DIRSIZ];
+	int pos = DIRSIZ - 1;
 	path[pos] = '\0';
 
 	ilock(cwd);
@@ -1633,7 +1530,7 @@ int sys_exit_group(void){
 	int status;
 
 	if(argint(0, &status) < 0)
-		return -1;
+		return -EPERM;
 
 	exit(status);
 	return 0;
@@ -1647,7 +1544,7 @@ int sys_set_tid_address(void){
 	int *tidptr;
 
 	if(argptr(0, (void*)&tidptr, sizeof(*tidptr)) < 0)
-		return -1;
+		return -EPERM;
 
 	return myproc()->pid;
 }
@@ -1663,10 +1560,10 @@ int sys_statx(void){
 	struct stat st;
 
 	if(argint(0, &dirfd) < 0 || argstr(1, &pathname) < 0 || argint(2, &flags) < 0 || argint(3, (int*)&mask) < 0 || argptr(4, (char**)&user_statxbuf, sizeof(struct statx)) < 0)
-		return -1;
+		return -EPERM;
 
 	if((ip = namei(pathname)) == 0)
-		return -1;
+		return -EPERM;
 
 	ilock(ip);
 
@@ -1697,7 +1594,7 @@ int sys_statx(void){
 	iunlockput(ip);
 
 	if(copyout(myproc()->pgdir, (unsigned int)user_statxbuf, &stxbuf, sizeof(stxbuf)) < 0)
-		return -1;
+		return -EPERM;
 
 	return 0;
 }
@@ -1710,21 +1607,21 @@ sys_clock_gettime64(void)
 	uint64_t ns;
 
 	if(argint(0, &clkid) < 0)
-		return -1;
+		return -EPERM;
 	if(argptr(1, (void*)&utp, sizeof(*utp)) < 0)
-		return -1;
+		return -EPERM;
 
 	ns = ((rdtsc() - tsc_offset) * 1000000000ULL) / tsc_freq_hz;
 
 	if(clkid != CLOCK_MONOTONIC)
-		return -1;
+		return -EPERM;
 
 	struct timespec64 ts;
 	ts.tv_sec = ns / 1000000000ULL;
 	ts.tv_nsec = ns % 1000000000ULL;
 
 	if(copyout(myproc()->pgdir, (unsigned int)utp, &ts, sizeof(ts)) < 0)
-		return -1;
+		return -EPERM;
 
 	return 0;
 }
