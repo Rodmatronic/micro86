@@ -339,7 +339,7 @@ waitpid(int pid, int *status, int options)
 				int childpid = p->pid;
 
 				if(status)
-					*status = p->exitstatus;
+					*status = (p->exitstatus & 0xFF) << 8;
 
 				kfree(p->kstack);
 				p->kstack = 0;
