@@ -1349,6 +1349,76 @@ sys_writev(void)
 	return total;
 }
 
+int sys_setresuid(void){
+	int uid, euid, suid;
+	struct proc *p = myproc();
+
+	if (argint(0, &uid) < 0)
+		return -EPERM;
+	if (argint(1, &euid) < 0)
+		return -EPERM;
+	if (argint(2, &suid) < 0)
+		return -EPERM;
+
+	if (uid < -1 || euid < -1 || suid < -1)
+		return -EINVAL;
+
+	if (p->uid != 0) {
+		if (uid != -1 && uid != p->uid && uid != p->euid)
+			return -EPERM;
+		if (euid != -1 && euid != p->uid && euid != p->suid)
+			return -EPERM;
+		if (suid != -1 && suid != p->euid)
+			return -EPERM;
+	}
+
+	if (uid != -1)
+		p->uid = uid;
+	if (euid != -1)
+		p->euid = euid;
+	if (suid != -1)
+		p->suid = suid;
+	else if (euid != -1)
+		p->suid = p->euid;
+
+	return 0;
+}
+
+int sys_setresgid(void){
+	int gid, egid, sgid;
+	struct proc *p = myproc();
+
+	if (argint(0, &gid) < 0)
+		return -EPERM;
+	if (argint(1, &egid) < 0)
+		return -EPERM;
+	if (argint(2, &sgid) < 0)
+		return -EPERM;
+
+	if (gid < -1 || egid < -1 || sgid < -1)
+		return -EINVAL;
+
+	if (p->gid != 0) {
+		if (gid != -1 && gid != p->gid && gid != p->egid)
+			return -EPERM;
+		if (egid != -1 && egid != p->gid && egid != p->sgid)
+			return -EPERM;
+		if (sgid != -1 && sgid != p->egid)
+			return -EPERM;
+	}
+
+	if (gid != -1)
+		p->gid = gid;
+	if (egid != -1)
+		p->egid = egid;
+	if (sgid != -1)
+		p->sgid = sgid;
+	else if (egid != -1)
+		p->sgid = p->egid;
+
+	return 0;
+}
+
 /*
  * return signal
  */
@@ -1513,6 +1583,14 @@ int sys_geteuid32(void){
 
 int sys_getegid32(void){
 	return myproc()->egid;
+}
+
+int sys_setresuid32(void){
+	return sys_setresuid();
+}
+
+int sys_setresgid32(void){
+	return sys_setresgid();
 }
 
 int sys_fcntl64(void){

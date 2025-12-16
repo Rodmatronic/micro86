@@ -78,6 +78,8 @@
 #define SYS_uname	122
 #define SYS_getpgid	132
 #define SYS_writev	146
+#define SYS_setresuid	164
+#define SYS_setresgid	170
 #define SYS_rt_sigreturn	173
 #define SYS_rt_sigprocmask	175
 #define SYS_rt_sigaction	174
@@ -87,6 +89,8 @@
 #define SYS_getgid32	200
 #define SYS_geteuid32	201
 #define SYS_getegid32	202
+#define SYS_setresuid32	208
+#define SYS_setresgid32	210
 #define SYS_fcntl64	221
 /*
  * rather large gap
