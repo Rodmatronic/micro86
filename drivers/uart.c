@@ -55,11 +55,36 @@ uartputc(int c)
 
 	if(!uart)
 		return;
-	if (c == '\t')
-		return;
+
 	for(i = 0; i < 128 && !(inb(COM1+5) & 0x20); i++)
 		microdelay(10);
-	outb(COM1+0, c);
+
+	switch(c){
+		case(0x100):
+		case('\b'):
+		case(0x7f):
+			outb(COM1+0, '\b');
+			outb(COM1+0, ' ');
+			outb(COM1+0, '\b');
+			return;
+
+		case('\n'):
+			outb(COM1+0, '\r');
+			outb(COM1+0, '\n');
+			return;
+
+		case('\t'):
+			for(int j = 0; j < 8; j++)
+				outb(COM1+0, ' ');
+			return;
+		}
+
+	if((c & 0xff) < 0x20){
+		outb(COM1+0, '^');
+		outb(COM1+0, (c & 0xff) + '@');
+	} else {
+		outb(COM1+0, c & 0xff);
+	}
 }
 
 static int

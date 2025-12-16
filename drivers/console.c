@@ -241,24 +241,31 @@ cgaputc(int c)
 		case('\n'):
 			pos += 80 - pos%80;
 			break;
+
 		case(BACKSPACE):
 			if(pos > 0) -- pos;
 			break;
-		case ('\t'):
-			int spaces = 8 - (pos % 8);
-			for(int i = 0; i < spaces; i++) {
+
+	case('\t'):
+		int spaces = 8 - (pos % 8);
+		for(int i = 0; i < spaces; i++){
 			crt[pos++] = ' ' | current_color;
-				if((pos/80) >= 25){
-					memmove(crt, crt+80, sizeof(crt[0])*24*80);
-					pos -= 80;
-					memset(crt+pos, 0, sizeof(crt[0])*(25*80 - pos));
-				}
+			if((pos/80) >= 25){
+				memmove(crt, crt+80, sizeof(crt[0])*24*80);
+				pos -= 80;
+				memset(crt+pos, 0, sizeof(crt[0])*(25*80 - pos));
 			}
-			break;
-		
-		default:
-			crt[pos++] = (c&0xff) | current_color;	// black on white
-			break;
+		}
+		break;
+
+	default:
+		if((c & 0xff) < 0x20){
+			crt[pos++] = '^' | current_color;
+			crt[pos++] = ((c & 0xff) + '@') | current_color;
+		}else{
+			crt[pos++] = (c & 0xff) | current_color;
+		}
+		break;
 	}
 
 	if((pos/80) >= 25){	// Scroll up.
@@ -560,8 +567,14 @@ consoleintr(int (*getc)(void))
 		case C('H'): case '\x7f':	// Backspace
 			if(input.e != input.w){
 				input.e--;
-			if(ttyb.tflags & ECHO)
-				consputc(BACKSPACE);
+				if(ttyb.tflags & ECHO){
+					if((input.buf[input.e % INPUT_BUF] & 0xff) < 0x20){
+						consputc(BACKSPACE);
+						consputc(BACKSPACE);
+					}else{
+						consputc(BACKSPACE);
+					}
+				}
 			}
 			break;
 		case '\t':	// Tab
