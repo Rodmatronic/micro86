@@ -102,7 +102,8 @@ ushort convert_mode(mode_t host_mode) {
 	if (S_ISDIR(host_mode))
 		xv6_mode |= S_IFDIR;
 	else if (S_ISREG(host_mode))
-		xv6_mode |= 0;
+		xv6_mode |= S_IFREG;
+
 
 	if (host_mode & S_IRUSR) xv6_mode |= S_IRUSR;
 	if (host_mode & S_IWUSR) xv6_mode |= S_IWUSR;
