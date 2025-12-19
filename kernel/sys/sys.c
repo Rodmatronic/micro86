@@ -215,12 +215,6 @@ sys_open(void)
 			return -ENOENT;
 		}
 		ilock(ip);
-
-		if (((ip->mode & S_IFMT) == S_IFDIR) && omode != O_RDONLY) {
-			iunlockput(ip);
-			end_op();
-			return -EACCES;
-		}
 	}
 	if (omode & O_TRUNC)
 		itrunc(ip);
