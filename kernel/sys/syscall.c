@@ -151,6 +151,7 @@ extern int sys_mpx(void);
 extern int sys_setpgid(void);
 extern int sys_ulimit(void);
 extern int sys_sbrk(void);
+extern int sys_sethostname(void);
 extern int sys_umask(void);
 extern int sys_chroot(void);
 extern int sys_ustat(void);
@@ -250,6 +251,7 @@ static int (*syscalls[])(void) = {
 	[SYS_setpgid]	sys_setpgid,
 	[SYS_ulimit]	sys_ulimit,
 	[SYS_sbrk]	sys_sbrk,
+	[SYS_sethostname]	sys_sethostname,
 	[SYS_umask]	sys_umask,
 	[SYS_chroot]	sys_chroot,
 	[SYS_ustat]	sys_ustat,

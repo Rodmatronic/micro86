@@ -1207,9 +1207,24 @@ sys_sbrk(void)
 	return addr;
 }
 
+int sys_sethostname(void){
+	const char * hostname;
+	size_t len;
+
+	if(argstr(0, (char **)&hostname) < 0)
+		return -EINVAL;
+	if(argptr(1, (void*)&len, sizeof(len)) < 0)
+		return -EINVAL;
+
+	strncpy(sys_nodename, hostname, len);
+	sys_nodename[len] = '\0';
+	return 0;
+}
+
 int sys_umask(void){
 	mode_t mask;
 	mode_t old;
+
 	if(argptr(0, (void*)&mask, sizeof(mode_t)) < 0)
 		return -EINVAL;
 	old = myproc()->umask;

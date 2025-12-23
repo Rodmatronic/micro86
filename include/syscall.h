@@ -69,6 +69,7 @@
 #define SYS_sigaction	67 // TODO
 #define SYS_sgetmask	68 // TODO
 #define SYS_ssetmask	69 // TODO
+#define SYS_sethostname	74
 #define SYS_getrusage	77
 /*
   don't worry about it
