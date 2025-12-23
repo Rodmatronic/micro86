@@ -7,6 +7,7 @@
 #include <proc.h>
 #include <spinlock.h>
 #include <errno.h>
+#include <stat.h>
 
 struct {
 	struct spinlock lock;
@@ -94,6 +95,7 @@ found:
 	p->alarmticks = 0;
 	p->alarminterval = 0;
 	p->sigmask = 0;
+	p->umask = S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH;
 	for(int i = 0; i < NSIG; i++)
 		p->sighandlers[i] = 0;
 	p->sighandlers[SIGCHLD] = 1;

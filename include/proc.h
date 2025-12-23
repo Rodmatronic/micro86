@@ -1,8 +1,9 @@
 #ifndef PROC_H
 #define PROC_H
 
-#include "../include/param.h"
+#include <param.h>
 #include <signal.h>
+#include <types.h>
 
 // Per-CPU state
 struct cpu {
@@ -66,6 +67,8 @@ struct proc {
 	unsigned int sigpending;	// Pending signal
 	unsigned int saved_trapframe_sp;	// Signal trapframe (for returning)
 	char cloexec[NOFILE];	// Close-on-exec
+	unsigned short umask;	// Permission mask
+	int tty;		// Current tty, -1 if not tty
 };
 
 // Process memory is laid out contiguously, low addresses first:

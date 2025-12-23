@@ -191,7 +191,6 @@ sys_open(void)
 	int mode = 0;
 	struct file *f;
 	struct inode *ip;
-	//struct proc *p = myproc();
 
 	if(argstr(0, &path) < 0 || argint(1, &omode) < 0)
 		return -EINVAL;
@@ -204,7 +203,7 @@ sys_open(void)
 	if(omode & O_CREAT){
 		if (mode == 2)
 			mode = 0666;
-		ip = create(path, S_IFREG | mode, 0, 0);
+		ip = create(path, (S_IFREG | mode) & ~myproc()->umask, 0, 0);
 		if(ip == 0){
 			end_op();
 			return -ENOENT;
@@ -874,7 +873,7 @@ sys_mkdir(void)
 	struct inode *ip;
 
 	begin_op();
-	if(argstr(0, &path) < 0 || (ip = create(path, S_IFDIR | S_IRUSR | S_IXUSR | S_IWUSR | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, 0, 0)) == 0){
+	if(argstr(0, &path) < 0 || (ip = create(path, (S_IFDIR | S_IRUSR | S_IXUSR | S_IWUSR | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH) & ~myproc()->umask, 0, 0)) == 0){
 		end_op();
 		return -EEXIST;
 	}
@@ -1209,8 +1208,13 @@ sys_sbrk(void)
 }
 
 int sys_umask(void){
-	notim();
-	return -1;
+	mode_t mask;
+	mode_t old;
+	if(argptr(0, (void*)&mask, sizeof(mode_t)) < 0)
+		return -EINVAL;
+	old = myproc()->umask;
+	myproc()->umask = mask & 0777;
+	return old;
 }
 
 int sys_chroot(void){
