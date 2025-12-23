@@ -230,13 +230,13 @@ void
 cgaputc(int c)
 {
 	int pos;
-	int spaces;
 
 	// Cursor position: col + 80*row.
 	outb(CRTPORT, 14);
 	pos = inb(CRTPORT+1) << 8;
 	outb(CRTPORT, 15);
 	pos |= inb(CRTPORT+1);
+	int spaces = 8 - (pos % 8);
 
 	switch(c) {
 		case('\n'):
@@ -248,7 +248,6 @@ cgaputc(int c)
 			break;
 
 	case('\t'):
-		spaces = 8 - (pos % 8);
 		for(int i = 0; i < spaces; i++){
 			crt[pos++] = ' ' | current_color;
 			if((pos/80) >= 25){
