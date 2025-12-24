@@ -133,6 +133,7 @@ typedef struct {
 extern int g_mouse_x_pos, g_mouse_y_pos, left_button, right_button, middle_button;
 
 // multiboot.c
+extern char *	cmdline;
 void		mbootinit(unsigned long);
 
 // mp.c

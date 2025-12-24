@@ -1,11 +1,12 @@
-#include "../include/multiboot.h"
-#include "../include/types.h"
-#include "../include/defs.h"
-#include "../include/memlayout.h"
-#include "../include/mmu.h"
+#include <multiboot.h>
+#include <types.h>
+#include <defs.h>
+#include <memlayout.h>
+#include <mmu.h>
 
 unsigned int mbi_addr;
 unsigned int mbi_size;
+char * cmdline;
 
 void * modget(int type) {
 	for(struct multiboot_header_tag * tag = (struct multiboot_header_tag *)(mbi_addr + 8); tag->type != MULTIBOOT_TAG_TYPE_END; tag = (struct multiboot_header_tag *)((uchar *)tag + ((tag->size + 7) & ~7))) {
@@ -62,11 +63,16 @@ void set_phystop(void) {
 }
 
 void mbootinit(unsigned long addr) {
+	struct multiboot_tag_string * multiboot_cmdline;
+
 	mbi_addr = (unsigned int)P2V(addr);
 	if (mbi_addr & 7) {
 		panic("mbootinit: invalid boot info\n");
 	}
 	mbi_size = *(unsigned int *)mbi_addr;
 	printk("mboot info addr=0x%08x, size=%d bytes\n", mbi_addr, mbi_size);
+	multiboot_cmdline = (struct multiboot_tag_string *)modget(MULTIBOOT_TAG_TYPE_CMDLINE);
+	cmdline = (char*)multiboot_cmdline->string;
+	printk("Command line: %s\n", cmdline);
 	set_phystop();
 }
