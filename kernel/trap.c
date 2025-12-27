@@ -98,7 +98,7 @@ trap(struct trapframe *tf)
 		}
 		// In user space, assume process misbehaved.
 		if (tf->eip != -1){
-			printk("%s: fatal trap from PID %d (%d)\n", myproc()->name, myproc()->pid, tf->trapno);
+			printk("%s[%d] general protection fault ip:0x%x sp:0x%x\n", myproc()->name, myproc()->pid, tf->eip, myproc()->tf->esp);
 		} else { // we are returning
 			exit(myproc()->exitstatus);
 		}
