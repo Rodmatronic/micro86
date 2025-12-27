@@ -214,9 +214,18 @@ fork(void)
 	np->egid = curproc->egid;
 	np->sgid = curproc->egid;
 	np->pgrp = curproc->pgrp;
+	np->sigpending = 0;
+	np->sigmask = 0;
+	np->saved_trapframe_sp = 0;
 
-	for(int i = 0; i < NSIG; i++)
+	/* i am pretty sure this is fine. I think, I hope.
+	 * Kornshell doesn't seem to mind, though. Fixes
+	 * an issue where it fails and dies cause of
+	 * SIGSEGV.*/
+	for(int i = 0; i < NSIG; i++) {
 		np->sighandlers[i] = curproc->sighandlers[i];
+		np->sigrestorers[i] = 0;
+	}
 	
 	np->alarmticks = 0;
 	np->alarminterval = 0;
