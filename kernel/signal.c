@@ -1,3 +1,7 @@
+/*
+ * signal.c - signal handling code.
+ */
+
 #include <types.h>
 #include <defs.h>
 #include <param.h>
@@ -9,10 +13,8 @@
 
 /*
  * preform any pending signals
- */	
-void
-dosignal(void)
-{
+ */
+void dosignal(void){
 	struct proc *p = myproc();
 	struct trapframe *tf = p->tf;
 

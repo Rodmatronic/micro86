@@ -1,3 +1,8 @@
+/*
+ * main.c - kernel entrypoint. This is jumped to after entry.S and is where the magic happens. Bootstrap
+ * the system and eventually setup userspace with INITCODE.
+ */
+
 #include <types.h>
 #include <defs.h>
 #include <param.h>
@@ -19,9 +24,7 @@ char * banner = sys_version "\n";
 // Allocate a real stack and switch to it, first
 // doing some setup required for memory allocator to work.
 // Doing int function returns so GCC will not complain
-int
-kmain(unsigned int addr)
-{
+int kmain(unsigned int addr){
 	printk(banner);
 	mbootinit(addr); // multiboot
 	kinit1(end, P2V(4*1024*1024)); // phys page allocator
@@ -48,9 +51,7 @@ kmain(unsigned int addr)
 }
 
 // Other CPUs jump here from entryother.S.
-static void
-mpenter(void)
-{
+static void mpenter(void){
 	switchkvm();
 	seginit();
 	lapicinit();
@@ -58,9 +59,7 @@ mpenter(void)
 }
 
 // Common CPU setup code.
-static void
-mpmain(void)
-{
+static void mpmain(void){
 	idtinit();	// load idt register
 	xchg(&(mycpu()->started), 1); // tell startothers() we're up
 	scheduler();	 // start running processes
@@ -69,9 +68,7 @@ mpmain(void)
 pde_t entrypgdir[];	// For entry.S
 
 // Start the non-boot (AP) processors.
-static void
-startothers(void)
-{
+static void startothers(void){
 	extern uchar _binary_kernel_boot_entryother_start[], _binary_kernel_boot_entryother_size[];
 	uchar *code;
 	struct cpu *c;

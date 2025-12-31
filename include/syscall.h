@@ -83,6 +83,7 @@
 #define SYS_getpgid	132
 #define SYS_getdents	141
 #define SYS_writev	146
+#define SYS_nanosleep	162
 #define SYS_setresuid	164
 #define SYS_setresgid	170
 #define SYS_rt_sigreturn	173

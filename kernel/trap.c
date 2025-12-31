@@ -1,3 +1,8 @@
+/*
+ * trap.c - handle kernel traps. Traps can be protection faults, syscalls, signals, keyboard, ide,
+ * and so on.
+ */
+
 #include <types.h>
 #include <defs.h>
 #include <param.h>
@@ -14,9 +19,7 @@ extern unsigned int vectors[];	// in vectors.S: array of 256 entry pointers
 struct spinlock tickslock;
 unsigned int ticks;
 
-void
-tvinit(void)
-{
+void tvinit(void){
 	int i;
 
 	for(i = 0; i < 256; i++)
@@ -26,15 +29,11 @@ tvinit(void)
 	initlock(&tickslock, "time");
 }
 
-void
-idtinit(void)
-{
+void idtinit(void){
 	lidt(idt, sizeof(idt));
 }
 
-void
-trap(struct trapframe *tf)
-{
+void trap(struct trapframe *tf){
 	struct proc *p = myproc();
 	if(tf->trapno == T_SYSCALL){
 		if(myproc()->killed)

@@ -1,5 +1,5 @@
 /*
- * i386 system calls, order from syscall.h
+ * sys.c - i386 system calls. System calls are in the order defined in syscall.h.
  */
 
 #include <types.h>
@@ -31,9 +31,7 @@ static int C_A_D = 1;
 
 // Allocate a file descriptor for the given file.
 // Takes over file reference from caller on success.
-static int
-fdalloc(struct file *f)
-{
+static int fdalloc(struct file *f){
 	int fd;
 	struct proc *curproc = myproc();
 
@@ -51,9 +49,7 @@ void notim(){
 }
 
 // Is the directory dp empty except for "." and ".." ?
-static int
-isdirempty(struct inode *dp)
-{
+static int isdirempty(struct inode *dp){
 	int off;
 	struct dirent de;
 
@@ -66,9 +62,7 @@ isdirempty(struct inode *dp)
 	return 1;
 }
 
-static int
-argfd(int n, int *pfd, struct file **pf)
-{
+static int argfd(int n, int *pfd, struct file **pf){
 	int fd;
 	struct file *f;
 
@@ -85,9 +79,7 @@ argfd(int n, int *pfd, struct file **pf)
 	return 0;
 }
 
-static struct inode*
-create(char *path, short type, short major, short minor)
-{
+static struct inode* create(char *path, short type, short major, short minor){
 
 	struct inode *ip, *dp;
 	char name[DIRSIZ];
@@ -167,8 +159,7 @@ void hard_reset_now(void){
  * As it's called within an interrupt, it may NOT sync: the only choice
  * is wether to reboot at once, or just ignore the ctrl-alt-del.
  */
-void ctrl_alt_del(void)
-{
+void ctrl_alt_del(void){
 	if (C_A_D) {
 		hard_reset_now();
 	} else {
@@ -185,9 +176,7 @@ int sys_syscall(void){
 	return -1;
 }
 
-void
-sys_exit(void)
-{
+void sys_exit(void){
 	int status;
 	if(argint(0, &status) < 0)
 		return;
@@ -195,15 +184,11 @@ sys_exit(void)
 	exit(status);
 }
 
-int
-sys_fork(void)
-{
+int sys_fork(void){
 	return fork();
 }
 
-int
-sys_read(void)
-{
+int sys_read(void){
 	struct file *f;
 	int n;
 	char *p;
@@ -214,9 +199,7 @@ sys_read(void)
 	return fileread(f, p, n);
 }
 
-int
-sys_write(void)
-{
+int sys_write(void){
 	struct file *f;
 	int n;
 	char *p;
@@ -227,9 +210,7 @@ sys_write(void)
 	return filewrite(f, p, n);
 }
 
-int
-sys_open(void)
-{
+int sys_open(void){
 	char *path;
 	int fd, omode;
 	int mode = 0;
@@ -286,9 +267,7 @@ sys_open(void)
 	return fd;
 }
 
-int
-sys_close(void)
-{
+int sys_close(void){
 	int fd;
 	struct file *f;
 
@@ -311,9 +290,7 @@ int sys_waitpid(void){
 /*
  * I would call sys_open, but I don't know how.
  */
-int
-sys_creat(void)
-{
+int sys_creat(void){
 	char *path;
 	int mode;
 	int fd;
@@ -357,9 +334,7 @@ sys_creat(void)
 }
 
 // Create the path new as a link to the same inode as old.
-int
-sys_link(void)
-{
+int sys_link(void){
 	char name[DIRSIZ], *new, *old;
 	struct inode *dp, *ip;
 
@@ -401,9 +376,7 @@ bad:
 	return -ENOENT;
 }
 
-int
-sys_unlink(void)
-{
+int sys_unlink(void){
 	struct inode *ip, *dp;
 	struct dirent de;
 	char name[DIRSIZ], *path;
@@ -464,9 +437,7 @@ bad:
 	return -ENOENT;
 }
 
-int
-sys_exec(void)
-{
+int sys_exec(void){
 	char *path, *argv[MAXARG];
 	int i;
 	unsigned int uargv, uarg;
@@ -521,9 +492,7 @@ sys_exec(void)
 	return exec(path, argv);
 }
 
-int
-sys_chdir(void)
-{
+int sys_chdir(void){
 	char *path;
 	struct inode *ip;
 	struct proc *curproc = myproc();
@@ -547,9 +516,7 @@ sys_chdir(void)
 }
 
 // seconds since epoch
-int
-sys_time(void)
-{
+int sys_time(void){
 	int esec;
 	if (argint(0, &esec) < 0)
 		return -EINVAL;
@@ -557,9 +524,7 @@ sys_time(void)
 	return epoch_mktime();
 }
 
-int
-sys_mknod(void)
-{
+int sys_mknod(void){
 	struct inode *ip;
 	char *path;
 	int major, minor;
@@ -574,9 +539,7 @@ sys_mknod(void)
 	return 0;
 }
 
-int
-sys_chmod(void)
-{
+int sys_chmod(void){
 	char *path;
 	int mode;
 	struct inode *ip;
@@ -604,9 +567,7 @@ sys_chmod(void)
 	return 0;
 }
 
-int
-sys_chown(void)
-{
+int sys_chown(void){
 	char *path;
 	int owner, group;
 	struct inode *ip;
@@ -647,9 +608,7 @@ int sys_stat(void){
 	return -1;
 }
 
-int
-sys_lseek(void)
-{
+int sys_lseek(void){
 	struct file *f;
 	int offset;
 	int whence;
@@ -681,9 +640,7 @@ sys_lseek(void)
 		return f->off;
 }
 
-int
-sys_getpid(void)
-{
+int sys_getpid(void){
 	return myproc()->pid;
 }
 
@@ -697,8 +654,7 @@ int sys_umount(void){
 	return -1;
 }
 
-int
-sys_setuid(void) {
+int sys_setuid(void){
 	int uid;
 	struct proc *p = myproc();
 	if (argint(0, &uid) < 0)
@@ -708,13 +664,11 @@ sys_setuid(void) {
 	return 0;
 }
 
-int
-sys_getuid(void)
-{
+int sys_getuid(void){
 	return myproc()->uid;
 }
 
-int sys_stime(void) {
+int sys_stime(void){
 	unsigned long epoch;
 	struct proc *p = myproc();
 	if (argint(0, (int*)&epoch) < 0)
@@ -749,7 +703,7 @@ int sys_alarm(void){
 	return old;
 }
 
-int sys_fstat(void) {
+int sys_fstat(void){
 	struct file *f;
 	struct stat st;
 	struct stat *user_st;
@@ -772,9 +726,7 @@ int sys_pause(void){
 	return 0;
 }
 
-int
-sys_utime(void)
-{
+int sys_utime(void){
 	char *path;
 	struct inode *ip;
 	unsigned int now;
@@ -800,9 +752,7 @@ sys_utime(void)
 	return 0;
 }
 
-int
-sys_stty(void)
-{
+int sys_stty(void){
 	struct ttyb *uttyb;
 	if (argptr(0, (char **)&uttyb, sizeof(struct ttyb)) < 0)
 		return -EINVAL;
@@ -816,9 +766,7 @@ sys_stty(void)
 	return 0;
 }
 
-int
-sys_gtty(void)
-{
+int sys_gtty(void){
 	struct ttyb *uttyb;
 	if (argptr(0, (char **)&uttyb, sizeof(struct ttyb)) < 0)
 		return -EINVAL;
@@ -883,9 +831,7 @@ int sys_sync(void){
 	return 0;
 }
 
-int
-sys_kill(void)
-{
+int sys_kill(void){
 	int pid, signo;
 
 	if(argint(0, &pid) < 0)
@@ -905,9 +851,7 @@ int sys_rename(void){
 	return -1;
 }
 
-int
-sys_mkdir(void)
-{
+int sys_mkdir(void){
 	char *path;
 	struct inode *ip;
 
@@ -988,9 +932,7 @@ int sys_rmdir(void){
 	return 0;
 }
 
-int
-sys_dup(void)
-{
+int sys_dup(void){
 	struct file *f;
 	int fd;
 
@@ -1004,9 +946,7 @@ sys_dup(void)
 	return fd;
 }
 
-int
-sys_pipe(void)
-{
+int sys_pipe(void){
 	int *fd;
 	struct file *rf, *wf;
 	int fd0, fd1;
@@ -1043,9 +983,7 @@ int sys_prof(void){
 /*
  * change the location of the program break (and return the new address)
  */
-int
-sys_brk(void)
-{
+int sys_brk(void){
 	int addr;
 	int old;
 	int delta;
@@ -1071,8 +1009,7 @@ sys_brk(void)
 	return addr;
 }
 
-int
-sys_setgid(void) {
+int sys_setgid(void){
 	int gid;
 	struct proc *p = myproc();
 	if (argint(0, &gid) < 0)
@@ -1082,9 +1019,7 @@ sys_setgid(void) {
 	return 0;
 }
 
-int
-sys_getgid(void)
-{
+int sys_getgid(void){
 	return myproc()->gid;
 }
 
@@ -1105,15 +1040,11 @@ int sys_signal(void){
 	return old;
 }
 
-int
-sys_geteuid(void)
-{
+int sys_geteuid(void){
 	return myproc()->euid;
 }
 
-int
-sys_getegid(void)
-{
+int sys_getegid(void){
 	return myproc()->egid;
 }
 
@@ -1156,9 +1087,7 @@ int tty_get_winsize(struct winsize *ws) {
 /*
  * palceholder for IOCTL to get printf working under MUSL
  */
-int
-sys_ioctl(void)
-{
+int sys_ioctl(void){
 	struct file *f;
 	int req;
 	void *arg;
@@ -1230,9 +1159,7 @@ int sys_ulimit(void){
 	return -1;
 }
 
-int
-sys_sbrk(void)
-{
+int sys_sbrk(void){
 	int addr;
 	int n;
 
@@ -1293,9 +1220,7 @@ int sys_dup2(void){
 	return 0;
 }
 
-int
-sys_getppid(void)
-{
+int sys_getppid(void){
 	return myproc()->parent->pid;
 }
 
@@ -1384,9 +1309,7 @@ int sys_getrusage(void){
 /*
  * Supplementary group IDs
  */
-int
-sys_setgroups(void)
-{
+int sys_setgroups(void){
 	int gidsetsize;
 	gid_t *ugroups;
 	struct proc *p = myproc();
@@ -1442,9 +1365,7 @@ int sys_reboot(void){
 	return 0;
 }
 
-int
-sys_wait4(void)
-{
+int sys_wait4(void){
 	int pid;
 	int *status;
 	int options;
@@ -1461,15 +1382,11 @@ sys_wait4(void)
 
 int sys_rt_sigreturn(void);
 
-int
-sys_sigreturn(void)
-{
+int sys_sigreturn(void){
 	return sys_rt_sigreturn();
 }
 
-int
-sys_uname(void)
-{
+int sys_uname(void){
 	struct utsname *u;
 
 	if(argptr(0, (char**)&u, sizeof(struct utsname)) < 0)
@@ -1488,17 +1405,66 @@ int sys_getpgid(void){
 	return myproc()->parent->gid;
 }
 
+/*
+ * TODO: This is not complete, but I don't have the guts to finish it today.
+ */
 int sys_getdents(void){
-	printk("working on it\n");
-	return 0;
+	int fd;
+	int count;
+	struct dirent *dp;
+	struct file *f;
+	struct inode *ip;
+	int n = 0;
+	struct dirent de;
+
+	if(argint(0, &fd) < 0)
+		return -1;
+	if(argptr(1, (void*)&dp, sizeof(*dp)) < 0)
+		return -1;
+	if(argint(2, &count) < 0)
+		return -1;
+
+	if(fd < 0 || fd >= NOFILE)
+		return -1;
+
+	f = myproc()->ofile[fd];
+	if(f == 0)
+		return -1;
+
+	ip = f->ip;
+	if(ip == 0 || !(ip->mode & S_IFDIR))
+		return -1;
+
+	ilock(ip);
+
+	while(f->off < ip->size){
+		if(count - n < sizeof(struct dirent))
+			break;
+
+		if(readi(ip, (char*)&de, f->off, sizeof(de)) != sizeof(de))
+			break;
+
+		f->off += sizeof(de);
+
+		if(de.d_ino == 0)
+			continue;
+
+		if(copyout(myproc()->pgdir, (unsigned int)dp + n, (char*)&de, sizeof(de)) < 0){
+			iunlock(ip);
+			return -1;
+		}
+
+		n += sizeof(struct dirent);
+	}
+
+	iunlock(ip);
+	return n;
 }
 
 /*
  * multiple buffer write
  */
-int
-sys_writev(void)
-{
+int sys_writev(void){
 	struct file *f;
 	int count;
 	unsigned int *vec;
@@ -1520,6 +1486,10 @@ sys_writev(void)
 		total += r;
 	}
 	return total;
+}
+
+int sys_nanosleep(void){
+	return -ENOSYS;
 }
 
 int sys_setresuid(void){
@@ -1613,9 +1583,7 @@ sys_rt_sigreturn(void)
 /*
  * signal mask
  */
-int
-sys_rt_sigprocmask(void)
-{
+int sys_rt_sigprocmask(void){
 	int how;
 	unsigned int *set;
 	unsigned int *oldset;
@@ -1658,9 +1626,7 @@ sys_rt_sigprocmask(void)
 	return 0;
 }
 
-int
-sys_rt_sigaction(void)
-{
+int sys_rt_sigaction(void){
 	int signum;
 	struct {
 		unsigned int sa_handler;
@@ -1864,9 +1830,7 @@ int sys_clock_gettime(void){
  * but doesn't allow directories, and should
  * probably accept flags.
  */
-int
-sys_linkat(void)
-{
+int sys_linkat(void){
 	char name[DIRSIZ], *new, *old;
 	struct inode *dp, *ip;
 
@@ -1964,8 +1928,6 @@ int sys_statx(void){
 	return 0;
 }
 
-int
-sys_clock_gettime64(void)
-{
+int sys_clock_gettime64(void){
 	return sys_clock_gettime();
 }

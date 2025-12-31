@@ -1,3 +1,8 @@
+/*
+ * exec.c - execute function. 'exec' can run either ELF binaries or scripts with a SHEBANG. 'exec'
+ * only runs files with the executable bit set.
+ */
+
 #include <types.h>
 #include <param.h>
 #include <memlayout.h>
@@ -8,9 +13,7 @@
 #include <elf.h>
 #include <errno.h>
 
-int
-exec(char *path, char **argv)
-{
+int exec(char *path, char **argv){
 	char *s, *last;
 	int i, off;
 	unsigned int argc, sz, sp, ustack[3+MAXARG+1];
