@@ -231,7 +231,7 @@ void _printf(char *func, char *fmt, ...){
 void vgaputc(int c){
 	int spaces = 8;
 
-	if (x >= 640){
+	if (x >= 640 + FONT_WIDTH){
 		x=0;
 		y+=FONT_HEIGHT;
 		if(y >= 480){	// Scroll up.
