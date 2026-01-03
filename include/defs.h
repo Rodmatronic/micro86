@@ -37,6 +37,7 @@ void		sync();
 // console.c
 #define		printk(fmt, ...) \
 			_printf((char *)__func__, fmt, ##__VA_ARGS__)
+extern int	current_color;
 extern int	x, y;
 void            consoleinit(void);
 void		consputc(int);

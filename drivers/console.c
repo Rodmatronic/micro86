@@ -49,7 +49,7 @@ struct {
 static enum ansi_state ansi_state = ANSI_NORMAL;
 static int ansi_params[4];
 static int ansi_param_count = 0;
-static int current_color = 0x0700;
+int current_color = 0x0700;
 struct cons cons;
 int x, y = 0;
 
@@ -217,11 +217,12 @@ void _printf(char *func, char *fmt, ...){
 	consputc(':');
 	consputc(' ');
 #endif
-	current_color = old_color;
-
+	current_color = 0x0F00;
 	va_start(ap, fmt);
 	vkprintf(fmt, ap);
 	va_end(ap);
+
+	current_color = old_color;
 
 	if(locking)
 		release(&cons.lock);
@@ -401,7 +402,7 @@ void handle_ansi_sgr(int param){
 			break;
 
 		case 100: // hi black background
-			current_color = (current_color & 0x0FFF) | 0x0000;
+			current_color = (current_color & 0x0FFF) | 0x8000;
 			break;
 		case 101: // hi red background
 			current_color = (current_color & 0x0FFF) | 0xC000;

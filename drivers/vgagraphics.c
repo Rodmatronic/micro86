@@ -86,22 +86,29 @@ static const uint8_t ac_text[21] = {
 };
 
 void graphical_putc(uint16_t x, uint16_t y, char c, uint8_t color){
+	const uint8_t* glyph;
+	int row;
+	int col;
+	int bg_color = (current_color & 0xF000) >> 12;
+
 	if((uint8_t)c == 0x00){
-		for(int row = 0; row < FONT_HEIGHT; row++){
-			for(int col = 0; col < FONT_WIDTH; col++){
-				putpixel(x + col, y + row, 0);
-			}
+		for(row = 0; row < FONT_HEIGHT; row++){
+			for(col = 0; col < FONT_WIDTH; col++)
+				putpixel(x + col, y + row, bg_color);
 		}
 		return;
 	}
 
-	const uint8_t* glyph = &fontdata_8x16[(uint8_t)c * FONT_HEIGHT];
-	for(int row = 0; row < FONT_HEIGHT; row++){
+	glyph = &fontdata_8x16[(uint8_t)c * FONT_HEIGHT];
+
+	for(row = 0; row < FONT_HEIGHT; row++){
 		uint8_t line = glyph[row];
-		for(int col = 0; col < FONT_WIDTH; col++){
-			if(line & (1 << (7 - col))){
+
+		for(col = 0; col < FONT_WIDTH; col++){
+			if(line & (1 << (7 - col)))
 				putpixel(x + col, y + row, color);
-			}
+			else if(bg_color > 0)
+				putpixel(x + col, y + row, bg_color);
 		}
 	}
 }
@@ -114,37 +121,50 @@ void gvga_scroll(void){
 	int row_bytes = 640 / 8;
 	int scroll_rows = FONT_HEIGHT;
 	int bytes_to_move = row_bytes * (480 - scroll_rows);
+	uint32_t i;
+	uint8_t *clear_base;
 
+	/* write mode 0 for moving data */
 	outb(VGA_GC_INDEX, 0x05);
 	outb(VGA_GC_DATA, 0x00);
 
-	// Disable Set/Reset
+	/* disable set/reset */
 	outb(VGA_GC_INDEX, 0x00);
 	outb(VGA_GC_DATA, 0x00);
 
 	outb(VGA_GC_INDEX, 0x01);
 	outb(VGA_GC_DATA, 0x00);
 
-	for(plane = 0; plane < 4; plane++) {
-		outb(VGA_GC_INDEX, 0x04);  // Read Map Select
+	for(plane = 0; plane < 4; plane++){
+		outb(VGA_GC_INDEX, 0x04);	// Read Map Select
 		outb(VGA_GC_DATA, plane);
 
-		outb(VGA_SEQ_INDEX, 0x02);  // Map Mask
+		outb(VGA_SEQ_INDEX, 0x02);	// Map Mask
 		outb(VGA_SEQ_DATA, 1 << plane);
 
 		uint8_t *plane_base = g_vga_buffer;
 		memmove(plane_base, plane_base + row_bytes * scroll_rows, bytes_to_move);
-		memset(plane_base + bytes_to_move, 0, row_bytes * scroll_rows);
 	}
 
-	outb(VGA_GC_INDEX, 0x05);  // Graphics Mode register
-	outb(VGA_GC_DATA, 0x02);   // Write mode 2, read mode 0
+	/* switch to write mode 2 for clearing */
+	outb(VGA_GC_INDEX, 0x05);
+	outb(VGA_GC_DATA, 0x02);
 
+	/* enable all planes */
 	outb(VGA_SEQ_INDEX, 0x02);
 	outb(VGA_SEQ_DATA, 0x0F);
 
-	outb(VGA_GC_INDEX, 0x03);  // Data Rotate/Function Select
-	outb(VGA_GC_DATA, 0x00);   // No rotation, replace
+	/* full bit mask */
+	outb(VGA_GC_INDEX, 0x08);
+	outb(VGA_GC_DATA, 0xFF);
+
+	clear_base = g_vga_buffer + bytes_to_move;
+
+	for(i = 0; i < row_bytes * scroll_rows; i++){
+		uint8_t dummy = clear_base[i];
+		(void)dummy;
+		clear_base[i] = 0x00;
+	}
 
 	y -= scroll_rows;
 }

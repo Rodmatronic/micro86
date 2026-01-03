@@ -18,6 +18,8 @@ void panic(char *fmt, ...){
         console.locking = 0;	// Disable console locking during panic
         printk("Kernel panic: ");
 
+	current_color = 0x0C00;
+
         va_start(ap, fmt);
         vkprintf(fmt, ap);
         va_end(ap);
