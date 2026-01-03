@@ -18,20 +18,42 @@
 #include <stdarg.h>
 #include <signal.h>
 #include <config.h>
+#include <font.h>
+
+#define INPUT_BUF 128
+#define C(x)	((x)-'@')	// Control-x
+#define BACKSPACE 0x100
+#define CRTPORT 0x3d4
 
 struct ttyb ttyb = {
-	.speeds = 0,			 // Initial speeds
-	.erase = '\b',		 // Backspace
-	.kill = '\025',		// Ctrl+U
-	.tflags = ECHO		 // Enable echo by default
+	.speeds = 0,	// Initial speeds
+	.erase = '\b',	// Backspace
+	.kill = '\025',	// Ctrl+U
+	.tflags = ECHO	// Enable echo by default
 };
 
+enum ansi_state {
+	ANSI_NORMAL,
+	ANSI_ESCAPE,
+	ANSI_BRACKET,
+	ANSI_PARAM
+};
+
+struct {
+	char buf[INPUT_BUF];
+	unsigned int r;	// Read index
+	unsigned int w;	// Write index
+	unsigned int e;	// Edit index
+} input;
+
+static enum ansi_state ansi_state = ANSI_NORMAL;
+static int ansi_params[4];
+static int ansi_param_count = 0;
 static int current_color = 0x0700;
 struct cons cons;
+int x, y = 0;
 
-static void
-printint(unsigned int xx, int base, int sgn, int width, int zero_pad)
-{
+static void printint(unsigned int xx, int base, int sgn, int width, int zero_pad){
 	static char digits[] = "0123456789ABCDEF";
 	char buf[16];
 	int i, neg;
@@ -70,9 +92,7 @@ printint(unsigned int xx, int base, int sgn, int width, int zero_pad)
 	}
 }
 
-static void
-vprintf(int fd, const char *fmt, va_list ap)
-{
+static void vprintf(int fd, const char *fmt, va_list ap){
 	char *s;
 	int c, i, state;
 	int width, zero_pad;
@@ -130,24 +150,18 @@ vprintf(int fd, const char *fmt, va_list ap)
 	}
 }
 
-void
-vkprintf(const char *fmt, va_list ap)
-{
+void vkprintf(const char *fmt, va_list ap){
 	vprintf(1, fmt, ap);
 }
 
-int
-vsprintf(char *buf, const char *fmt, va_list ap)
-{
+int vsprintf(char *buf, const char *fmt, va_list ap){
 	char *start = buf;
 	vprintf(1, fmt, ap);
 	*buf = '\0';
 	return buf - start;
 }
 
-int
-sprintf(char *buf, const char *fmt, ...)
-{
+int sprintf(char *buf, const char *fmt, ...){
 	va_list ap;
 	int rc;
 
@@ -157,9 +171,7 @@ sprintf(char *buf, const char *fmt, ...)
 	return rc;
 }
 
-void
-_printf(char *func, char *fmt, ...)
-{
+void _printf(char *func, char *fmt, ...){
 	va_list ap;
 	int locking;
 	int old_color;
@@ -215,80 +227,65 @@ _printf(char *func, char *fmt, ...)
 		release(&cons.lock);
 }
 
-enum ansi_state {
-	ANSI_NORMAL,
-	ANSI_ESCAPE,
-	ANSI_BRACKET,
-	ANSI_PARAM
-};
+void vgaputc(int c){
+	int spaces = 8;
 
-#define BACKSPACE 0x100
-#define CRTPORT 0x3d4
-static enum ansi_state ansi_state = ANSI_NORMAL;
-static int ansi_params[4];
-static int ansi_param_count = 0;
-static ushort *crt = (ushort*)P2V(0xb8000);	// CGA memory
-
-void
-cgaputc(int c)
-{
-	int pos;
-
-	// Cursor position: col + 80*row.
-	outb(CRTPORT, 14);
-	pos = inb(CRTPORT+1) << 8;
-	outb(CRTPORT, 15);
-	pos |= inb(CRTPORT+1);
-	int spaces = 8 - (pos % 8);
+	if (x >= 640){
+		x=0;
+		y+=FONT_HEIGHT;
+		if(y >= 480){	// Scroll up.
+			gvga_scroll();
+		}
+	}
 
 	switch(c) {
 		case('\n'):
-			pos += 80 - pos%80;
+			x = 0;
+			y+=FONT_HEIGHT;
 			break;
 
 		case(BACKSPACE):
-			if(pos > 0) -- pos;
+			if(x > 0){
+				x -= FONT_WIDTH;
+			} else {
+				if(y > 0){
+					y -= FONT_HEIGHT;
+					x = (80 - 1) * FONT_WIDTH;
+				} else {
+					break;
+				}
+			}
+			graphical_putc(x, y, 0x00, (current_color & 0x0F00) >> 8);
 			break;
 
 	case('\t'):
 		for(int i = 0; i < spaces; i++){
-			crt[pos++] = ' ' | current_color;
-			if((pos/80) >= 25){
-				memmove(crt, crt+80, sizeof(crt[0])*24*80);
-				pos -= 80;
-				memset(crt+pos, 0, sizeof(crt[0])*(25*80 - pos));
-			}
+			graphical_putc(x, y, c, (current_color & 0x0F00) >> 8);
+			if(y >= 480)
+				gvga_scroll();
 		}
 		break;
 
 	default:
 		if((c & 0xff) < 0x20){
-			crt[pos++] = '^' | current_color;
-			crt[pos++] = ((c & 0xff) + '@') | current_color;
-		}else{
-			crt[pos++] = (c & 0xff) | current_color;
+			graphical_putc(x, y, '^', (current_color & 0x0F00) >> 8);
+			x+=FONT_WIDTH;
+			graphical_putc(x, y, ((c & 0xff) + '@'), (current_color & 0x0F00) >> 8);
+			x+=FONT_WIDTH;
+		} else {
+			graphical_putc(x, y, c, (current_color & 0x0F00) >> 8);
+			x+=FONT_WIDTH;
 		}
 		break;
 	}
 
-	if((pos/80) >= 25){	// Scroll up.
-		memmove(crt, crt+80, sizeof(crt[0])*24*80);
-		pos -= 80;
-		memset(crt+pos, 0, sizeof(crt[0])*(25*80 - pos));
-	}
-
-	outb(CRTPORT, 14);
-	outb(CRTPORT+1, pos>>8);
-	outb(CRTPORT, 15);
-	outb(CRTPORT+1, pos);
-	crt[pos] = ' ' | 0x0700;
+	if(y >= 480)	// Scroll up.
+		gvga_scroll();
 }
 
 void handle_ansi_sgr(int param);
 
-void
-setcursor(int x, int y)
-{
+void setcursor(int x, int y){
 	if(x < 0) x = 0;
 	if(x > 79) x = 79;
 	if(y < 0) y = 0;
@@ -300,35 +297,27 @@ setcursor(int x, int y)
 	outb(CRTPORT+1, pos & 0xFF);
 }
 
-void
-handle_ansi_sgr_sequence(int params[], int count)
-{
+void handle_ansi_sgr_sequence(int params[], int count){
 	for(int i = 0; i < count; i++) {
 		handle_ansi_sgr(params[i]);
 	}
 }
 
-void
-handle_ansi_clear(int param)
-{
+void handle_ansi_clear(int param){
 	if(param == 2 || param == 0) { // 2J = clear entire screen, 0J = clear from cursor
-		setcursor(0, 0);
-		for (int i = 0; i < 80*25; i++) {
-			crt[i] = ' ' | 0x0700;
-		}
+		goto clear;
 	} else if(param == 1) { // clear from top to cursor
-		outb(CRTPORT, 14);
-		int pos = inb(CRTPORT+1) << 8;
-		outb(CRTPORT, 15);
-		pos |= inb(CRTPORT+1);
-		for(int i = 0; i <= pos; i++)
-			crt[i] = ' ' | 0x0700;
+		goto clear;
 	}
+	return;
+clear:
+	gvga_clear();
+	x=0;
+	y=0-FONT_HEIGHT;
+	return;
 }
 
-void
-handle_ansi_sgr(int param)
-{
+void handle_ansi_sgr(int param){
 	switch(param) {
 		case 0:	// reset
 			current_color = 0x0700; // white on black
@@ -438,9 +427,7 @@ handle_ansi_sgr(int param)
 	}
 }
 
-void
-consputc(int c)
-{
+void consputc(int c){
 	if(panicked){
 		cli();
 		for(;;);
@@ -461,7 +448,7 @@ consputc(int c)
 				ansi_param_count = 0;
 				return;
 			} else {
-				cgaputc(c);	// noraml
+				vgaputc(c);	// normal
 				return;
 			}
 			break;
@@ -520,22 +507,10 @@ consputc(int c)
 		return;
 	}
 
-	cgaputc(c);
+	vgaputc(c);
 }
 
-#define INPUT_BUF 128
-struct {
-	char buf[INPUT_BUF];
-	unsigned int r;	// Read index
-	unsigned int w;	// Write index
-	unsigned int e;	// Edit index
-} input;
-
-#define C(x)	((x)-'@')	// Control-x
-
-void
-consoleintr(int (*getc)(void))
-{
+void consoleintr(int (*getc)(void)){
 	int c;
 	acquire(&cons.lock);
 	while((c = getc()) >= 0){
@@ -611,9 +586,7 @@ consoleintr(int (*getc)(void))
 	release(&cons.lock);
 }
 
-int
-consoleread(struct inode *ip, char *dst, int n)
-{
+int consoleread(struct inode *ip, char *dst, int n){
 	unsigned int target;
 	int c;
 
@@ -649,9 +622,7 @@ consoleread(struct inode *ip, char *dst, int n)
 	return target - n;
 }
 
-int
-consolewrite(struct inode *ip, char *buf, int n)
-{
+int consolewrite(struct inode *ip, char *buf, int n){
 	int i;
 
 	iunlock(ip);
@@ -664,9 +635,7 @@ consolewrite(struct inode *ip, char *buf, int n)
 	return n;
 }
 
-void
-consoleinit(void)
-{
+void consoleinit(void){
 	initlock(&cons.lock, "console");
 
 	devsw[CONSOLE].write = consolewrite;

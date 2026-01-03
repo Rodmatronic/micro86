@@ -17,10 +17,10 @@ void * modget(int type) {
 	return 0;
 }
 
-void set_phystop(void) {
+void set_phystop(void){
 	struct multiboot_tag *tag;
 	struct multiboot_tag_mmap *mmap;
-	uint32_t max_top = 0;
+	uint64_t max_top = 0;
 	extern char end[];
 
 	printk("using multiboot2 provided memory map\n");
@@ -29,38 +29,57 @@ void set_phystop(void) {
 		return;
 
 	mmap = (struct multiboot_tag_mmap *)tag;
-	for (unsigned char *p = (unsigned char *)mmap->entries;
-		p < (unsigned char *)mmap + mmap->size;
-		p += mmap->entry_size) {
+	unsigned char *p = (unsigned char *)mmap->entries;
+	unsigned char *endp = (unsigned char *)mmap + mmap->size;
+
+	while (p + sizeof(struct multiboot_mmap_entry) <= endp) {
 
 		struct multiboot_mmap_entry *e = (struct multiboot_mmap_entry *)p;
-		uint32_t start = e->addr;
-		uint32_t len   = e->len;
-		uint32_t end   = start + len;
+		uint64_t start = e->addr;
+		uint64_t len   = e->len;
 
-		printk("[start=%08x end=%08x len=%08x %s]\n", start, end, len, e->type ? "usable" : "reserved");
-		/* type 1 means available RAM per Multiboot2 spec */
-		if (e->type == 1) {
-			if (end > max_top)
-				max_top = end;
-		}
+		p += mmap->entry_size;
+
+		if (e->type != MULTIBOOT_MEMORY_AVAILABLE)
+			continue;
+
+		if (len == 0)
+			continue;
+
+		if (start >= 0x100000000ULL)
+			continue;
+
+		uint64_t end = start + len;
+
+		if (end < start)
+			continue;
+
+		if (end > 0x100000000ULL)
+			end = 0x100000000ULL;
+
+		if (end > max_top)
+			max_top = end;
+
+		printk("[start=%08x end=%08x len=%08x usable]\n", (uint32_t)start, (uint32_t)end, (uint32_t)len);
 	}
 
 	if (max_top == 0)
 		return;
 
 	/* FIXME: this sucks! */
-	if (max_top > 0x7DFE0000)
-		max_top = 0x7DFE0000;
+	if (max_top > 0x7DFE0000ULL)
+		max_top = 0x7DFE0000ULL;
 
 	/* round down to page boundary so PHYSTOP is safe to use for page allocs */
-	PHYSTOP = (unsigned int)(max_top & ~(PGSIZE - 1));
-	unsigned int pa_end = V2P(end);
-	unsigned int pa_end_aligned = PGROUNDUP(pa_end);
-	unsigned int total_mem = PHYSTOP - pa_end_aligned;
+	PHYSTOP = (uint32_t)(max_top & ~(PGSIZE - 1));
+	uint32_t pa_end = V2P(end);
+	uint32_t pa_end_aligned = PGROUNDUP(pa_end);
+	uint32_t total_mem = PHYSTOP - pa_end_aligned;
+
 	printk("PHYSTOP pushed to %08x\n", PHYSTOP);
 	printk("found %dM of memory\n", total_mem / 1048576 + 2);
 }
+
 
 void mbootinit(unsigned long addr) {
 	struct multiboot_tag_string * multiboot_cmdline;

@@ -37,12 +37,12 @@ void		sync();
 // console.c
 #define		printk(fmt, ...) \
 			_printf((char *)__func__, fmt, ##__VA_ARGS__)
+extern int	x, y;
 void            consoleinit(void);
 void		consputc(int);
 void		_printf(char *func, char *fmt, ...);
 void            consoleintr(int(*)(void));
 int		sprintf(char *buf, const char *fmt, ...);
-void		vbe_initdraw(void);
 void		vkprintf(const char *fmt, va_list ap);
 
 // exec.c
@@ -220,7 +220,8 @@ int             fetchstr(unsigned int, char**);
 void            syscall(void);
 
 // time.c
-unsigned int		epoch_mktime(void);
+uint8_t		cmos_read(uint8_t);
+unsigned int	epoch_mktime(void);
 void 		set_kernel_time(unsigned long);
 
 // timer.c
@@ -248,8 +249,12 @@ void            uartintr(void);
 void            uartputc(int);
 
 // vgagraphics.c
-void		vgaconsoleinit(void);
-void		vgareturnconsole(void);
+void		graphical_putc(uint16_t, uint16_t, char, uint8_t);
+void		putpixel(uint16_t, uint16_t, uint8_t);
+void		gvga_clear(void);
+void		gvga_init(void);
+void		gvga_retcons(void);
+void		gvga_scroll(void);
 
 // vgatext.c
 void		vgatextpalette(void);

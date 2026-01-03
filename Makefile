@@ -7,6 +7,7 @@ OBJS = \
 	$S/bio.o\
 	$S/exec.o\
 	$S/file.o\
+	$S/boot/font.o\
 	$S/fs.o\
 	$S/ioapic.o\
 	$S/kalloc.o\

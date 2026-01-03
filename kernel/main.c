@@ -14,8 +14,7 @@
 #include <time.h>
 #include <version.h>
 
-static void startothers(void);
-static void mpmain(void) __attribute__((noreturn));
+void cmosphys(void);
 extern pde_t *kpgdir;
 extern char end[]; // first address after kernel loaded from ELF file
 char * banner = sys_version "\n";
@@ -25,6 +24,7 @@ char * banner = sys_version "\n";
 // doing some setup required for memory allocator to work.
 // Doing int function returns so GCC will not complain
 int kmain(unsigned int addr){
+	gvga_init();
 	printk(banner);
 	mbootinit(addr); // multiboot
 	kinit1(end, P2V(4*1024*1024)); // phys page allocator
@@ -43,62 +43,14 @@ int kmain(unsigned int addr){
 	binit();	// buffer cache
 	fileinit();	// file table
 	ideinit();	// disk 
-	startothers();	// start other processors
 	kinit2(P2V(4*1024*1024), P2V(PHYSTOP)); // must come after startothers()
 	userinit();	// first user process
-	mpmain();	// finish this processor's setup
+	idtinit();	// load idt register
+	scheduler();	// start running processes
 	return -1; /* NOT REACHED */
 }
 
-// Other CPUs jump here from entryother.S.
-static void mpenter(void){
-	switchkvm();
-	seginit();
-	lapicinit();
-	mpmain();
-}
-
-// Common CPU setup code.
-static void mpmain(void){
-	idtinit();	// load idt register
-	xchg(&(mycpu()->started), 1); // tell startothers() we're up
-	scheduler();	 // start running processes
-}
-
 pde_t entrypgdir[];	// For entry.S
-
-// Start the non-boot (AP) processors.
-static void startothers(void){
-	extern uchar _binary_kernel_boot_entryother_start[], _binary_kernel_boot_entryother_size[];
-	uchar *code;
-	struct cpu *c;
-	char *stack;
-
-	// Write entry code to unused memory at 0x7000.
-	// The linker has placed the image of entryother.S in
-	// _binary_entryother_start.
-	code = P2V(0x7000);
-	memmove(code, _binary_kernel_boot_entryother_start, (unsigned int)_binary_kernel_boot_entryother_size);
-
-	for(c = cpus; c < cpus+ncpu; c++){
-		if(c == mycpu())	// We've started already.
-			continue;
-
-		// Tell entryother.S what stack to use, where to enter, and what
-		// pgdir to use. We cannot use kpgdir yet, because the AP processor
-		// is running in low memory, so we use entrypgdir for the APs too.
-		stack = kalloc();
-		*(void**)(code-4) = stack + KSTACKSIZE;
-		*(void(**)(void))(code-8) = mpenter;
-		*(int**)(code-12) = (void *) V2P(entrypgdir);
-
-		lapicstartap(c->apicid, V2P(code));
-
-		// wait for cpu to finish mpmain()
-		while(c->started == 0)
-			;
-	}
-}
 
 // The boot page table used in entry.S and entryother.S.
 // Page directories (and page tables) must start on page boundaries,
