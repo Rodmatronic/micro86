@@ -15,6 +15,7 @@
 #define COM1	0x3f8
 
 static int uart;	// is there a uart?
+int uart_debug = 0;
 
 void
 uartinit(void)

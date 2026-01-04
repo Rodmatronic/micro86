@@ -37,6 +37,11 @@ void		sync();
 // console.c
 #define		printk(fmt, ...) \
 			_printf((char *)__func__, fmt, ##__VA_ARGS__)
+#define		debug(fmt, ...) \
+			uart_debug=1; \
+			_printf((char *)__func__, fmt, ##__VA_ARGS__);\
+			uart_debug=0;
+
 extern int	current_color;
 extern int	x, y;
 void            consoleinit(void);
@@ -48,9 +53,6 @@ void		vkprintf(const char *fmt, va_list ap);
 
 // exec.c
 int	      exec(char*, char**);
-
-// debug.c
-int		debugger(int);
 
 // file.c
 struct file*    filealloc(void);
@@ -245,6 +247,7 @@ uint64_t	tsc_to_us(uint64_t);
 uint64_t	tsc_to_ns(uint64_t);
 
 // uart.c
+extern int uart_debug;
 void            uartinit(void);
 void            uartintr(void);
 void            uartputc(int);

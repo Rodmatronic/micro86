@@ -439,6 +439,9 @@ void consputc(int c){
 		uartputc(c);
 	}
 
+	if (uart_debug)	// this is for the serial debug line, don't print to vga
+		return;
+
 	switch(ansi_state) {
 		case ANSI_NORMAL:
 			if(c == 0x1B) { // ESC
