@@ -12,7 +12,7 @@
 /*
  * User code makes a system call with INT T_SYSCALL.
  * Syscalls are defined by EAX, with the arguments
- * being the remaining EBX, ECX, EDX, and so on.
+ * being the remaining EBX, ECX, EDX, ESI, EDI, EBP.
  */
 
 // Fetch the int at addr from the current process.
