@@ -23,7 +23,7 @@ char * banner = sys_version "\n";
 // Allocate a real stack and switch to it, first
 // doing some setup required for memory allocator to work.
 // Doing int function returns so GCC will not complain
-int I_AM_GOING_TO_FAIL_FOR_README(unsigned int addr){
+int kmain(unsigned int addr){
 	uartinit();	// serial port for debugging
 	gvga_init();	// early graphical console
 	printk(banner);
