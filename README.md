@@ -6,11 +6,3 @@ I might include a little demodisk once I get file listing working (getdents).
 The version number only gets incremented when I add a whole bunch of stuff that is really groundbreaking. Like... TTYs, a ton of new syscalls, or a ton of fundamental fixes to the kernel. This is, of course, based on XV6. But, I have gutted a fair bit of the original project to be a more Linux-like kernel. No userspace comes with this by default, and any programs you wish to run have to be statically linked, and have a small enough entrypoint (0x1000 - 0x15000 works well!).
 
 Anything in root/ will be asssembled into a funky little disk by MKFS. Mind you that Linux stuff (aside from executables compiled explicitly for this funky kernel) WILL NOT run. Virtual memory differences and blah blah blah.
-
-# Issues with micro86:
-	- kernel does NOT do ENV correctly. It is usermode memory, not kernel.
-		- by proxy, does not have execve
-	- just add ttys.
-	- implement: sys_execve, sys_break, sys_access, sys_nice, etc.
-		- things that aren't doable from Linux will be placeholdered.
-	Don't feature creep. Do what linux did by 0.01
