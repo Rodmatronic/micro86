@@ -18,9 +18,18 @@ start:
 	# mknod /dev/console
 	movl	$SYS_mknod, %eax
 	movl	$console, %ebx
-	movl	$0x1, %ecx
-	movl	$0x1, %edx
+	movl	$0x21B0, %ecx               # S_IFCHR=0x2000, 0660=0x1B0
+	movl	$0x1, %edx                  # major = 1 (CONSOLE)
+	movl	$0x1, %esi                  # minor = 1
 	int	$T_SYSCALL
+
+	# mknod /dev/root
+        movl    $SYS_mknod, %eax
+        movl    $rootdir, %ebx
+        movl    $0x61B0, %ecx               # 0x6000 | 0x1B0 (block device | 0660)
+        movl    $0x9, %edx                  # major = 9
+        movl    $0x0, %esi                  # minor = 0
+        int     $T_SYSCALL
 
 	# open /dev/console
 	movl	$SYS_open, %eax
@@ -61,6 +70,8 @@ init:
 	.string "/sbin/init\0"
 console:
 	.string "/dev/console\0"
+rootdir:
+	.string "/dev/root\0"
 devdir:
 	.string "/dev\0"
 message:

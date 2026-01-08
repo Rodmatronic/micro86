@@ -40,7 +40,6 @@ uartinit(void)
 	// enable interrupts.
 	inb(COM1+2);
 	inb(COM1+0);
-//	ioapicenable(IRQ_COM1, 0);
 
 	// Announce that we're here.
 	debug("Debug serial on COM1 at 0x%x\n", COM1);
@@ -59,6 +58,8 @@ uartputc(int c)
 		microdelay(10);
 
 	switch(c){
+		case(0x00):
+			return;
 		case(0x100):
 		case('\b'):
 		case(0x7f):

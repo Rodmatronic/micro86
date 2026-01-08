@@ -13,6 +13,7 @@
 #include <config.h>
 #include <time.h>
 #include <version.h>
+#include <traps.h>
 
 void cmosphys(void);
 extern pde_t *kpgdir;
@@ -35,6 +36,7 @@ int kmain(unsigned int addr){
 	lapicinit();	// interrupt controller
 	seginit();	// segment descriptors
 	ioapicinit();	// another interrupt controller
+	ioapicenable(IRQ_COM1, 0);
 	consoleinit();	// console hardware
 	devinit();	// device nodes init
 	pinit();	// process table

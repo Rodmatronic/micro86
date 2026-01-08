@@ -259,6 +259,8 @@ void cgaputc(int c){
 		break;
 
 	default:
+		if((c == 0x00))
+			break;
 		if((c & 0xff) < 0x20){
 			crt[pos++] = '^' | current_color;
 			crt[pos++] = ((c & 0xff) + '@') | current_color;
@@ -592,7 +594,7 @@ void consoleintr(int (*getc)(void)){
 	release(&cons.lock);
 }
 
-int consoleread(struct inode *ip, char *dst, int n){
+int consoleread(struct inode *ip, char *dst, int n, uint32_t off){
 	unsigned int target;
 	int c;
 
@@ -628,7 +630,7 @@ int consoleread(struct inode *ip, char *dst, int n){
 	return target - n;
 }
 
-int consolewrite(struct inode *ip, char *buf, int n){
+int consolewrite(struct inode *ip, char *buf, int n, uint32_t off){
 	int i;
 
 	iunlock(ip);
@@ -644,8 +646,6 @@ int consolewrite(struct inode *ip, char *buf, int n){
 void consoleinit(void){
 	initlock(&cons.lock, "console");
 
-	devsw[CONSOLE].write = consolewrite;
-	devsw[CONSOLE].read = consoleread;
 	cons.locking = 1;
 	ttyb.tflags = ECHO;
 

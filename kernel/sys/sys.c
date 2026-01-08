@@ -527,13 +527,22 @@ int sys_time(void){
 int sys_mknod(void){
 	struct inode *ip;
 	char *path;
-	int major, minor;
-
+	int mode, major, minor;
 	begin_op();
-	if((argstr(0, &path)) < 0 || argint(1, &major) < 0 || argint(2, &minor) < 0 || (ip = create(path, S_IFCHR | S_IRUSR | S_IWUSR, major, minor)) == 0){
+	if((argstr(0, &path)) < 0 || argint(1, &mode) < 0 || argint(2, &major) < 0 || argint(3, &minor) < 0){
 		end_op();
 		return -EACCES;
 	}
+
+	if((ip = create(path, mode, major, minor)) == 0){
+		end_op();
+		return -EACCES;
+	}
+
+	if((mode & S_IFMT) == S_IFBLK){
+		ip->size = FSSIZE * BSIZE;
+	}
+
 	iunlockput(ip);
 	end_op();
 	return 0;

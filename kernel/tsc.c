@@ -36,9 +36,9 @@ void tscinit(void){
 	tsc_realtime = (uint64_t)epoch_mktime() * 1000000000ULL;
 
 	printk("Using TSC with PIT clocksource\n");
-	printk("tsc_freq_hz  : 0x%x\n", tsc_freq_hz);
-	printk("tsc_offset   : 0x%x\n", tsc_offset);
-	printk("tsc_realtime : 0x%x\n", tsc_realtime);
+	debug("tsc_freq_hz  : 0x%x\n", tsc_freq_hz);
+	debug("tsc_offset   : 0x%x\n", tsc_offset);
+	debug("tsc_realtime : 0x%x\n", tsc_realtime);
 }
 
 uint64_t tsc_to_us(uint64_t tsc){

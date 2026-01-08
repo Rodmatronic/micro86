@@ -13,6 +13,7 @@
 #include <proc.h>
 #include <stat.h>
 #include <errno.h>
+#include <buf.h>
 
 struct devsw devsw[NDEV];
 struct {
@@ -26,9 +27,9 @@ fileinit(void)
 	initlock(&ftable.lock, "ftable");
 }
 
-int badwrite(struct inode *ip, char *buf, int n) { return -1; }
-int badread(struct inode *ip, char *buf, int n) { return -1; }
-int nullread(struct inode *ip, char *buf, int n) { return 0; }
+int badwrite(struct inode *ip, char *buf, int nm, uint32_t off) { return -1; }
+int badread(struct inode *ip, char *buf, int n, uint32_t off) { return -1; }
+int nullread(struct inode *ip, char *buf, int n, uint32_t off) { return 0; }
 
 // Devnodes devices
 uint32_t
@@ -46,7 +47,7 @@ static uint32_t rng_state;
 
 // very simple entropy
 int
-rndread(struct inode *ip, char *dst, int n)
+rndread(struct inode *ip, char *dst, int n, uint32_t off)
 {
 	uint32_t lo, hi;
 
@@ -75,29 +76,78 @@ rndread(struct inode *ip, char *dst, int n)
 }
 
 int
-keyread(struct inode *ip, char *dst, int n)
+keyread(struct inode *ip, char *dst, int n, uint32_t off)
 {
 	return n;
 }
 
-int mouseread(struct inode *ip, char *dst, int n) {
+int mouseread(struct inode *ip, char *dst, int n, uint32_t off) {
 	return n;
+}
+
+#define min(a, b) ((a) < (b) ? (a) : (b))
+
+int diskread(struct inode *ip, char *dst, int n, uint32_t off){
+	struct buf *bp;
+	int bytes_read = 0;
+
+	while(n > 0) {
+		uint32_t sector = off / BSIZE;
+		uint32_t sector_off = off % BSIZE;
+
+		bp = bread(ip->dev, sector);
+		int count = min(n, BSIZE - sector_off);
+		memmove(dst, bp->data + sector_off, count);
+		brelse(bp);
+		dst += count;
+		bytes_read += count;
+		n -= count;
+		off += count;
+	}
+
+	return bytes_read;
+}
+
+int diskwrite(struct inode *ip, char *src, int n, uint32_t off){
+	struct buf *bp;
+	uint32_t sector = ip->minor;
+	int bytes_written = 0;
+
+	while(n > 0) {
+		bp = bread(0, sector);
+		int count = min(n, BSIZE);
+		memmove(bp->data, src, count);
+		bwrite(bp);
+		brelse(bp);
+		src += count;
+		bytes_written += count;
+		n -= count;
+		sector++;
+	}
+
+	return bytes_written;
 }
 
 // Devnodes devices (not /dev/console)
 void
 devinit()
 {
+	// Character devices
+	devsw[CONSOLE].write = consolewrite;
+	devsw[CONSOLE].read = consoleread;
 	devsw[NULLDEV].read = nullread;
 	devsw[NULLDEV].write = badwrite;
 	devsw[RANDOM].read = rndread;
 	devsw[RANDOM].write = badwrite;
-	devsw[SCRDEV].read = badread;
-//	devsw[SCRDEV].write = scrwrite;
 	devsw[KEYDEV].read = keyread;
 	devsw[KEYDEV].write = badwrite;
 	devsw[MOUSDEV].read = mouseread;
 	devsw[MOUSDEV].write = badwrite;
+
+	// Disk block device
+	devsw[DISKDEV].read = diskread;
+	devsw[DISKDEV].write = diskwrite;
+
 }
 
 // Allocate a file structure.
