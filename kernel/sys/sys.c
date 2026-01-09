@@ -1218,15 +1218,35 @@ int sys_ustat(void){
 }
 
 int sys_dup2(void){
-	int fd;
+	int oldfd, newfd;
 	struct file *f;
+	struct proc *p = myproc();
 
-	if(argfd(0, &fd, &f) < 0)
+	if(argint(0, &oldfd) < 0)
 		return -EINVAL;
-	myproc()->ofile[fd] = 0;
-	fileclose(f);
+	if(argint(1, &newfd) < 0)
+		return -EINVAL;
+	if(oldfd < 0 || oldfd >= NOFILE || newfd < 0 || newfd >= NOFILE)
+		return -EBADF;
 
-	return 0;
+	f = p->ofile[oldfd];
+	if(f == 0)
+		return -EBADF;
+
+	if(oldfd == newfd)
+		return newfd;
+
+	if(p->ofile[newfd]){
+		fileclose(p->ofile[newfd]);
+		p->ofile[newfd] = 0;
+	}
+
+	p->ofile[newfd] = f;
+	filedup(f);
+
+	p->cloexec[newfd] = 0;
+
+	return newfd;
 }
 
 int sys_getppid(void){
