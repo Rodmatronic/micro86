@@ -113,7 +113,7 @@ static struct inode* create(char *path, short type, short major, short minor){
 	ip->gid = myproc()->gid;
 	iupdate(ip);
 
-	if(type == S_IFDIR){	// Create . and .. entries.
+	if((ip->mode & S_IFMT) == S_IFDIR){	// Create . and .. entries.
 		dp->nlink++;	// for ".."
 		iupdate(dp);
 		// No ip->nlink++ for ".": avoid cyclic ref count.
@@ -1434,9 +1434,6 @@ int sys_getpgid(void){
 	return myproc()->parent->gid;
 }
 
-/*
- * TODO: This is not complete, but I don't have the guts to finish it today.
- */
 int sys_getdents(void){
 	int fd;
 	int count;
