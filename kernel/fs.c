@@ -379,8 +379,8 @@ iunlockput(struct inode *ip)
 
 // Return the disk block address of the nth block in inode ip.
 // If there is no such block, bmap allocates one.
-static unsigned int
-bmap(struct inode *ip, unsigned int bn)
+uint32_t
+bmap(struct inode *ip, uint32_t bn)
 {
 	unsigned int addr, *a;
 	struct buf *bp;

@@ -110,22 +110,62 @@ int diskread(struct inode *ip, char *dst, int n, uint32_t off){
 
 int diskwrite(struct inode *ip, char *src, int n, uint32_t off){
 	struct buf *bp;
-	uint32_t sector = ip->minor;
-	int bytes_written = 0;
+	int tot = 0;
 
-	while(n > 0) {
-		bp = bread(0, sector);
-		int count = min(n, BSIZE);
-		memmove(bp->data, src, count);
-		bwrite(bp);
-		brelse(bp);
-		src += count;
-		bytes_written += count;
-		n -= count;
-		sector++;
+	if((ip->mode & S_IFMT) == S_IFBLK){
+		uint32_t base = ip->minor;
+
+		while(n > 0){
+			uint32_t sector = base + (off / BSIZE);
+			uint32_t boff = off % BSIZE;
+
+			bp = bread(ip->dev, sector);
+
+			int count = BSIZE - boff;
+			if(count > n)
+				count = n;
+
+			memmove(bp->data + boff, src, count);
+
+			bwrite(bp);
+			brelse(bp);
+
+			off += count;
+			src += count;
+			n -= count;
+			tot += count;
+		}
+		return tot;
 	}
 
-	return bytes_written;
+	while(n > 0){
+		uint32_t lbn = off / BSIZE;
+		uint32_t boff = off % BSIZE;
+		uint32_t sector = bmap(ip, lbn);
+
+		bp = bread(ip->dev, sector);
+
+		int count = BSIZE - boff;
+		if(count > n)
+			count = n;
+
+		memmove(bp->data + boff, src, count);
+
+		log_write(bp);
+		brelse(bp);
+
+		off += count;
+		src += count;
+		n -= count;
+		tot += count;
+	}
+
+	if(off > ip->size){
+		ip->size = off;
+		iupdate(ip);
+	}
+
+	return tot;
 }
 
 // Devnodes devices (not /dev/console)

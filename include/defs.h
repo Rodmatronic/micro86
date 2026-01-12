@@ -68,7 +68,7 @@ int             filewrite(struct file*, char*, int n);
 void		devinit(void);
 
 // fs.c
-void            readsb(int dev, struct superblock *sb);
+uint32_t 	bmap(struct inode *ip, uint32_t bn);
 int             dirlink(struct inode*, char*, unsigned int);
 struct inode*   dirlookup(struct inode*, char*, unsigned int*);
 struct inode*   ialloc(unsigned int, short);
@@ -83,6 +83,7 @@ int             namecmp(const char*, const char*);
 struct inode*   namei(char*);
 struct inode*   nameiparent(char*, char*);
 int             readi(struct inode*, char*, unsigned int, unsigned int);
+void            readsb(int dev, struct superblock *sb);
 void            stati(struct inode*, struct stat*);
 int             writei(struct inode*, char*, unsigned int, unsigned int);
 void		itrunc(struct inode *ip);
