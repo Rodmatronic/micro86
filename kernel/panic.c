@@ -15,6 +15,7 @@ void panic(char *fmt, ...){
         va_list ap;
 
         cli();
+	uart_debug=0;
         console.locking = 0;	// Disable console locking during panic
         printk("Kernel panic: ");
 
