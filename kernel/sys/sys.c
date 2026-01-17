@@ -1819,14 +1819,19 @@ int sys_clock_settime32(void){
 int sys_clock_gettime(void){
 	int clkid;
 	struct timespec64 *utp;
-	uint64_t ns;
+	uint64_t tsc_delta, ns, tsc_now;
 
 	if(argint(0, &clkid) < 0)
 		return -EINVAL;
 	if(argptr(1, (void*)&utp, sizeof(*utp)) < 0)
 		return -EINVAL;
 
-	ns = ((rdtsc() - tsc_offset) * 1000000000ULL) / tsc_freq_hz;
+	tsc_now = rdtsc();
+	tsc_delta = tsc_now - tsc_offset;
+
+	uint64_t seconds = tsc_delta / tsc_freq_hz;
+	uint64_t remainder = tsc_delta % tsc_freq_hz;
+	ns = seconds * 1000000000ULL + (remainder * 1000000000ULL) / tsc_freq_hz;
 
 	switch(clkid) {
 		case CLOCK_MONOTONIC:
@@ -1844,7 +1849,6 @@ int sys_clock_gettime(void){
 
 	if(copyout(myproc()->pgdir, (unsigned int)utp, &ts, sizeof(ts)) < 0)
 		return -EINVAL;
-
 	return 0;
 }
 
