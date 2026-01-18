@@ -173,7 +173,7 @@ void ctrl_alt_del(void){
 
 int sys_syscall(void){
 	notim();
-	return -1;
+	return -ENOSYS;
 }
 
 void sys_exit(void){
@@ -506,7 +506,7 @@ int sys_chdir(void){
 	if ((ip->mode & S_IFMT) != S_IFDIR) {
 		iunlockput(ip);
 		end_op();
-		return -EISDIR;
+		return -ENOTDIR;
 	}
 	iunlock(ip);
 	iput(curproc->cwd);
@@ -528,6 +528,10 @@ int sys_mknod(void){
 	struct inode *ip;
 	char *path;
 	int mode, major, minor;
+
+	if (!suser())
+		return -EPERM;
+
 	begin_op();
 	if((argstr(0, &path)) < 0 || argint(1, &mode) < 0 || argint(2, &major) < 0 || argint(3, &minor) < 0){
 		end_op();
@@ -679,12 +683,13 @@ int sys_getuid(void){
 
 int sys_stime(void){
 	unsigned long epoch;
-	struct proc *p = myproc();
+
 	if (argint(0, (int*)&epoch) < 0)
 		return -EINVAL;
 
-	if (p->uid != 0)
+	if (!suser())
 		return -EPERM;
+
 	set_kernel_time((unsigned long)epoch);
 	return 0;
 }
@@ -843,11 +848,8 @@ int sys_sync(void){
 int sys_kill(void){
 	int pid, signo;
 
-	if(argint(0, &pid) < 0)
+	if(argint(0, &pid) < 0 || argint(1, &signo) < 0)
 		return -EINVAL;
-
-	if(argint(1, &signo) < 0)
-		signo = SIGTERM;
 
 	if(signo < 1 || signo >= NSIG)
 		return -EINVAL;
@@ -1101,18 +1103,14 @@ int sys_ioctl(void){
 	int req;
 	void *arg;
 
-	if(argfd(0, 0, &f) < 0)
-		return -EINVAL;
-	if(argint(1, &req) < 0)
-		return -EINVAL;
-	if(argptr(2, (char**)&arg, sizeof(struct winsize)) < 0)
+	if(argfd(0, 0, &f) < 0 || argint(1, &req) < 0 || argptr(2, (char**)&arg, sizeof(struct winsize)) < 0)
 		return -EINVAL;
 
 	switch(req){
 		case 21523: // winsize
 			return tty_get_winsize((struct winsize*)arg);
-	default:
-		return -ENOTTY;
+		default:
+			return -ENOTTY;
 	}
 }
 
@@ -1123,38 +1121,35 @@ int sys_fcntl(void){
 	struct file *f;
 	struct proc *curproc = myproc();
 
-	if(argfd(0, &fd, &f) < 0)
+	if(argfd(0, &fd, &f) < 0 || argint(1, &cmd) < 0 || argint(2, (int*)&arg) < 0)
 		return -EINVAL;
-	if(argint(1, &cmd) < 0)
-		return -EINVAL;
-	if(argint(2, (int*)&arg) < 0)
-		return -EINVAL;
-	switch(cmd){
-	case F_DUPFD:
-	case F_DUPFD_CLOEXEC:
-		// find the lowest fd >= arg
-		for(int i = arg; i < NOFILE; i++){
-			if(curproc->ofile[i] == 0){
-				curproc->ofile[i] = f;
-				filedup(f);
-				if(cmd == F_DUPFD_CLOEXEC){
-					curproc->cloexec[i] = 1;
-				}
-				return i;
-			}
-		}
-		return -EMFILE;
 
-	case F_GETFL:
-		return f->flags;
-	case F_SETFL:
-		// only allow changing O_APPEND for now
-		if(arg & ~O_APPEND)
+	switch(cmd){
+		case F_DUPFD:
+		case F_DUPFD_CLOEXEC:
+			// find the lowest fd >= arg
+			for(int i = arg; i < NOFILE; i++){
+				if(curproc->ofile[i] == 0){
+					curproc->ofile[i] = f;
+					filedup(f);
+					if(cmd == F_DUPFD_CLOEXEC){
+						curproc->cloexec[i] = 1;
+					}
+					return i;
+				}
+			}
+			return -EMFILE;
+
+		case F_GETFL:
+			return f->flags;
+		case F_SETFL:
+			// only allow changing O_APPEND for now
+			if(arg & ~O_APPEND)
+				return -EPERM;
+			f->flags = (f->flags & ~O_APPEND) | (arg & O_APPEND);
+			return 0;
+		default:
 			return -EPERM;
-		f->flags = (f->flags & ~O_APPEND) | (arg & O_APPEND);
-		return 0;
-	default:
-		return -EPERM;
 	}
 }
 
@@ -1186,9 +1181,7 @@ int sys_sethostname(void){
 	const char * hostname;
 	size_t len;
 
-	if(argstr(0, (char **)&hostname) < 0)
-		return -EINVAL;
-	if(argptr(1, (void*)&len, sizeof(len)) < 0)
+	if(argstr(0, (char **)&hostname) < 0 || argptr(1, (void*)&len, sizeof(len)) < 0)
 		return -EINVAL;
 
 	strncpy(sys_nodename, hostname, len);
@@ -1222,10 +1215,9 @@ int sys_dup2(void){
 	struct file *f;
 	struct proc *p = myproc();
 
-	if(argint(0, &oldfd) < 0)
+	if(argint(0, &oldfd) < 0 || argint(1, &newfd) < 0)
 		return -EINVAL;
-	if(argint(1, &newfd) < 0)
-		return -EINVAL;
+
 	if(oldfd < 0 || oldfd >= NOFILE || newfd < 0 || newfd >= NOFILE)
 		return -EBADF;
 
@@ -1303,9 +1295,7 @@ int sys_getrusage(void){
 	struct rusage *uru;
 	struct rusage ru;
 
-	if(argint(0, &pid) < 0)
-		return -EINVAL;
-	if(argptr(1, (void*)&uru, sizeof(uru)) < 0)
+	if(argint(0, &pid) < 0 || argptr(1, (void*)&uru, sizeof(uru)) < 0)
 		return -EINVAL;
 
 	struct proc *pp = findproc(pid, myproc());
@@ -1346,17 +1336,13 @@ int sys_setgroups(void){
 	if (!suser())
 		return -EPERM;
 
-	if(argint(0, &gidsetsize) < 0)
-		return -EINVAL;
-
-	if(argptr(1, (void*)&ugroups, gidsetsize * sizeof(gid_t)) < 0)
+	if(argint(0, &gidsetsize) < 0 || argptr(1, (void*)&ugroups, gidsetsize * sizeof(gid_t)) < 0)
 		return -EINVAL;
 
 	if(gidsetsize < 0 || gidsetsize > NGROUPS)
 		return -EINVAL;
 
 	memmove(p->groups, ugroups, gidsetsize * sizeof(gid_t));
-
 	return 0;
 }
 
@@ -1372,11 +1358,7 @@ int sys_reboot(void){
 	if (!suser())
 		return -EPERM;
 
-	if(argint(0, &magic) < 0)
-		return -EINVAL;
-	if(argint(1, &magic_too) < 0)
-		return -EINVAL;
-	if(argint(2, &flag) < 0)
+	if(argint(0, &magic) < 0 || argint(1, &magic_too) < 0 || argint(2, &flag) < 0)
 		return -EINVAL;
 
 	if (magic != 0xfee1dead || magic_too != 672274793)
@@ -1399,11 +1381,7 @@ int sys_wait4(void){
 	int *status;
 	int options;
 
-	if(argint(0, &pid) < 0)
-		return -EINVAL;
-	if(argptr(1, (void*)&status, sizeof(*status)) < 0)
-		return -EINVAL;
-	if(argint(2, &options) < 0)
+	if(argint(0, &pid) < 0 || argptr(1, (void*)&status, sizeof(*status)) < 0 || argint(2, &options) < 0)
 		return -EINVAL;
 
 	return waitpid(pid, status, options);
@@ -1443,12 +1421,8 @@ int sys_getdents(void){
 	int n = 0;
 	struct dirent de;
 
-	if(argint(0, &fd) < 0)
-		return -1;
-	if(argptr(1, (void*)&dp, sizeof(*dp)) < 0)
-		return -1;
-	if(argint(2, &count) < 0)
-		return -1;
+	if(argint(0, &fd) < 0 || argptr(1, (void*)&dp, sizeof(*dp)) < 0 || argint(2, &count) < 0)
+		return -EINVAL;
 
 	if(fd < 0 || fd >= NOFILE)
 		return -1;
@@ -1498,9 +1472,7 @@ int sys_writev(void){
 	int i;
 	int total;
 
-	if(argfd(0, 0, &f) < 0 || argint(2, &count) < 0)
-		return -EINVAL;
-	if(argptr(1, (char**)&vec, count * sizeof(unsigned int) * 2) < 0)
+	if(argfd(0, 0, &f) < 0 || argint(2, &count) < 0 || argptr(1, (char**)&vec, count * sizeof(unsigned int) * 2) < 0)
 		return -EINVAL;
 
 	total = 0;
@@ -1523,11 +1495,7 @@ int sys_setresuid(void){
 	int uid, euid, suid;
 	struct proc *p = myproc();
 
-	if (argint(0, &uid) < 0)
-		return -EINVAL;
-	if (argint(1, &euid) < 0)
-		return -EINVAL;
-	if (argint(2, &suid) < 0)
+	if (argint(0, &uid) < 0 || argint(1, &euid) < 0 || argint(2, &suid) < 0)
 		return -EINVAL;
 
 	if (uid < -1 || euid < -1 || suid < -1)
@@ -1558,11 +1526,7 @@ int sys_setresgid(void){
 	int gid, egid, sgid;
 	struct proc *p = myproc();
 
-	if (argint(0, &gid) < 0)
-		return -EINVAL;
-	if (argint(1, &egid) < 0)
-		return -EINVAL;
-	if (argint(2, &sgid) < 0)
+	if (argint(0, &gid) < 0 || argint(1, &egid) < 0 || argint(2, &sgid) < 0)
 		return -EINVAL;
 
 	if (gid < -1 || egid < -1 || sgid < -1)
@@ -1616,14 +1580,8 @@ int sys_rt_sigprocmask(void){
 	unsigned int *oldset;
 	size_t sigsetsize;
 
-	if(argint(0, &how) < 0)
+	if(argint(0, &how) < 0 || argptr(1, (void*)&set, sizeof(*set)) < 0 || argptr(2, (void*)&oldset, sizeof(*oldset)) < 0 || argint(3, (int*)&sigsetsize) < 0)
 		return -EINVAL;
-	if(argptr(1, (void*)&set, sizeof(*set)) < 0)
-		set = 0;
-	if(argptr(2, (void*)&oldset, sizeof(*oldset)) < 0)
-		oldset = 0;
-	if(argint(3, (int*)&sigsetsize) < 0)
-		sigsetsize = sizeof(unsigned int);
 
 	struct proc *curproc = myproc();
 
@@ -1663,12 +1621,8 @@ int sys_rt_sigaction(void){
 	} *act;
 	unsigned int old;
 
-	if(argint(0, &signum) < 0)
+	if(argint(0, &signum) < 0 || argptr(1, (void*)&act, sizeof(*act)) < 0 || argint(2, (int*)&old) < 0)
 		return -EINVAL;
-	if(argptr(1, (void*)&act, sizeof(*act)) < 0)
-		act = 0;
-	if(argint(2, (int*)&old) < 0)
-		old = 0;
 
 	if(signum < 1 || signum >= NSIG || signum == SIGKILL)
 		return -EPERM;
@@ -1697,9 +1651,7 @@ int sys_getcwd(void){
 	char *buf;
 	size_t size;
 
-	if(argptr(0, (void*)&buf, sizeof(*buf)) < 0)
-		return -EINVAL;
-	if(argint(1, (int*)&size) < 0)
+	if(argptr(0, (void*)&buf, sizeof(*buf)) < 0 || argint(1, (int*)&size) < 0)
 		return -EINVAL;
 
 	struct proc *curproc = myproc();
@@ -1813,9 +1765,10 @@ int sys_clock_settime32(void){
 	int clkid;
 	struct timespec64 *utp;
 
-	if(argint(0, &clkid) < 0)
-		return -EINVAL;
-	if(argptr(1, (void*)&utp, sizeof(*utp)) < 0)
+	if (!suser())
+		return -EPERM;
+
+	if(argint(0, &clkid) < 0 || argptr(1, (void*)&utp, sizeof(*utp)) < 0)
 		return -EINVAL;
 
 	if(clkid != CLOCK_REALTIME)
@@ -1830,9 +1783,7 @@ int sys_clock_gettime(void){
 	struct timespec64 *utp;
 	uint64_t tsc_delta, ns, tsc_now;
 
-	if(argint(0, &clkid) < 0)
-		return -EINVAL;
-	if(argptr(1, (void*)&utp, sizeof(*utp)) < 0)
+	if(argint(0, &clkid) < 0 || argptr(1, (void*)&utp, sizeof(*utp)) < 0)
 		return -EINVAL;
 
 	tsc_now = rdtsc();
