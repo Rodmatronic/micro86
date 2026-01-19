@@ -31,10 +31,10 @@ OBJS = \
 	$S/time.o\
 	$S/pl/vectors.o\
 	$S/vm.o\
-	$D/console.o\
-	$D/kbd.o\
-	$D/ide.o\
-	$D/uart.o\
+	$D/char/console.o\
+	$D/input/keyboard/kbd.o\
+	$D/ide/ide.o\
+	$D/serial/uart.o\
 
 # Cross-compiling (e.g., on Mac OS X)
 # TOOLPREFIX = i386-jos-elf
@@ -163,7 +163,7 @@ $S/fs.img: $S/mkfs/mkfs
 -include *.d
 
 clean:
-	find $S -type f \( -name '*.o' -o -name '*.asm' -o -name '*.sym' -o -name '*.tex' -o -name '*.dvi' -o -name '*.idx' -o -name '*.aux' -o -name '*.log' -o -name '*.ind' -o -name '*.ilg' -o -name '*.d' \) -delete
+	find . -type f \( -name '*.o' -o -name '*.asm' -o -name '*.sym' -o -name '*.d' \) -delete
 	rm -rf $S/pl/vectors.S $S/boot/entryother \
 	$S/initcode $S/initcode.out $S/miunix xv6.img $S/fs.img $S/kernelmemfs \
 	xv6memfs.img $S/mkfs/mkfs .gdbinit microunix.iso
