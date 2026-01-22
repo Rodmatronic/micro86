@@ -172,12 +172,18 @@ int sprintf(char *buf, const char *fmt, ...){
 	return rc;
 }
 
+void colorchange(char low_bit, char high_bit){
+	consputc('\033');
+	consputc('[');
+	consputc(low_bit);
+	consputc(high_bit);
+	consputc('m');
+}
+
 void _printf(char *func, char *fmt, ...){
 	va_list ap;
 	int locking;
-	int old_color;
 
-	old_color = current_color;
 #ifdef CONFIG_PRINTK_TIME
 	unsigned int us, s, rem;
 #endif
@@ -188,7 +194,7 @@ void _printf(char *func, char *fmt, ...){
 
 #ifdef CONFIG_PRINTK_TIME
 #ifdef CONFIG_COLORFUL_KMESG
-	current_color = 0x0200;
+	colorchange('3', '2');
 #endif
 
 	consputc('[');
@@ -211,19 +217,20 @@ void _printf(char *func, char *fmt, ...){
 	consputc(' ');
 
 #ifdef CONFIG_COLORFUL_KMESG
-	current_color = 0x600;
+	colorchange('3', '3');
 #endif
 
 	vkprintf(func, 0);
 	consputc(':');
 	consputc(' ');
 #endif
-	current_color = 0x0F00;
+	colorchange('9', '7');
+
 	va_start(ap, fmt);
 	vkprintf(fmt, ap);
 	va_end(ap);
 
-	current_color = old_color;
+	colorchange('3', '7');
 
 	if(locking)
 		release(&cons.lock);

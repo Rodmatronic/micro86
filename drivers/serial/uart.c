@@ -17,9 +17,7 @@
 static int uart;	// is there a uart?
 int uart_debug = 0;
 
-void
-uartinit(void)
-{
+void uartinit(void){
 	// Turn off the FIFO
 	outb(COM1+2, 0);
 
@@ -46,9 +44,7 @@ uartinit(void)
 	debug("status : 0x%x\n", inb(COM1+5));
 }
 
-void
-uartputc(int c)
-{
+void uartputc(int c){
 	int i;
 
 	if(!uart)
@@ -79,17 +75,10 @@ uartputc(int c)
 			return;
 		}
 
-	if((c & 0xff) < 0x20){
-		outb(COM1+0, '^');
-		outb(COM1+0, (c & 0xff) + '@');
-	} else {
-		outb(COM1+0, c & 0xff);
-	}
+	outb(COM1+0, c & 0xff);
 }
 
-static int
-uartgetc(void)
-{
+static int uartgetc(void){
 	if(!uart)
 		return -1;
 	if(!(inb(COM1+5) & 0x01))
@@ -97,8 +86,6 @@ uartgetc(void)
 	return inb(COM1+0);
 }
 
-void
-uartintr(void)
-{
+void uartintr(void){
 	consoleintr(uartgetc);
 }

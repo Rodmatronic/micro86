@@ -42,7 +42,7 @@ void		sync();
 			uart_debug=1; \
 			_printf((char *)__func__, fmt, ##__VA_ARGS__);\
 			uart_debug=0;
-
+void		colorchange(char, char);
 extern int	current_color;
 extern int	x, y;
 void            consoleinit(void);
