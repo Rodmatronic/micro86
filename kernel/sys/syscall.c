@@ -9,6 +9,7 @@
 #include <config.h>
 #include <debug.h>
 #include <sys.h>
+#include <errno.h>
 
 /*
  * User code makes a system call with INT T_SYSCALL.
@@ -207,7 +208,7 @@ syscall(void)
 		p->tf->eax = syscalls[num]();
 	} else {
 		debug("!!FIXME!!: unknown syscall %s, %d\n", syscall_list[num], num);
-		p->tf->eax = -1;
+		p->tf->eax = -ENOSYS;
 	}
 }
 
