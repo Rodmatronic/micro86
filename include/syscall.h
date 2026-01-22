@@ -79,6 +79,7 @@
 */
 #define SYS_wait4	114
 #define SYS_sigreturn	119
+#define SYS_setdomainname	121
 #define SYS_uname	122
 #define SYS_getpgid	132
 #define SYS_getdents	141
@@ -91,6 +92,7 @@
 #define SYS_rt_sigaction	174
 #define SYS_rt_sigsuspend	179
 #define SYS_getcwd	183
+#define SYS_vfork	190
 #define SYS_getuid32	199
 #define SYS_getgid32	200
 #define SYS_geteuid32	201

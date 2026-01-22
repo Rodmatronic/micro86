@@ -23,6 +23,7 @@
 extern struct ttyb ttyb;
 extern struct cons cons;
 char sys_nodename[65] = "localhost";
+char sys_domainname[65] = "domainname";
 
 /*
  * this indicates wether you can reboot with ctrl-alt-del: the default is yes
@@ -1085,7 +1086,7 @@ struct winsize {
 int tty_get_winsize(struct winsize *ws) {
 	if (!ws) return -1;
 
-	ws->ws_row = 24;
+	ws->ws_row = 25;
 	ws->ws_col = 79;
 	ws->ws_xpixel = 720;
 	ws->ws_ypixel = 400;
@@ -1179,6 +1180,9 @@ int sys_sethostname(void){
 	const char * hostname;
 	size_t len;
 
+	if (!suser())
+		return -EPERM;
+
 	if(argstr(0, (char **)&hostname) < 0 || argptr(1, (void*)&len, sizeof(len)) < 0)
 		return -EINVAL;
 
@@ -1269,20 +1273,20 @@ int sys_ssetmask(void){
 struct rusage {
 	struct timespec64 ru_utime; /* user CPU time used */
 	struct timespec64 ru_stime; /* system CPU time used */
-	long   ru_maxrss;        /* maximum resident set size */
-	long   ru_ixrss;         /* integral shared memory size */
-	long   ru_idrss;         /* integral unshared data size */
-	long   ru_isrss;         /* integral unshared stack size */
-	long   ru_minflt;        /* page reclaims (soft page faults) */
-	long   ru_majflt;        /* page faults (hard page faults) */
-	long   ru_nswap;         /* swaps */
+	long   ru_maxrss;	/* maximum resident set size */
+	long   ru_ixrss;	 /* integral shared memory size */
+	long   ru_idrss;	 /* integral unshared data size */
+	long   ru_isrss;	 /* integral unshared stack size */
+	long   ru_minflt;	/* page reclaims (soft page faults) */
+	long   ru_majflt;	/* page faults (hard page faults) */
+	long   ru_nswap;	 /* swaps */
 	long   ru_inblock;       /* block input operations */
 	long   ru_oublock;       /* block output operations */
-	long   ru_msgsnd;        /* IPC messages sent */
-	long   ru_msgrcv;        /* IPC messages received */
+	long   ru_msgsnd;	/* IPC messages sent */
+	long   ru_msgrcv;	/* IPC messages received */
 	long   ru_nsignals;      /* signals received */
-	long   ru_nvcsw;         /* voluntary context switches */
-	long   ru_nivcsw;        /* involuntary context switches */
+	long   ru_nvcsw;	 /* voluntary context switches */
+	long   ru_nivcsw;	/* involuntary context switches */
 };
 
 /*
@@ -1391,6 +1395,21 @@ int sys_sigreturn(void){
 	return sys_rt_sigreturn();
 }
 
+int sys_setdomainname(void){
+	const char * domainname;
+	size_t len;
+
+	if (!suser())
+		return -EPERM;
+
+	if(argstr(0, (char **)&domainname) < 0 || argptr(1, (void*)&len, sizeof(len)) < 0)
+		return -EINVAL;
+
+	strncpy(sys_domainname, domainname, len);
+	sys_domainname[len] = '\0';
+	return 0;
+}
+
 int sys_uname(void){
 	struct utsname *u;
 
@@ -1402,7 +1421,7 @@ int sys_uname(void){
 	safestrcpy(u->release, sys_release, sizeof(u->release));
 	safestrcpy(u->version, sys_version, sizeof(u->version));
 	safestrcpy(u->machine, "i386", sizeof(u->machine));
-	safestrcpy(u->domainname, "domainname", sizeof(u->domainname));
+	safestrcpy(u->domainname, sys_domainname, sizeof(u->domainname));
 	return 0;
 }
 
@@ -1689,6 +1708,10 @@ int sys_getcwd(void){
 	return (int)buf;
 }
 
+int sys_vfork(void){
+	return sys_fork();
+}
+
 int sys_getuid32(void){
 	return myproc()->uid;
 }
@@ -1811,7 +1834,7 @@ int sys_clock_gettime(void){
 }
 
 //       int linkat(int olddirfd, const char *oldpath,
-//                  int newdirfd, const char *newpath, int flags);
+//		  int newdirfd, const char *newpath, int flags);
 
 /*
  * Pretty much a placeholder for the LN utility
@@ -1908,6 +1931,7 @@ int sys_statx(void){
 	stxbuf.stx_atime.tv_nsec = 0;
 	stxbuf.stx_dev_major = st.st_dev;
 	stxbuf.stx_dev_minor = 0;
+
 
 	iunlockput(ip);
 
