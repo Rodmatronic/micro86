@@ -18,7 +18,7 @@ jobs:
     - name: install deps
       run: sudo apt install xorriso grub2-common build-essential mtools
     - name: make
-      run: make -j$(nproc) TOOLPREFIX=" "
+      run: make iso -j$(nproc) TOOLPREFIX=" "
     - name: Upload a Build Artifact
       uses: actions/upload-artifact@v4.6.2
       with:
