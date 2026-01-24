@@ -75,6 +75,8 @@ extern int sys_setsid(void);
 extern int sys_sigaction(void);
 extern int sys_sgetmask(void);
 extern int sys_ssetmask(void);
+extern int sys_setreuid(void);
+extern int sys_setregid(void);
 extern int sys_getrusage(void);
 extern int sys_setgroups(void);
 extern int sys_symlink(void);

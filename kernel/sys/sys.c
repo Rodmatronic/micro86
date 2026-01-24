@@ -49,6 +49,54 @@ void notim(){
 	printk("syscall %d: Not Implemented.\n", myproc()->tf->eax);
 }
 
+/* both setre* functions are from linux 0.11 */
+int setreuid(int ruid, int euid){
+	int old_ruid = myproc()->uid;
+	struct proc *p = myproc();
+
+	if (ruid>0) {
+		if ((p->euid==ruid) ||
+                    (old_ruid == ruid) ||
+		    suser())
+			p->uid = ruid;
+		else
+			return -EPERM;
+	}
+	if (euid>0) {
+		if ((old_ruid == euid) ||
+                    (p->euid == euid) ||
+		    suser())
+			p->euid = euid;
+		else {
+			p->uid = old_ruid;
+			return -EPERM;
+		}
+	}
+	return 0;
+}
+
+int setregid(int rgid, int egid){
+	struct proc *p = myproc();
+
+	if (rgid>0) {
+		if ((p->gid == rgid) || 
+		    suser())
+			p->gid = rgid;
+		else
+			return -EPERM;
+	}
+	if (egid>0) {
+		if ((p->gid == egid) ||
+		    (p->egid == egid) ||
+		    (p->sgid == egid) ||
+		    suser())
+			p->egid = egid;
+		else
+			return -EPERM;
+	}
+	return 0;
+}
+
 // Is the directory dp empty except for "." and ".." ?
 static int isdirempty(struct inode *dp){
 	int off;
@@ -664,14 +712,13 @@ int sys_umount(void){
 	return -1;
 }
 
-int sys_setuid(void){
+int sys_setuid(){
 	int uid;
-	struct proc *p = myproc();
-	if (argint(0, &uid) < 0)
+
+	if (argint(0, (int*)&uid) < 0)
 		return -EINVAL;
 
-	p->uid = p->euid = p->suid = uid;
-	return 0;
+	return(setreuid(uid, uid));
 }
 
 int sys_getuid(void){
@@ -1019,12 +1066,11 @@ int sys_brk(void){
 
 int sys_setgid(void){
 	int gid;
-	struct proc *p = myproc();
+
 	if (argint(0, &gid) < 0)
 		return -EINVAL;
 
-	p->gid = p->egid = p->sgid = gid;
-	return 0;
+	return setregid(gid, gid);
 }
 
 int sys_getgid(void){
@@ -1174,21 +1220,6 @@ int sys_sbrk(void){
 	return addr;
 }
 
-int sys_sethostname(void){
-	const char * hostname;
-	size_t len;
-
-	if (!suser())
-		return -EPERM;
-
-	if(argstr(0, (char **)&hostname) < 0 || argptr(1, (void*)&len, sizeof(len)) < 0)
-		return -EINVAL;
-
-	strncpy(sys_nodename, hostname, len);
-	sys_nodename[len] = '\0';
-	return 0;
-}
-
 int sys_umask(void){
 	mode_t mask;
 	mode_t old;
@@ -1268,12 +1299,43 @@ int sys_sigaction(void){
 }
 
 int sys_sgetmask(void){
-	notim();
-	return -1;
+	return -ENOSYS;
 }
 int sys_ssetmask(void){
-	notim();
-	return -1;
+	return -ENOSYS;
+}
+
+int sys_setreuid(){
+	int ruid, euid;
+
+	if(argint(0, &ruid) < 0 || argint(1, &euid) < 0)
+		return -EINVAL;
+
+	return setreuid(ruid, euid);
+}
+
+int sys_setregid(){
+	int rgid, egid;
+
+	if(argint(0, &rgid) < 0 || argint(1, &egid) < 0)
+		return -EINVAL;
+
+	return setregid(rgid, egid);
+}
+
+int sys_sethostname(void){
+	const char * hostname;
+	size_t len;
+
+	if (!suser())
+		return -EPERM;
+
+	if(argstr(0, (char **)&hostname) < 0 || argptr(1, (void*)&len, sizeof(len)) < 0)
+		return -EINVAL;
+
+	strncpy(sys_nodename, hostname, len);
+	sys_nodename[len] = '\0';
+	return 0;
 }
 
 struct rusage {
