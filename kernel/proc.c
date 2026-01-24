@@ -96,6 +96,8 @@ found:
 	p->alarminterval = 0;
 	p->sigmask = 0;
 	p->umask = 0022;
+	p->session = 0;
+	p->leader = 0;
 	p->tty = -1; // not a tty
 
 	for(int i = 0; i < NGROUPS; i++)
@@ -217,6 +219,9 @@ fork(void)
 	np->sigpending = 0;
 	np->sigmask = 0;
 	np->saved_trapframe_sp = 0;
+	np->session = curproc->session;
+	np->leader = 0;	// Child is never a session leader
+	np->tty = curproc->tty;
 
 	/* i am pretty sure this is fine. I think, I hope.
 	 * Kornshell doesn't seem to mind, though. Fixes

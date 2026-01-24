@@ -1250,8 +1250,16 @@ int sys_getpgrp(void){
 }
 
 int sys_setsid(void){
-	notim();
-	return -1;
+	struct proc *p = myproc();
+
+	if (p->leader && !suser())
+		return -EPERM;
+
+	p->leader = 1;
+	p->session = p->pid;
+	p->pgrp = p->pid;
+	p->tty = -1;
+	return p->pgrp;
 }
 
 int sys_sigaction(void){

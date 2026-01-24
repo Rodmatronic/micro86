@@ -69,6 +69,8 @@ struct proc {
 	unsigned int saved_trapframe_sp;	// Signal trapframe (for returning)
 	char cloexec[NOFILE];	// Close-on-exec
 	unsigned short umask;	// Permission mask
+	int session;		// Session ID
+	int leader;		// Is session leader?
 	int tty;		// Current tty, -1 if not tty
 	int groups[NGROUPS];	// Supplementary group IDs
 };

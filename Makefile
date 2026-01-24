@@ -13,7 +13,7 @@ OBJDUMP := $(TOOLPREFIX)objdump
 
 CFLAGS += -MMD -MP -fno-pic -static -fno-builtin  -Oz -Wall -MD -m32 -Wa,--noexecstack -Iinclude -Werror
 ASFLAGS += -m32 -gdwarf-2 -Wa,--noexecstack -Iinclude -DASM_FILE=1
-LDFLAGS += -m elf_i386  --no-warn-rwx-segment -N -e start -Ttext 0
+LDFLAGS += -m elf_i386 
 QEMUOPTS += -accel tcg -cdrom microunix.iso -boot d -drive file=$S/fs.img,index=1,media=disk,format=raw
 
 #kernel, then drivers
@@ -119,4 +119,4 @@ qemu: iso
 	$(QEMU) -serial mon:stdio $(QEMUOPTS)
 
 qemu-nox: iso
-	$(QEMU) -nographic $(QEMUOPTS)
+	$(QEMU) -display curses $(QEMUOPTS)
