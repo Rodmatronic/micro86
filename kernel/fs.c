@@ -20,6 +20,7 @@
 #include <fs.h>
 #include <buf.h>
 #include <file.h>
+#include <errno.h>
 
 #define min(a, b) ((a) < (b) ? (a) : (b))
 // there should be one superblock per disk device, but we run with
@@ -471,7 +472,7 @@ readi(struct inode *ip, char *dst, unsigned int off, unsigned int n)
 
 	if(((ip->mode & S_IFMT) == S_IFCHR) || ((ip->mode & S_IFMT) == S_IFBLK)){
 		if(ip->major < 0 || ip->major >= NDEV || !devsw[ip->major].read)
-			return -1;
+			return -ENXIO;
 		return devsw[ip->major].read(ip, dst, n, off);
 	}
 
