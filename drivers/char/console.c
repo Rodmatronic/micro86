@@ -448,7 +448,7 @@ void consputc(int c){
 	} else if(c == BACKSPACE){
 		uartputc('\b'); uartputc(' '); uartputc('\b');
 	} else {
-		uartputc(c);
+//		uartputc(c);
 	}
 
 	if (uart_debug)	// this is for the serial debug line, don't print to vga

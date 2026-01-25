@@ -11,6 +11,8 @@
 #include <spinlock.h>
 #include <sleeplock.h>
 #include <fs.h>
+#include <stat.h>
+#include <file.h>
 #include <buf.h>
 
 #define SECTOR_SIZE	512
@@ -23,6 +25,8 @@
 #define IDE_CMD_WRITE	0x30
 #define IDE_CMD_RDMUL	0xc4
 #define IDE_CMD_WRMUL	0xc5
+
+#define min(a, b) ((a) < (b) ? (a) : (b))
 
 // idequeue points to the buf now being read/written to the disk.
 // idequeue->qnext points to the next buf to be processed.
@@ -81,13 +85,13 @@ idestart(struct buf *b)
 	if(b == 0)
 		panic("idestart");
 	if(b->blockno >= FSSIZE)
-		panic("incorrect blockno");
+		panic("fatal ide error: incorrect number of blocks");
 	int sector_per_block =	BSIZE/SECTOR_SIZE;
 	int sector = b->blockno * sector_per_block;
 	int read_cmd = (sector_per_block == 1) ? IDE_CMD_READ :	IDE_CMD_RDMUL;
 	int write_cmd = (sector_per_block == 1) ? IDE_CMD_WRITE : IDE_CMD_WRMUL;
 
-	if (sector_per_block > 7) panic("idestart");
+	if (sector_per_block > 7) panic("fatal ide error: incorrect sector-per-block amount (%d)", sector_per_block);
 
 	idewait(0);
 	outb(0x3f6, 0);	// generate interrupt
@@ -170,3 +174,85 @@ iderw(struct buf *b)
 
 	release(&idelock);
 }
+
+int ide0read(struct inode *ip, char *dst, int n, uint32_t off){
+	struct buf *bp;
+	int bytes_read = 0;
+
+	while(n > 0) {
+		uint32_t sector = off / BSIZE;
+		uint32_t sector_off = off % BSIZE;
+
+		bp = bread(ip->dev, sector);
+		int count = min(n, BSIZE - sector_off);
+		memmove(dst, bp->data + sector_off, count);
+		brelse(bp);
+		dst += count;
+		bytes_read += count;
+		n -= count;
+		off += count;
+	}
+
+	return bytes_read;
+}
+
+int ide0write(struct inode *ip, char *src, int n, uint32_t off){
+	struct buf *bp;
+	int tot = 0;
+
+	if((ip->mode & S_IFMT) == S_IFBLK){
+		uint32_t base = ip->minor;
+
+		while(n > 0){
+			uint32_t sector = base + (off / BSIZE);
+			uint32_t boff = off % BSIZE;
+
+			bp = bread(ip->dev, sector);
+
+			int count = BSIZE - boff;
+			if(count > n)
+				count = n;
+
+			memmove(bp->data + boff, src, count);
+
+			bwrite(bp);
+			brelse(bp);
+
+			off += count;
+			src += count;
+			n -= count;
+			tot += count;
+		}
+		return tot;
+	}
+
+	while(n > 0){
+		uint32_t lbn = off / BSIZE;
+		uint32_t boff = off % BSIZE;
+		uint32_t sector = bmap(ip, lbn);
+
+		bp = bread(ip->dev, sector);
+
+		int count = BSIZE - boff;
+		if(count > n)
+			count = n;
+
+		memmove(bp->data + boff, src, count);
+
+		log_write(bp);
+		brelse(bp);
+
+		off += count;
+		src += count;
+		n -= count;
+		tot += count;
+	}
+
+	if(off > ip->size){
+		ip->size = off;
+		iupdate(ip);
+	}
+
+	return tot;
+}
+

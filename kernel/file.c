@@ -30,150 +30,17 @@ int badwrite(struct inode *ip, char *buf, int nm, uint32_t off) { return -1; }
 int badread(struct inode *ip, char *buf, int n, uint32_t off) { return -1; }
 int nullread(struct inode *ip, char *buf, int n, uint32_t off) { return 0; }
 
-// Devnodes devices
-uint32_t
-xorshift32(uint32_t *state)
-{
-	uint32_t x = *state;
-	x ^= x << 13;
-	x ^= x >> 17;
-	x ^= x << 5;
-	*state = x;
-	return x;
-}
-
-static uint32_t rng_state;
-
-// very simple entropy
-int
-rndread(struct inode *ip, char *dst, int n, uint32_t off)
-{
-	uint32_t lo, hi;
-
-	// Generate entropy using rdtsc and mix into PRNG state
-	asm volatile ("rdtsc" : "=a"(lo), "=d"(hi));
-	uint32_t entropy = lo ^ hi;
-	rng_state ^= entropy; // Mix entropy into existing state
-
-	uint32_t *buf32 = (uint32_t*)dst;
-	int num_words = n / sizeof(uint32_t);
-	int remainder = n % sizeof(uint32_t);
-
-	for (int i = 0; i < num_words; i++) {
-		buf32[i] = xorshift32(&rng_state);
-	}
-
-	if (remainder > 0) {
-		uint32_t val = xorshift32(&rng_state);
-		char *tail = (char*)(buf32 + num_words);
-		for (int i = 0; i < remainder; i++) {
-			tail[i] = (val >> (i * 8)) & 0xFF;
-		}
-	}
-
-	return n;
-}
-
-int
-keyread(struct inode *ip, char *dst, int n, uint32_t off)
-{
-	return n;
-}
-
-int mouseread(struct inode *ip, char *dst, int n, uint32_t off) {
-	return n;
-}
-
-#define min(a, b) ((a) < (b) ? (a) : (b))
-
-int diskread(struct inode *ip, char *dst, int n, uint32_t off){
-	struct buf *bp;
-	int bytes_read = 0;
-
-	while(n > 0) {
-		uint32_t sector = off / BSIZE;
-		uint32_t sector_off = off % BSIZE;
-
-		bp = bread(ip->dev, sector);
-		int count = min(n, BSIZE - sector_off);
-		memmove(dst, bp->data + sector_off, count);
-		brelse(bp);
-		dst += count;
-		bytes_read += count;
-		n -= count;
-		off += count;
-	}
-
-	return bytes_read;
-}
-
-int diskwrite(struct inode *ip, char *src, int n, uint32_t off){
-	struct buf *bp;
-	int tot = 0;
-
-	if((ip->mode & S_IFMT) == S_IFBLK){
-		uint32_t base = ip->minor;
-
-		while(n > 0){
-			uint32_t sector = base + (off / BSIZE);
-			uint32_t boff = off % BSIZE;
-
-			bp = bread(ip->dev, sector);
-
-			int count = BSIZE - boff;
-			if(count > n)
-				count = n;
-
-			memmove(bp->data + boff, src, count);
-
-			bwrite(bp);
-			brelse(bp);
-
-			off += count;
-			src += count;
-			n -= count;
-			tot += count;
-		}
-		return tot;
-	}
-
-	while(n > 0){
-		uint32_t lbn = off / BSIZE;
-		uint32_t boff = off % BSIZE;
-		uint32_t sector = bmap(ip, lbn);
-
-		bp = bread(ip->dev, sector);
-
-		int count = BSIZE - boff;
-		if(count > n)
-			count = n;
-
-		memmove(bp->data + boff, src, count);
-
-		log_write(bp);
-		brelse(bp);
-
-		off += count;
-		src += count;
-		n -= count;
-		tot += count;
-	}
-
-	if(off > ip->size){
-		ip->size = off;
-		iupdate(ip);
-	}
-
-	return tot;
-}
+int ide0read(struct inode *ip, char *dst, int n, uint32_t off);
+int ide0write(struct inode *ip, char *src, int n, uint32_t off);
+int rndread(struct inode *ip, char *dst, int n, uint32_t off);
+int uartwrite(struct inode *ip, char *src, int n, uint32_t off);
 
 struct devsw devsw[NDEV] = {
 	[CONSOLE] = {consoleread, consolewrite},
 	[NULLDEV] = {nullread,	badwrite},
 	[RANDOM]  = {rndread,	badwrite},
-	[KEYDEV]  = {keyread,	badwrite},
-	[MOUSDEV] = {mouseread,	badwrite},
-	[DISKDEV] = {diskread,	diskwrite},
+	[DISKDEV] = {ide0read,	ide0write},
+	[UARTDEV] = {badread,	uartwrite},
 };
 
 // Allocate a file structure.

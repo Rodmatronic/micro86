@@ -89,3 +89,13 @@ static int uartgetc(void){
 void uartintr(void){
 	consoleintr(uartgetc);
 }
+
+int uartwrite(struct inode *ip, char *src, int n, uint32_t off){
+	int i;
+
+	for(i = 0; i < n; i++){
+		uartputc(src[i]);
+	}
+
+	return n;
+}

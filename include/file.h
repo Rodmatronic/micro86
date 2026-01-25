@@ -38,12 +38,9 @@ struct devsw {
 
 extern struct devsw devsw[];
 
-#define CONSOLE 1
-#define TTY     2
-#define NULLDEV 3
-#define RANDOM  4
-#define SCRDEV  5
-#define KEYDEV  6
-#define MOUSDEV 7
-#define ZERODEV 8
-#define DISKDEV	9
+#define NULLDEV 0
+#define ZERODEV 1
+#define UARTDEV 2
+#define DISKDEV 3
+#define CONSOLE 4
+#define RANDOM  7
