@@ -30,20 +30,21 @@ fileinit(void)
 int badwrite(int minor, struct inode *ip, char *buf, int nm, uint32_t off) { return -1; }
 int badread(int minor, struct inode *ip, char *buf, int n, uint32_t off) { return -1; }
 
-extern int consoleread(int minor, struct inode *ip, char *dst, int n, uint32_t off);
-extern int consolewrite(int minor, struct inode *ip, char *dst, int n, uint32_t off);
 extern int memread(int minor, struct inode *ip, char *dst, int n, uint32_t off);
 extern int memwrite(int minor, struct inode *ip, char *dst, int n, uint32_t off);
 extern int ide0read(int minor, struct inode *ip, char *dst, int n, uint32_t off);
 extern int ide0write(int minor, struct inode *ip, char *src, int n, uint32_t off);
+extern int ttyauxread(int minor, struct inode *ip, char *src, int n, uint32_t off);
+extern int ttyauxwrite(int minor, struct inode *ip, char *src, int n, uint32_t off);
 
 struct devsw devsw[NDEV] = {
-	[CONSOLE_MAJOR] = {consoleread, consolewrite},
+	[UNNAMED_MAJOR]	= {badread, badwrite},
 	[MEM_MAJOR]	= {memread, memwrite},
 	[FLOPPY_MAJOR]  = {badread, badwrite},
 	[IDE0_MAJOR]	= {ide0read, ide0write},
 	[HD_MAJOR]	= {ide0read, ide0write},
 	[TTY_MAJOR]	= {badread, badwrite},
+	[TTYAUX_MAJOR]	= {ttyauxread, ttyauxwrite},
 };
 
 // Allocate a file structure.

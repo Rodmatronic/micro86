@@ -50,6 +50,7 @@ OBJS = \
 	$D/char/console.o\
 	$D/char/mem.o\
 	$D/char/random.o\
+	$D/char/tty_aux.o\
 	$D/input/keyboard/kbd.o\
 	$D/ide/ide.o\
 	$D/serial/uart.o\

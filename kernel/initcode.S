@@ -19,7 +19,7 @@ start:
         movl    $SYS_mknod, %eax
         movl    $console, %ebx
         movl    $0x21B0, %ecx               # S_IFCHR=0x2000, 0660=0x1B0
-        movl    $((0 << 1) | 1), %edx       # makedev(major=4, minor=1)
+        movl    $((5 << 8) | 1), %edx       # makedev(major=5, minor=1)
         int     $T_SYSCALL
 
 	# open /dev/console
