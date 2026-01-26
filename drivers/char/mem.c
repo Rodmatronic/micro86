@@ -24,8 +24,6 @@ int memread(int minor, struct inode *ip, char *dst, int n, uint32_t off){
 			memmove(dst, P2V(off), n);
 			return n;
 		case 2: // kmem
-			if (!suser())
-				return -EPERM;
 			if (off < KERNBASE || off + n > KERNBASE + PHYSTOP)
 				return -EFAULT;
 			memmove(dst, (char*)off, n);
