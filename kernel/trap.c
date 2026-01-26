@@ -19,6 +19,41 @@ extern unsigned int vectors[];	// in vectors.S: array of 256 entry pointers
 struct spinlock tickslock;
 unsigned int ticks;
 
+const char* exceptions[] = {
+	"Division Error",			// 0
+	"Debug",				// 1
+	"Non-maskable Interrupt",		// 2
+	"Breakpoint",				// 3
+	"Overflow",				// 4
+	"Bound Range Exceeded",			// 5
+	"Invalid Opcode",			// 6
+	"Device Not Available",			// 7
+	"Double Fault",				// 8
+	"Coprocessor Segment Overrun",		// 9
+	"Invalid TSS",				// 10
+	"Segment Not Present",			// 11
+	"Stack-Segment Fault",			// 12
+	"General Protection Fault",		// 13
+	"Page Fault",				// 14
+	"Reserved",				// 15
+	"x87 Floating-Point Exception",		// 16
+	"Alignment Check",			// 17
+	"Machine Check",			// 18
+	"SIMD Floating-Point Exception",	// 19
+	"Virtualization Exception",		// 20
+	"Control Protection Exception",		// 21
+	"Reserved",				// 22
+	"Reserved",				// 23
+	"Reserved",				// 24
+	"Reserved",				// 25
+	"Reserved",				// 26
+	"Reserved",				// 27
+	"Hypervisor Injection Exception",	// 28
+	"VMM Communication Exception",		// 29
+	"Security Exception",			// 30
+	"Reserved"				// 31
+};
+
 void tvinit(void){
 	int i;
 
@@ -93,11 +128,11 @@ void trap(struct trapframe *tf){
 		if(myproc() == 0 || (tf->cs&3) == 0){
 			// In kernel, it must be our mistake.
 			printk("unexpected trap %d from cpu %d eip %x (cr2=0x%x)\n", tf->trapno, cpunum(), tf->eip, rcr2());
-			panic("fatal unhandled hardware trap!");
+			panic("%s", exceptions[tf->trapno]);
 		}
 		// In user space, assume process misbehaved.
 		if (tf->eip != -1){
-			printk("%s[%d] general protection fault[%d] ip:0x%x sp:0x%x\n", myproc()->name, myproc()->pid, myproc()->tf->trapno, tf->eip, myproc()->tf->esp);
+			printk("%s[%d] %s[%d] ip:0x%x sp:0x%x\n", myproc()->name, myproc()->pid, exceptions[myproc()->tf->trapno], myproc()->tf->trapno, tf->eip, myproc()->tf->esp);
 		} else { // we are returning
 			exit(myproc()->exitstatus);
 		}
