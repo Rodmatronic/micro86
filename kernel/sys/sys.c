@@ -19,6 +19,7 @@
 #include <version.h>
 #include <errno.h>
 #include <time.h>
+#include <ioctls.h>
 
 extern struct ttyb ttyb;
 extern struct cons cons;
@@ -1152,9 +1153,10 @@ int sys_ioctl(void){
 		return -EINVAL;
 
 	switch(req){
-		case 21523: // winsize
+		case TIOCGWINSZ: // 21523 / 0x5413 winsize
 			return tty_get_winsize((struct winsize*)arg);
 		default:
+			printk("%s: bad ioctl request [0x%x]\n", myproc()->name, req);
 			return -ENOTTY;
 	}
 }
