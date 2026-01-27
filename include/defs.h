@@ -20,8 +20,6 @@ extern unsigned int PHYSTOP;
 
 #define IRQ_IDE_SECONDARY 15
 
-extern time_t startup_time;
-extern time_t kernel_time;
 extern uint16_t current_line;
 
 // common functions, some from early Linux
@@ -239,14 +237,14 @@ void            tvinit(void);
 extern struct spinlock tickslock;
 
 // tsc.c
-extern uint64_t tsc_freq_hz;
-extern uint64_t tsc_offset;
-extern uint64_t tsc_realtime;
+extern int64_t tsc_freq_hz;
+extern int64_t tsc_offset;
+extern int64_t tsc_realtime;
 
-uint64_t	rdtsc(void);
+int64_t		rdtsc(void);
 void		tscinit(void);
-uint64_t	tsc_to_us(uint64_t);
-uint64_t	tsc_to_ns(uint64_t);
+int64_t		tsc_to_us(int64_t);
+int64_t		tsc_to_ns(int64_t);
 
 // uart.c
 extern int uart_debug;

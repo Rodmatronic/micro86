@@ -13,11 +13,10 @@ struct tm {
 };
 
 struct timespec64 {
-	uint64_t tv_sec;
+	int64_t tv_sec;
 	uint64_t tv_nsec;
 };
 
-extern time_t startup_time;
 
 #define CLOCK_REALTIME           0
 #define CLOCK_MONOTONIC          1

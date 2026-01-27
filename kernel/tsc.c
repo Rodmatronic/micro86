@@ -6,18 +6,18 @@
 #include <defs.h>
 #include <x86.h>
 
-uint64_t tsc_freq_hz = 0;
-uint64_t tsc_offset = 0;
-uint64_t tsc_realtime = 0;
+int64_t tsc_freq_hz = 0;
+int64_t tsc_offset = 0;
+int64_t tsc_realtime = 0;
 
-uint64_t rdtsc(void){
+int64_t rdtsc(void){
 	uint32_t lo, hi;
 	asm volatile("rdtsc" : "=a"(lo), "=d"(hi));
 	return ((unsigned long long)hi << 32) | lo;
 }
 
 void tscinit(void){
-	uint64_t tsc_start, tsc_end;
+	int64_t tsc_start, tsc_end;
 
 	outb(0x61, (inb(0x61) & ~0x02) | 0x01);
 	outb(0x43, 0xB0);
@@ -33,19 +33,17 @@ void tscinit(void){
 	tsc_calibrated = 0;
 
 	tsc_offset = rdtsc();
-	tsc_realtime = (uint64_t)epoch_mktime() * 1000000000ULL;
-
 	printk("Using TSC with PIT clocksource\n");
 	debug("tsc_freq_hz  : 0x%x\n", tsc_freq_hz);
 	debug("tsc_offset   : 0x%x\n", tsc_offset);
 	debug("tsc_realtime : 0x%x\n", tsc_realtime);
 }
 
-uint64_t tsc_to_us(uint64_t tsc){
+int64_t tsc_to_us(int64_t tsc){
 	return ((tsc - tsc_offset) * 1000000) / tsc_freq_hz;
 }
 
-uint64_t tsc_to_ns(uint64_t tsc){
+int64_t tsc_to_ns(int64_t tsc){
 	return ((tsc - tsc_offset) * 1000000000ULL) / tsc_freq_hz;
 }
 

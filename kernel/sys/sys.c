@@ -729,7 +729,7 @@ int sys_getuid(void){
 }
 
 int sys_stime(void){
-	unsigned long epoch;
+	time_t epoch;
 
 	if (argint(0, (int*)&epoch) < 0)
 		return -EINVAL;
@@ -737,7 +737,7 @@ int sys_stime(void){
 	if (!suser())
 		return -EPERM;
 
-	set_kernel_time((unsigned long)epoch);
+	tsc_realtime = epoch * 1000000000ULL;
 	return 0;
 }
 

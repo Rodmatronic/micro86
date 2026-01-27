@@ -13,8 +13,6 @@
 #define BCD_TO_BIN(val) ((val)=((val)&15) + ((val)>>4)*10)
 
 int tsc_calibrated = 1;
-time_t startup_time = 0;
-time_t kernel_time = 0;
 
 #define MINUTE 60
 #define HOUR (60*MINUTE)
@@ -42,24 +40,13 @@ static int month[12] = {
 	DAY*(31+29+31+30+31+30+31+31+30+31+30)
 };
 
-void set_kernel_time(time_t new_epoch) {
-	acquire(&tickslock);
-	unsigned int ticks_since_boot = ticks;
-	kernel_time = new_epoch - (ticks_since_boot / 100);
-	release(&tickslock);
-}
-
 time_t epoch_mktime(void) {
-	unsigned int ticks_since_boot;
-	acquire(&tickslock);
-	ticks_since_boot = ticks;
-	release(&tickslock);
-	return kernel_time + (ticks_since_boot / 100);
+	return tsc_realtime / 1000000000ULL;;
 }
 
 time_t mktime(struct tm * tm)
 {
-	long res;
+	time_t res;
 	int year;
 
 	year = tm->tm_year;
@@ -107,6 +94,5 @@ timeinit(void)
 	// the current year.
 	full_year = (century * 100) + time.tm_year;
 	time.tm_year = full_year - 1970;
-	startup_time = mktime(&time);
-	kernel_time = mktime(&time);
+	tsc_realtime = mktime(&time) * 1000000000ULL;
 }
