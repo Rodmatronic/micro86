@@ -1,5 +1,6 @@
-#include <stdint.h>
-
+#include <types.h>
+#include <defs.h>
+	
 uint64_t
 __udivmoddi4(uint64_t dividend, uint64_t divisor, uint64_t *remainder_ptr)
 {
