@@ -1450,6 +1450,24 @@ int sys_reboot(void){
 	return 0;
 }
 
+int sys_iopl(void){
+	int level;
+	struct trapframe *tf = myproc()->tf;
+
+	if (!suser())
+		return -EPERM;
+
+	if(argint(0, &level) < 0)
+		return -EINVAL;
+
+	if(level < 0 || level > 3)
+		return -EINVAL;
+
+	// IOPL is bits 12-13 of EFLAGS
+	tf->eflags = (tf->eflags & ~0x3000) | ((level & 3) << 12);
+	return 0;
+}
+
 /*
  * Pretty much a placeholder
  */

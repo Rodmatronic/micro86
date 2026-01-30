@@ -79,6 +79,7 @@
 /*
   don't worry about it
 */
+#define SYS_iopl	110
 #define SYS_idle	112
 #define SYS_wait4	114
 #define SYS_sigreturn	119
