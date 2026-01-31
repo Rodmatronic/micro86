@@ -76,9 +76,8 @@
 #define SYS_setgroups	81
 #define SYS_symlink	83
 #define SYS_reboot	88
-/*
-  don't worry about it
-*/
+#define SYS_fchmod	95
+#define SYS_fchown	96
 #define SYS_iopl	110
 #define SYS_vhangup	111
 #define SYS_idle	112

@@ -616,13 +616,13 @@ int sys_chmod(void){
 
 	ilock(ip);
 	if (myproc()->uid != 0 && myproc()->uid != ip->uid) {
-		iunlock(ip);
+		iunlockput(ip);
 		end_op();
 		return -EACCES;
 	}
 	ip->mode = (ip->mode & ~0777) | (mode & 0777);
 	iupdate(ip);
-	iunlock(ip);
+	iunlockput(ip);
 	end_op();
 
 	return 0;
@@ -1447,6 +1447,55 @@ int sys_reboot(void){
 	else
 		return -EINVAL;
 
+	return 0;
+}
+
+/*
+ * The f versions of chmod & chown are the same, but use proc's ip instead of path
+ */
+int sys_fchmod(void){
+	struct file *f;
+	int mode;
+
+	if (argfd(0, 0, &f) < 0 || argint(1, &mode) < 0)
+		return -EINVAL;
+
+	begin_op();
+	ilock(f->ip);
+	if (myproc()->uid != 0 && myproc()->uid != f->ip->uid) {
+		iunlock(f->ip);
+		end_op();
+		return -EACCES;
+	}
+	f->ip->mode = (f->ip->mode & ~0777) | (mode & 0777);
+	iupdate(f->ip);
+	iunlock(f->ip);
+	end_op();
+
+	return 0;
+}
+
+int sys_fchown(void){
+	struct file *f;
+	int owner, group;
+
+	if (argfd(0, 0, &f) < 0 || argint(1, &owner) < 0 || argint(2, &group) < 0)
+		return -EINVAL;
+
+	begin_op();
+	ilock(f->ip);
+	if (myproc()->uid != 0 && myproc()->uid != f->ip->uid) {
+		iunlock(f->ip);
+		end_op();
+		return -EACCES;
+	}
+
+	f->ip->uid = owner;
+	f->ip->gid = group;
+
+	iupdate(f->ip);
+	iunlock(f->ip);
+	end_op();
 	return 0;
 }
 
