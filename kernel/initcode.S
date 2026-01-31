@@ -1,11 +1,9 @@
-# Initial process execs /init.
-# This code runs in user space.
+/*
+ * This is the first userland process. Its job is to set up console and run /sbin/init.
+ */
 
 #include <syscall.h>
 #include <traps.h>
-
-
-# exec(init, argv)
 
 .globl start
 start:
@@ -16,11 +14,11 @@ start:
 	int	$T_SYSCALL
 
 	# mknod /dev/console
-        movl    $SYS_mknod, %eax
-        movl    $console, %ebx
-        movl    $0x21B0, %ecx               # S_IFCHR=0x2000, 0660=0x1B0
-        movl    $((5 << 8) | 1), %edx       # makedev(major=5, minor=1)
-        int     $T_SYSCALL
+	movl    $SYS_mknod, %eax
+	movl    $console, %ebx
+	movl    $0x21B0, %ecx               # S_IFCHR=0x2000, 0660=0x1B0
+	movl    $((5 << 8) | 1), %edx       # makedev(major=5, minor=1)
+	int     $T_SYSCALL
 
 	# open /dev/console
 	movl	$SYS_open, %eax
@@ -61,8 +59,6 @@ init:
 	.string "/sbin/init\0"
 console:
 	.string "/dev/console\0"
-MAKEDEVS:
-	.string "/dev/MAKEDEVS\0"
 devdir:
 	.string "/dev\0"
 message:
