@@ -1,7 +1,5 @@
 # micro86
-This is my hobby-operating system that I work on in my free time. Don't expect too much out of it, I only recently got it to run a Kornshell-like shell properly.
-
-I might include a little demodisk once I get file listing working (getdents).
+This is my hobby-operating system that I work on in my free time. Don't expect too much out of it, I only recently got it to run MKSH properly.
 
 The version number only gets incremented when I add a whole bunch of stuff that is really groundbreaking. Like... TTYs, a ton of new syscalls, or a ton of fundamental fixes to the kernel. This is, of course, based on XV6. But, I have gutted a fair bit of the original project to be a more Linux-like kernel. No userspace comes with this by default, and any programs you wish to run have to be statically linked, and have a small enough entrypoint (0x1000 - 0x15000 works well!).
 
