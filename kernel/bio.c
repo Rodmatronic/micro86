@@ -7,7 +7,7 @@
 //
 // Interface:
 // * To get a buffer for a particular disk block, call bread.
-// * After changing buffer data, call bwrite to write it to disk.
+// * After changing buffer data, call buffer_write to write it to disk.
 // * When done with the buffer, call brelse.
 // * Do not use the buffer after calling brelse.
 // * Only one process at a time can use a buffer,
@@ -35,16 +35,14 @@ struct {
 	struct buf head;
 } bcache;
 
-void
-sync(void)
-{
+void sync(void){
 	struct buf *b;
 	struct buf *dirty_buffers[NBUF];
 	int count = 0;
 
 	// Collect dirty buffers
 	acquire(&bcache.lock);
-	for (b = bcache.head.next; b != &bcache.head; b = b->next) {
+	for (b = bcache.head.next; b != &bcache.head; b = b->next){
 		if (b->flags & B_DIRTY) {
 			dirty_buffers[count] = b;
 			if (++count >= NBUF)
@@ -54,19 +52,17 @@ sync(void)
 	release(&bcache.lock);
 
 	// Write each buffer
-	for (int i = 0; i < count; i++) {
+	for (int i = 0; i < count; i++){
 		b = dirty_buffers[i];
 		acquiresleep(&b->lock);
-		if (b->flags & B_DIRTY) {
-			bwrite(b);	// Clears B_DIRTY
-		}
+		if (b->flags & B_DIRTY)
+			buffer_write(b);	// Clears B_DIRTY
+
 		releasesleep(&b->lock);
 	}
 }
 
-void
-binit(void)
-{
+void buffer_init(void){
 	struct buf *b;
 
 	initlock(&bcache.lock, "bcache");
@@ -74,7 +70,7 @@ binit(void)
 	// Create linked list of buffers
 	bcache.head.prev = &bcache.head;
 	bcache.head.next = &bcache.head;
-	for(b = bcache.buf; b < bcache.buf+NBUF; b++){
+	for (b = bcache.buf; b < bcache.buf+NBUF; b++){
 		b->next = bcache.head.next;
 		b->prev = &bcache.head;
 		initsleeplock(&b->lock, "buffer");
@@ -86,9 +82,7 @@ binit(void)
 // Look through buffer cache for block on device dev.
 // If not found, allocate a buffer.
 // In either case, return locked buffer.
-static struct buf*
-bget(unsigned int dev, unsigned int blockno)
-{
+static struct buf* buffer_get(uint32_t dev, uint32_t blockno) {
 	struct buf *b;
 
 	acquire(&bcache.lock);
@@ -117,37 +111,31 @@ bget(unsigned int dev, unsigned int blockno)
 			return b;
 		}
 	}
-	panic("bget: no buffers");
+	panic("buffer_get: no buffers");
 }
 
 // Return a locked buf with the contents of the indicated block.
-struct buf*
-bread(unsigned int dev, unsigned int blockno)
-{
+struct buf* buffer_read(uint32_t dev, uint32_t blockno){
 	struct buf *b;
 
-	b = bget(dev, blockno);
+	b = buffer_get(dev, blockno);
 	if((b->flags & B_VALID) == 0) {
-		iderw(b);
+		ide_dirty_write(b);
 	}
 	return b;
 }
 
 // Write b's contents to disk.	Must be locked.
-void
-bwrite(struct buf *b)
-{
+void buffer_write(struct buf *b){
 	if(!holdingsleep(&b->lock))
-		panic("bwrite");
+		panic("buffer_write");
 	b->flags |= B_DIRTY;
-	iderw(b);
+	ide_dirty_write(b);
 }
 
 // Release a locked buffer.
 // Move to the head of the MRU list.
-void
-brelse(struct buf *b)
-{
+void buffer_release(struct buf *b){
 	if(!holdingsleep(&b->lock))
 		panic("brelse");
 

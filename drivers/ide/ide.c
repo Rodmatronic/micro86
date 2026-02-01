@@ -34,30 +34,25 @@
 
 static struct spinlock idelock;
 static struct buf *idequeue;
-
 static int havedisk1;
-static void idestart(struct buf*);
+static void ide_start(struct buf*);
 
 // Wait for IDE disk to become ready.
-static int
-idewait(int checkerr)
-{
+static int idewait(int checkerr){
 	int r;
 
-	while(((r = inb(0x1f7)) & (IDE_BSY|IDE_DRDY)) != IDE_DRDY)
-		;
+	while(((r = inb(0x1f7)) & (IDE_BSY|IDE_DRDY)) != IDE_DRDY);
+
 	if(checkerr && (r & (IDE_DF|IDE_ERR)) != 0)
 		return -1;
 	return 0;
 }
 
-void
-ideinit(void)
-{
+void ide_init(void){
 	int i;
 
 	initlock(&idelock, "ide");
-	ioapicenable(IRQ_IDE, ncpu - 1);
+	pic_enable(IRQ_IDE);
 
 	printk("waiting on root device...\n");
 
@@ -78,12 +73,10 @@ ideinit(void)
 	outb(0x1f6, 0xe0 | (0<<4));
 }
 
-// Start the request for b.  Caller must hold idelock.
-static void
-idestart(struct buf *b)
-{
+// Start the request for b. Caller must hold idelock.
+static void ide_start(struct buf *b){
 	if(b == 0)
-		panic("idestart");
+		panic("failed to start ide (b = 0)");
 	if(b->blockno >= FSSIZE)
 		panic("fatal ide error: incorrect number of blocks");
 	int sector_per_block =	BSIZE/SECTOR_SIZE;
@@ -109,9 +102,7 @@ idestart(struct buf *b)
 }
 
 // Interrupt handler.
-void
-ideintr(void)
-{
+void ide_interrupt(void){
 	struct buf *b;
 
 	// First queued buffer is the active request.
@@ -134,7 +125,7 @@ ideintr(void)
 
 	// Start disk on next buf in queue.
 	if(idequeue != 0)
-		idestart(idequeue);
+		ide_start(idequeue);
 
 	release(&idelock);
 }
@@ -142,9 +133,7 @@ ideintr(void)
 // Sync buf with disk.
 // If B_DIRTY is set, write buf to disk, clear B_DIRTY, set B_VALID.
 // Else if B_VALID is not set, read buf from disk, set B_VALID.
-void
-iderw(struct buf *b)
-{
+void ide_dirty_write(struct buf *b){
 	struct buf **pp;
 
 	if(!holdingsleep(&b->lock))
@@ -158,19 +147,17 @@ iderw(struct buf *b)
 
 	// Append b to idequeue.
 	b->qnext = 0;
-	for(pp=&idequeue; *pp; pp=&(*pp)->qnext) //DOC:insert-queue
-		;
+	for(pp=&idequeue; *pp; pp=&(*pp)->qnext); //DOC:insert-queue
 	*pp = b;
 
 	// Start disk if necessary.
 	if(idequeue == b)
-		idestart(b);
+		ide_start(b);
 
 	// Wait for request to finish.
 	while((b->flags & (B_VALID|B_DIRTY)) != B_VALID){
 		sleep(b, &idelock);
 	}
-
 
 	release(&idelock);
 }
@@ -183,10 +170,10 @@ int ide0read(int minor, struct inode *ip, char *dst, int n, uint32_t off){
 		uint32_t sector = off / BSIZE;
 		uint32_t sector_off = off % BSIZE;
 
-		bp = bread(ip->dev, sector);
+		bp = buffer_read(ip->dev, sector);
 		int count = min(n, BSIZE - sector_off);
 		memmove(dst, bp->data + sector_off, count);
-		brelse(bp);
+		buffer_release(bp);
 		dst += count;
 		bytes_read += count;
 		n -= count;
@@ -207,7 +194,7 @@ int ide0write(int minor, struct inode *ip, char *src, int n, uint32_t off){
 			uint32_t sector = base + (off / BSIZE);
 			uint32_t boff = off % BSIZE;
 
-			bp = bread(ip->dev, sector);
+			bp = buffer_read(ip->dev, sector);
 
 			int count = BSIZE - boff;
 			if(count > n)
@@ -215,8 +202,8 @@ int ide0write(int minor, struct inode *ip, char *src, int n, uint32_t off){
 
 			memmove(bp->data + boff, src, count);
 
-			bwrite(bp);
-			brelse(bp);
+			buffer_write(bp);
+			buffer_release(bp);
 
 			off += count;
 			src += count;
@@ -231,7 +218,7 @@ int ide0write(int minor, struct inode *ip, char *src, int n, uint32_t off){
 		uint32_t boff = off % BSIZE;
 		uint32_t sector = bmap(ip, lbn);
 
-		bp = bread(ip->dev, sector);
+		bp = buffer_read(ip->dev, sector);
 
 		int count = BSIZE - boff;
 		if(count > n)
@@ -240,7 +227,7 @@ int ide0write(int minor, struct inode *ip, char *src, int n, uint32_t off){
 		memmove(bp->data + boff, src, count);
 
 		log_write(bp);
-		brelse(bp);
+		buffer_release(bp);
 
 		off += count;
 		src += count;

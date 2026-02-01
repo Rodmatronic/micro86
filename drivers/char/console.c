@@ -41,9 +41,9 @@ enum ansi_state {
 
 struct {
 	char buf[INPUT_BUF];
-	unsigned int r;	// Read index
-	unsigned int w;	// Write index
-	unsigned int e;	// Edit index
+	uint32_t r;	// Read index
+	uint32_t w;	// Write index
+	uint32_t e;	// Edit index
 } input;
 
 static enum ansi_state ansi_state = ANSI_NORMAL;
@@ -54,17 +54,17 @@ struct cons cons;
 int x, y = 0;
 static ushort *crt = (ushort*)P2V(0xb8000);	// CGA memory
 
-static void printint(unsigned int xx, int base, int sgn, int width, int zero_pad){
+static void print_int(uint32_t xx, int base, int sgn, int width, int zero_pad){
 	static char digits[] = "0123456789ABCDEF";
 	char buf[16];
 	int i, neg;
-	unsigned int x;
+	uint32_t x;
 
 	neg = 0;
-	if(sgn) {
+	if (sgn) {
 		if ((int)xx < 0) {
 			neg = 1;
-			x = (unsigned int)(-(int)xx);
+			x = (uint32_t)(-(int)xx);
 		} else {
 			x = xx;
 		}
@@ -75,21 +75,21 @@ static void printint(unsigned int xx, int base, int sgn, int width, int zero_pad
 	i = 0;
 	do {
 		buf[i++] = digits[x % base];
-	} while((x /= base) != 0);
+	} while ((x /= base) != 0);
 
 	int total_digits = i;
 	int total_chars = total_digits + (neg ? 1 : 0);
 	int pad = width > total_chars ? width - total_chars : 0;
 
 	if (zero_pad) {
-		if (neg) consputc('-');
-		for (int j = 0; j < pad; j++) consputc('0');
-		while (--i >= 0) consputc(buf[i]);
+		if (neg) console_putc('-');
+		for (int j = 0; j < pad; j++) console_putc('0');
+		while (--i >= 0) console_putc(buf[i]);
 	}
 	else {
-		for (int j = 0; j < pad; j++) consputc(' ');
-		if (neg) consputc('-');
-		while (--i >= 0) consputc(buf[i]);
+		for (int j = 0; j < pad; j++) console_putc(' ');
+		if (neg) console_putc('-');
+		while (--i >= 0) console_putc(buf[i]);
 	}
 }
 
@@ -99,52 +99,52 @@ static void vprintf(int fd, const char *fmt, va_list ap){
 	int width, zero_pad;
 
 	state = 0;
-	for(i = 0; fmt[i]; i++) {
+	for (i = 0; fmt[i]; i++) {
 		c = fmt[i] & 0xff;
-		if(state == 0) {
-			if(c == '%') {
+		if (state == 0) {
+			if (c == '%') {
 				state = '%';
 				width = 0;
 				zero_pad = 0;
 			} else {
-				consputc(c);
+				console_putc(c);
 			}
-		} else if(state == '%') {
-			if(c == '0') {
+		} else if (state == '%') {
+			if (c == '0') {
 				zero_pad = 1;
 				i++;
 				c = fmt[i] & 0xff;
 			}
 
-			while(c >= '0' && c <= '9') {
+			while (c >= '0' && c <= '9') {
 				width = width * 10 + (c - '0');
 				i++;
 				c = fmt[i] & 0xff;
 			}
-			if(c == 'l') {
+			if (c == 'l') {
 				i++;
 				c = fmt[i] & 0xff;
 			}
-			if(c == 'd') {
-				printint((unsigned int)va_arg(ap, int), 10, 1, width, zero_pad);
-			} else if(c == 'u') {
-				printint(va_arg(ap, unsigned int), 10, 0, width, zero_pad);
-			} else if(c == 'x' || c == 'p') {
-				printint(va_arg(ap, unsigned int), 16, 0, width, zero_pad);
-			} else if(c == 's') {
+			if (c == 'd') {
+				print_int((uint32_t)va_arg(ap, int), 10, 1, width, zero_pad);
+			} else if (c == 'u') {
+				print_int(va_arg(ap, uint32_t), 10, 0, width, zero_pad);
+			} else if (c == 'x' || c == 'p') {
+				print_int(va_arg(ap, uint32_t), 16, 0, width, zero_pad);
+			} else if (c == 's') {
 				s = va_arg(ap, char*);
-				if(s == 0) s = "(null)";
-				while(*s != 0) {
-					consputc(*s);
+				if (s == 0) s = "(null)";
+				while (*s != 0) {
+					console_putc(*s);
 					s++;
 				}
-			} else if(c == 'c') {
-				consputc(va_arg(ap, int));
-			} else if(c == '%') {
-				consputc(c);
+			} else if (c == 'c') {
+				console_putc(va_arg(ap, int));
+			} else if (c == '%') {
+				console_putc(c);
 			} else {
-				consputc('%');
-				consputc(c);
+				console_putc('%');
+				console_putc(c);
 			}
 			state = 0;
 		}
@@ -172,12 +172,12 @@ int sprintf(char *buf, const char *fmt, ...){
 	return rc;
 }
 
-void colorchange(char low_bit, char high_bit){
-	consputc('\033');
-	consputc('[');
-	consputc(low_bit);
-	consputc(high_bit);
-	consputc('m');
+void color_change(char low_bit, char high_bit){
+	console_putc('\033');
+	console_putc('[');
+	console_putc(low_bit);
+	console_putc(high_bit);
+	console_putc('m');
 }
 
 void _printf(char *func, char *fmt, ...){
@@ -185,54 +185,53 @@ void _printf(char *func, char *fmt, ...){
 	int locking;
 
 #ifdef CONFIG_PRINTK_TIME
-	unsigned int us, s, rem;
+	uint32_t us, s, rem;
 #endif
 
 	locking = cons.locking;
-	if(locking)
+	if (locking)
 		acquire(&cons.lock);
 
 #ifdef CONFIG_PRINTK_TIME
 #ifdef CONFIG_COLORFUL_KMESG
-	colorchange('3', '2');
+	color_change('3', '2');
 #endif
 
-	consputc('[');
-	consputc(' ');
+	console_putc('[');
+	console_putc(' ');
 
-	if(tsc_calibrated) {
+	if (tsc_calibrated)
 		us = 0;
-	} else {
+	else
 		us = tsc_to_us(rdtsc());
-	}
 
 	s = us / 1000000;
 	rem = us % 1000000;
 
-	printint(s, 10, 0, 4, 0);
-	consputc('.');
-	printint(rem, 10, 0, 6, 1);
+	print_int(s, 10, 0, 4, 0);
+	console_putc('.');
+	print_int(rem, 10, 0, 6, 1);
 
-	consputc(']');
-	consputc(' ');
+	console_putc(']');
+	console_putc(' ');
 
 #ifdef CONFIG_COLORFUL_KMESG
-	colorchange('3', '3');
+	color_change('3', '3');
 #endif
 
 	vkprintf(func, 0);
-	consputc(':');
-	consputc(' ');
+	console_putc(':');
+	console_putc(' ');
 #endif
-	colorchange('9', '7');
+	color_change('9', '7');
 
 	va_start(ap, fmt);
 	vkprintf(fmt, ap);
 	va_end(ap);
 
-	colorchange('3', '7');
+	color_change('3', '7');
 
-	if(locking)
+	if (locking)
 		release(&cons.lock);
 }
 
@@ -252,13 +251,13 @@ void cgaputc(int c){
 			break;
 
 		case(BACKSPACE):
-			if(pos > 0) -- pos;
+			if (pos > 0) -- pos;
 			break;
 
 	case('\t'):
-		for(int i = 0; i < spaces; i++){
+		for (int i = 0; i < spaces; i++){
 			crt[pos++] = ' ' | current_color;
-			if((pos/80) >= 25){
+			if ((pos/80) >= 25){
 				memmove(crt, crt+80, sizeof(crt[0])*24*80);
 				pos -= 80;
 				memset(crt+pos, 0, sizeof(crt[0])*(25*80 - pos));
@@ -267,9 +266,9 @@ void cgaputc(int c){
 		break;
 
 	default:
-		if((c == 0x00))
+		if ((c == 0x00))
 			break;
-		if((c & 0xff) < 0x20){
+		if ((c & 0xff) < 0x20){
 			crt[pos++] = '^' | current_color;
 			crt[pos++] = ((c & 0xff) + '@') | current_color;
 		}else{
@@ -278,7 +277,7 @@ void cgaputc(int c){
 		break;
 	}
 
-	if((pos/80) >= 25){	// Scroll up.
+	if ((pos/80) >= 25){	// Scroll up.
 		memmove(crt, crt+80, sizeof(crt[0])*24*80);
 		pos -= 80;
 		memset(crt+pos, 0, sizeof(crt[0])*(25*80 - pos));
@@ -293,11 +292,11 @@ void cgaputc(int c){
 
 void handle_ansi_sgr(int param);
 
-void setcursor(int x, int y){
-	if(x < 0) x = 0;
-	if(x > 79) x = 79;
-	if(y < 0) y = 0;
-	if(y > 24) y = 24;
+void set_cursor(int x, int y){
+	if (x < 0) x = 0;
+	if (x > 79) x = 79;
+	if (y < 0) y = 0;
+	if (y > 24) y = 24;
 	int pos = y * 80 + x;
 	outb(CRTPORT, 14);
 	outb(CRTPORT+1, pos >> 8);
@@ -306,23 +305,23 @@ void setcursor(int x, int y){
 }
 
 void handle_ansi_sgr_sequence(int params[], int count){
-	for(int i = 0; i < count; i++) {
+	for (int i = 0; i < count; i++) {
 		handle_ansi_sgr(params[i]);
 	}
 }
 
 void handle_ansi_clear(int param){
-	if(param == 2 || param == 0) { // 2J = clear entire screen, 0J = clear from cursor
-		setcursor(0, 0);
+	if (param == 2 || param == 0) { // 2J = clear entire screen, 0J = clear from cursor
+		set_cursor(0, 0);
 		for (int i = 0; i < 80*25; i++) {
 			crt[i] = ' ' | 0x0700;
 		}
-	} else if(param == 1) { // clear from top to cursor
+	} else if (param == 1) { // clear from top to cursor
 		outb(CRTPORT, 14);
 		int pos = inb(CRTPORT+1) << 8;
 		outb(CRTPORT, 15);
 		pos |= inb(CRTPORT+1);
-		for(int i = 0; i <= pos; i++)
+		for (int i = 0; i <= pos; i++)
 			crt[i] = ' ' | 0x0700;
 	}
 }
@@ -437,18 +436,18 @@ void handle_ansi_sgr(int param){
 	}
 }
 
-void consputc(int c){
-	if(panicked){
+void console_putc(int c){
+	if (panicked){
 		cli();
-		for(;;);
+		for (;;);
 	}
-	if(c == '\t'){
-		for(int i = 0; i < 8; i++)
-			uartputc(' ');
-	} else if(c == BACKSPACE){
-		uartputc('\b'); uartputc(' '); uartputc('\b');
+	if (c == '\t'){
+		for (int i = 0; i < 8; i++)
+			uart_putc(' ');
+	} else if (c == BACKSPACE){
+		uart_putc('\b'); uart_putc(' '); uart_putc('\b');
 	} else {
-		uartputc(c);
+		uart_putc(c);
 	}
 
 	if (uart_debug)	// this is for the serial debug line, don't print to vga
@@ -456,7 +455,7 @@ void consputc(int c){
 
 	switch(ansi_state) {
 		case ANSI_NORMAL:
-			if(c == 0x1B) { // ESC
+			if (c == 0x1B) { // ESC
 				ansi_state = ANSI_ESCAPE;
 				ansi_param_count = 0;
 				return;
@@ -467,7 +466,7 @@ void consputc(int c){
 			break;
 			
 		case ANSI_ESCAPE:
-			if(c == '[') {
+			if (c == '[') {
 				ansi_state = ANSI_BRACKET;
 			} else {
 				ansi_state = ANSI_NORMAL;
@@ -485,7 +484,7 @@ void consputc(int c){
 				handle_ansi_sgr(0);
 				ansi_state = ANSI_NORMAL;
 			} else if (c == 'H') {
-				setcursor(0, 0);
+				set_cursor(0, 0);
 				ansi_state = ANSI_NORMAL;
 			} else {
 				ansi_state = ANSI_NORMAL; // invalid
@@ -501,7 +500,7 @@ void consputc(int c){
 				if (ansi_param_count < 4)
 					ansi_param_count++;
 				return;
-			} else if(c == 'm') {
+			} else if (c == 'm') {
 				handle_ansi_sgr_sequence(ansi_params, ansi_param_count);
 				ansi_state = ANSI_NORMAL;
 				return;
@@ -513,7 +512,7 @@ void consputc(int c){
 			} else if (c == 'f') {
 				int row = (ansi_param_count >= 1 ? ansi_params[0] : 1) - 1;
 				int col = (ansi_param_count >= 2 ? ansi_params[1] : 1) - 1;
-				setcursor(col, row);
+				set_cursor(col, row);
 				ansi_state = ANSI_NORMAL;
 				return;
 			} else {
@@ -526,10 +525,10 @@ void consputc(int c){
 	cgaputc(c);
 }
 
-void consoleintr(int (*getc)(void)){
+void console_interrupt(int (*getc)(void)){
 	int c;
 	acquire(&cons.lock);
-	while((c = getc()) >= 0){
+	while ((c = getc()) >= 0){
 		if (c >= 0xE100 && c <= 0xE103) {
 			char seq[3];
 			seq[0] = 0x1B;
@@ -544,41 +543,41 @@ void consoleintr(int (*getc)(void)){
 				if (input.e - input.r < INPUT_BUF) {
 					input.buf[input.e++ % INPUT_BUF] = seq[i];
 					if (ttyb.tflags & ECHO)
-						consputc(seq[i]);
+						console_putc(seq[i]);
 				}
 			}
 			continue;
 		}
 		switch(c){
 		case C('U'):	// Kill line.
-			while(input.e != input.w && input.buf[(input.e-1) % INPUT_BUF] != '\n'){
+			while (input.e != input.w && input.buf[(input.e-1) % INPUT_BUF] != '\n'){
 				input.e--;
-				consputc(BACKSPACE);
+				console_putc(BACKSPACE);
 			}
 			break;
 		case C('C'):	// Send interrupt signal
 			break;
 		case C('H'): case '\x7f':	// Backspace
-			if(input.e != input.w){
+			if (input.e != input.w){
 				input.e--;
-				if(ttyb.tflags & ECHO){
-					if((input.buf[input.e % INPUT_BUF] & 0xff) < 0x20){
-						consputc(BACKSPACE);
-						consputc(BACKSPACE);
+				if (ttyb.tflags & ECHO){
+					if ((input.buf[input.e % INPUT_BUF] & 0xff) < 0x20){
+						console_putc(BACKSPACE);
+						console_putc(BACKSPACE);
 					}else{
-						consputc(BACKSPACE);
+						console_putc(BACKSPACE);
 					}
 				}
 			}
 			break;
 		case '\t':	// Tab
-			if(input.e-input.r < INPUT_BUF - 8){	// ensure space for 8 spaces
-				for(int i = 0; i < 8; i++){
+			if (input.e-input.r < INPUT_BUF - 8){	// ensure space for 8 spaces
+				for (int i = 0; i < 8; i++){
 					input.buf[input.e++ % INPUT_BUF] = ' ';
-					if(ttyb.tflags & ECHO)
-						consputc(' ');
+					if (ttyb.tflags & ECHO)
+						console_putc(' ');
 				}
-				if(input.e == input.r+INPUT_BUF){
+				if (input.e == input.r+INPUT_BUF){
 					input.w = input.e;
 					wakeup(&input.r);
 				}
@@ -586,12 +585,12 @@ void consoleintr(int (*getc)(void)){
 		break;
 
 		default:
-			if(c != 0 && input.e-input.r < INPUT_BUF){
+			if (c != 0 && input.e-input.r < INPUT_BUF){
 				c = (c == '\r') ? '\n' : c;
 				input.buf[input.e++ % INPUT_BUF] = c;
-				if(ttyb.tflags & ECHO)
-					consputc(c);
-				if(c == '\n' || c == C('D') || input.e == input.r+INPUT_BUF){
+				if (ttyb.tflags & ECHO)
+					console_putc(c);
+				if (c == '\n' || c == C('D') || input.e == input.r+INPUT_BUF){
 					input.w = input.e;
 					wakeup(&input.r);
 				}
@@ -603,15 +602,15 @@ void consoleintr(int (*getc)(void)){
 }
 
 int consoleread(int minor, struct inode *ip, char *dst, int n, uint32_t off){
-	unsigned int target;
+	uint32_t target;
 	int c;
 
 	iunlock(ip);
 	target = n;
 	acquire(&cons.lock);
-	while(n > 0){
-		while(input.r == input.w){
-			if(myproc()->killed){
+	while (n > 0){
+		while (input.r == input.w){
+			if (myproc()->killed){
 				release(&cons.lock);
 				ilock(ip);
 				return -1;
@@ -619,8 +618,8 @@ int consoleread(int minor, struct inode *ip, char *dst, int n, uint32_t off){
 			sleep(&input.r, &cons.lock);
 		}
 		c = input.buf[input.r++ % INPUT_BUF];
-		if(c == C('D')){	// EOF
-			if(n < target){
+		if (c == C('D')){	// EOF
+			if (n < target){
 				// Save ^D for next time, to make sure
 				// caller gets a 0-byte result.
 				input.r--;
@@ -629,7 +628,7 @@ int consoleread(int minor, struct inode *ip, char *dst, int n, uint32_t off){
 		}
 		*dst++ = c;
 		--n;
-		if(c == '\n')
+		if (c == '\n')
 			break;
 	}
 	release(&cons.lock);
@@ -643,25 +642,25 @@ int consolewrite(int minor, struct inode *ip, char *buf, int n, uint32_t off){
 
 	iunlock(ip);
 	acquire(&cons.lock);
-	for(i = 0; i < n; i++)
-		consputc(buf[i] & 0xff);
+	for (i = 0; i < n; i++)
+		console_putc(buf[i] & 0xff);
 	release(&cons.lock);
 	ilock(ip);
 
 	return n;
 }
 
-void consoleinit(void){
+void console_init(void){
 	initlock(&cons.lock, "console");
-
 	cons.locking = 1;
 	ttyb.tflags = ECHO;
 
+	// 14-line tall cursor for visibility
 	outb(0x3D4, 0x0A);
 	outb(0x3D5, (inb(0x3D5) & 0xC0) | 0);
 	outb(0x3D4, 0x0B);
 	outb(0x3D5, (inb(0x3D5) & 0xE0) | 0x0E);
 
-	ioapicenable(IRQ_KBD, 0);
+	pic_enable(IRQ_KBD);
 }
 

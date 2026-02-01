@@ -13,25 +13,28 @@
 #include <x86.h>
 
 #define COM1	0x3f8
+#define BAUD	9600
 
 static int uart;	// is there a uart?
 int uart_debug = 0;
 
-void uartinit(void){
+void uart_init(void){
 	// Turn off the FIFO
 	outb(COM1+2, 0);
 
 	// 9600 baud, 8 data bits, 1 stop bit, parity off.
 	outb(COM1+3, 0x80);	// Unlock divisor
-	outb(COM1+0, 115200/9600);
+	outb(COM1+0, 115200/BAUD);
 	outb(COM1+1, 0);
 	outb(COM1+3, 0x03);	// Lock divisor, 8 data bits.
 	outb(COM1+4, 0);
 	outb(COM1+1, 0x01);	// Enable receive interrupts.
 
 	// If status is 0xFF, no serial port.
-	if(inb(COM1+5) == 0xFF)
+	if(inb(COM1+5) == 0xFF) {
+		printk("WARNING: No COM1 debug serial available\n");
 		return;
+	}
 	uart = 1;
 
 	// Acknowledge pre-existing interrupt conditions;
@@ -40,11 +43,11 @@ void uartinit(void){
 	inb(COM1+0);
 
 	// Announce that we're here.
-	debug("Debug serial on COM1 at 0x%x\n", COM1);
+	debug("Debug serial on COM1 at %d baud\n", BAUD);
 	debug("status : 0x%x\n", inb(COM1+5));
 }
 
-void uartputc(int c){
+void uart_putc(int c){
 	int i;
 
 	if(!uart)
@@ -78,7 +81,7 @@ void uartputc(int c){
 	outb(COM1+0, c & 0xff);
 }
 
-static int uartgetc(void){
+static int uart_getchar(void){
 	if(!uart)
 		return -1;
 	if(!(inb(COM1+5) & 0x01))
@@ -86,15 +89,15 @@ static int uartgetc(void){
 	return inb(COM1+0);
 }
 
-void uartintr(void){
-	consoleintr(uartgetc);
+void uart_interrupt(void){
+	console_interrupt(uart_getchar);
 }
 
-int uartwrite(struct inode *ip, char *src, int n, uint32_t off){
+int uart_write(struct inode *ip, char *src, int n, uint32_t off){
 	int i;
 
 	for(i = 0; i < n; i++){
-		uartputc(src[i]);
+		uart_putc(src[i]);
 	}
 
 	return n;

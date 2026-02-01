@@ -1,6 +1,5 @@
 /*
- * trap.c - handle kernel traps. Traps can be protection faults, syscalls, signals, keyboard, ide,
- * and so on.
+ * Kernel traps
  */
 
 #include <types.h>
@@ -54,107 +53,106 @@ const char* exceptions[] = {
 	"Reserved"				// 31
 };
 
-void tvinit(void){
+void trap_init(void){
 	int i;
 
-	for(i = 0; i < 256; i++)
+	for (i = 0; i < 256; i++)
 		SETGATE(idt[i], 0, SEG_KCODE<<3, vectors[i], 0);
-	SETGATE(idt[T_SYSCALL], 1, SEG_KCODE<<3, vectors[T_SYSCALL], DPL_USER);
 
+	SETGATE(idt[T_SYSCALL], 1, SEG_KCODE<<3, vectors[T_SYSCALL], DPL_USER);
 	initlock(&tickslock, "time");
 }
 
-void idtinit(void){
+void idt_init(void){
 	lidt(idt, sizeof(idt));
+}
+
+void interrupt_eoi(void){
+	outb(0x20, 0x20);	// End-Of-Interrupt command
 }
 
 void trap(struct trapframe *tf){
 	struct proc *p = myproc();
-	if(tf->trapno == T_SYSCALL){
-		if(myproc()->killed)
+
+	if (tf->trapno == T_SYSCALL){	// Syscall
+		if (myproc()->killed)
 			exit(0);
 		myproc()->tf = tf;
 		syscall();
-		if(myproc()->killed)
+		if (myproc()->killed)
 			exit(0);
 		return;
 	}
 
 	switch(tf->trapno){
-	case T_IRQ0 + IRQ_TIMER:
+	case T_IRQ0 + IRQ_TIMER:	// Timer increment
 		// Up the timer
 		acquire(&tickslock);
 		ticks++;
 		wakeup(&ticks);
 		release(&tickslock);
-
-		outb(0x20, 0x22);
-		lapiceoi();
-		if(myproc() != 0 && (tf->cs&3) == DPL_USER) {
-			if(p->alarmticks > 0) {
+		interrupt_eoi();
+		if (myproc() != 0 && (tf->cs&3) == DPL_USER){
+			if (p->alarmticks > 0){
 				p->alarmticks--;
 
-				if(p->alarmticks == 0) {
-					if((p->sigpending = 0)) {
+				if (p->alarmticks == 0){
+					if ((p->sigpending = 0))
 						p->sigpending |= SIGALRM;
-					}
 				}
 			}
 		}
 		break;
 	case T_IRQ0 + IRQ_IDE:
-		ideintr();
-		lapiceoi();
+		ide_interrupt();
+		interrupt_eoi();
 		break;
 	case T_IRQ0 + IRQ_IDE+1:
 		// Bochs generates spurious IDE1 interrupts.
 		break;
 	case T_IRQ0 + IRQ_KBD:
-		kbdintr();
-		lapiceoi();
+		kbd_interrupt();
+		interrupt_eoi();
 		break;
 	case T_IRQ0 + IRQ_COM1:
-		uartintr();
-		lapiceoi();
+		uart_interrupt();
+		interrupt_eoi();
 		break;
 	case T_IRQ0 + 7:
 	case T_IRQ0 + IRQ_SPURIOUS:
-		printk("cpu%d: spurious interrupt at %x:%x\n",
-						cpunum(), tf->cs, tf->eip);
-		lapiceoi();
+		printk("warning: spurious interrupt at %x:%x\n", tf->cs, tf->eip);
+		interrupt_eoi();
 		break;
 
 	default:
-
-		if(myproc() == 0 || (tf->cs&3) == 0){
+		if (myproc() == 0 || (tf->cs&3) == 0){
 			// In kernel, it must be our mistake.
 			printk("unexpected trap %d [eip %x][cr2=0x%x]\n", tf->trapno, tf->eip, rcr2());
 			panic("%s", exceptions[tf->trapno]);
 		}
 		// In user space, assume process misbehaved.
-		if (tf->eip != -1){
+		if (tf->eip != -1)
 			printk("%s[%d] %s[%d] ip:0x%x sp:0x%x\n", myproc()->name, myproc()->pid, exceptions[myproc()->tf->trapno], myproc()->tf->trapno, tf->eip, myproc()->tf->esp);
-		} else { // we are returning
+		else	// we are returning
 			exit(myproc()->exitstatus);
-		}
 		myproc()->sigpending |= SIGSEGV;
 	}
 
 	// Force process exit if it has been killed and is in user space.
 	// (If it is still executing in the kernel, let it keep running
 	// until it gets to the regular system call return.)
-	if(myproc() && myproc()->killed && (tf->cs&3) == DPL_USER)
+	if (myproc() && myproc()->killed && (tf->cs&3) == DPL_USER)
 		exit(0);
 
-	if(myproc() && myproc()->sigpending)
+	if (myproc() && myproc()->sigpending)
 		dosignal();
 
 	// Force process to give up CPU on clock tick.
 	// If interrupts were on while locks held, would need to check nlock.
-	if(myproc() && myproc()->state == RUNNING)
+	if (myproc() && myproc()->state == RUNNING)
 		yield();
 
 	// Check if the process has been killed since we yielded
-	if(myproc() && myproc()->killed && (tf->cs&3) == DPL_USER)
+	if (myproc() && myproc()->killed && (tf->cs&3) == DPL_USER)
 		exit(0);
 }

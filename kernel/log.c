@@ -1,11 +1,3 @@
-#include <types.h>
-#include <defs.h>
-#include <param.h>
-#include <spinlock.h>
-#include <sleeplock.h>
-#include <fs.h>
-#include <buf.h>
-
 // Simple logging that allows concurrent FS system calls.
 //
 // A log transaction contains the updates of multiple FS system
@@ -29,6 +21,14 @@
 //	 ...
 // Log appends are synchronous.
 
+#include <types.h>
+#include <defs.h>
+#include <param.h>
+#include <spinlock.h>
+#include <sleeplock.h>
+#include <fs.h>
+#include <buf.h>
+
 // Contents of the header block, used for both the on-disk header block
 // and to keep track in memory of logged block# before commit.
 struct logheader {
@@ -50,9 +50,7 @@ struct log log;
 static void recover_from_log(void);
 static void commit();
 
-void
-initlog(int dev)
-{
+void init_log(int dev){
 	if (sizeof(struct logheader) >= BSIZE)
 		panic("initlog: too big logheader");
 
@@ -66,55 +64,47 @@ initlog(int dev)
 }
 
 // Copy committed blocks from log to their home location
-static void
-install_trans(void)
-{
+static void install_trans(void){
 	int tail;
 
 	for (tail = 0; tail < log.lh.n; tail++) {
-		struct buf *lbuf = bread(log.dev, log.start+tail+1); // read log block
-		struct buf *dbuf = bread(log.dev, log.lh.block[tail]); // read dst
+		struct buf *lbuf = buffer_read(log.dev, log.start+tail+1); // read log block
+		struct buf *dbuf = buffer_read(log.dev, log.lh.block[tail]); // read dst
 		memmove(dbuf->data, lbuf->data, BSIZE);	// copy block to dst
-		bwrite(dbuf);	// write dst to disk
-		brelse(lbuf);
-		brelse(dbuf);
+		buffer_write(dbuf);	// write dst to disk
+		buffer_release(lbuf);
+		buffer_release(dbuf);
 	}
 }
 
 // Read the log header from disk into the in-memory log header
-static void
-read_head(void)
-{
-	struct buf *buf = bread(log.dev, log.start);
+static void read_head(void){
+	struct buf *buf = buffer_read(log.dev, log.start);
 	struct logheader *lh = (struct logheader *) (buf->data);
 	int i;
 	log.lh.n = lh->n;
 	for (i = 0; i < log.lh.n; i++) {
 		log.lh.block[i] = lh->block[i];
 	}
-	brelse(buf);
+	buffer_release(buf);
 }
 
 // Write in-memory log header to disk.
 // This is the true point at which the
 // current transaction commits.
-static void
-write_head(void)
-{
-	struct buf *buf = bread(log.dev, log.start);
+static void write_head(void){
+	struct buf *buf = buffer_read(log.dev, log.start);
 	struct logheader *hb = (struct logheader *) (buf->data);
 	int i;
 	hb->n = log.lh.n;
 	for (i = 0; i < log.lh.n; i++) {
 		hb->block[i] = log.lh.block[i];
 	}
-	bwrite(buf);
-	brelse(buf);
+	buffer_write(buf);
+	buffer_release(buf);
 }
 
-static void
-recover_from_log(void)
-{
+static void recover_from_log(void){
 	read_head();
 	install_trans(); // if committed, copy from log to disk
 	log.lh.n = 0;
@@ -122,9 +112,7 @@ recover_from_log(void)
 }
 
 // called at the start of each FS system call.
-void
-begin_op(void)
-{
+void begin_op(void){
 	acquire(&log.lock);
 	while(1){
 		if(log.committing){
@@ -142,9 +130,7 @@ begin_op(void)
 
 // called at the end of each FS system call.
 // commits if this was the last outstanding operation.
-void
-end_op(void)
-{
+void end_op(void){
 	int do_commit = 0;
 
 	acquire(&log.lock);
@@ -174,24 +160,20 @@ end_op(void)
 }
 
 // Copy modified blocks from cache to log.
-static void
-write_log(void)
-{
+static void write_log(void){
 	int tail;
 
 	for (tail = 0; tail < log.lh.n; tail++) {
-		struct buf *to = bread(log.dev, log.start+tail+1); // log block
-		struct buf *from = bread(log.dev, log.lh.block[tail]); // cache block
+		struct buf *to = buffer_read(log.dev, log.start+tail+1); // log block
+		struct buf *from = buffer_read(log.dev, log.lh.block[tail]); // cache block
 		memmove(to->data, from->data, BSIZE);
-		bwrite(to);	// write the log
-		brelse(from);
-		brelse(to);
+		buffer_write(to);	// write the log
+		buffer_release(from);
+		buffer_release(to);
 	}
 }
 
-static void
-commit()
-{
+static void commit(){
 	if (log.lh.n > 0) {
 		write_log();	// Write modified blocks from cache to log
 		write_head();	// Write header to disk -- the real commit
@@ -205,14 +187,12 @@ commit()
 // Record the block number and pin in the cache with B_DIRTY.
 // commit()/write_log() will do the disk write.
 //
-// log_write() replaces bwrite(); a typical use is:
-//	 bp = bread(...)
+// log_write() replaces buffer_write(); a typical use is:
+//	 bp = buffer_read(...)
 //	 modify bp->data[]
 //	 log_write(bp)
-//	 brelse(bp)
-void
-log_write(struct buf *b)
-{
+//	 buffer_release(bp)
+void log_write(struct buf *b){
 	int i;
 
 	if (log.lh.n >= LOGSIZE || log.lh.n >= log.size - 1)

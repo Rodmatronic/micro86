@@ -1,6 +1,6 @@
-//
-// File descriptors
-//
+/*
+ * File descriptors
+ */
 
 #include <types.h>
 #include <defs.h>
@@ -21,9 +21,7 @@ struct {
 	struct file file[NFILE];
 } ftable;
 
-void
-fileinit(void)
-{
+void file_init(void){
 	initlock(&ftable.lock, "ftable");
 }
 
@@ -48,9 +46,7 @@ struct devsw devsw[NDEV] = {
 };
 
 // Allocate a file structure.
-struct file*
-filealloc(void)
-{
+struct file* file_alloc(void){
 	struct file *f;
 
 	acquire(&ftable.lock);
@@ -66,9 +62,7 @@ filealloc(void)
 }
 
 // Increment ref count for file f.
-struct file*
-filedup(struct file *f)
-{
+struct file* file_dup(struct file *f){
 	acquire(&ftable.lock);
 	if(f->ref < 1)
 		panic("filedup");
@@ -77,10 +71,8 @@ filedup(struct file *f)
 	return f;
 }
 
-// Close file f.	(Decrement ref count, close when reaches 0.)
-void
-fileclose(struct file *f)
-{
+// Close file f. (Decrement ref count, close when reaches 0.)
+void file_close(struct file *f){
 	struct file ff;
 
 	acquire(&ftable.lock);
@@ -105,9 +97,7 @@ fileclose(struct file *f)
 }
 
 // Get metadata about file f.
-int
-filestat(struct file *f, struct stat *st)
-{
+int file_stat(struct file *f, struct stat *st){
 	if(f->type == FD_INODE){
 		ilock(f->ip);
 		stati(f->ip, st);
@@ -118,9 +108,7 @@ filestat(struct file *f, struct stat *st)
 }
 
 // Read from file f.
-int
-fileread(struct file *f, char *addr, int n)
-{
+int file_read(struct file *f, char *addr, int n){
 	int r;
 
 	if(f->readable == 0)
@@ -138,9 +126,7 @@ fileread(struct file *f, char *addr, int n)
 }
 
 // Write to file f.
-int
-filewrite(struct file *f, char *addr, int n)
-{
+int file_write(struct file *f, char *addr, int n){
 	int r;
 
 	if(f->writable == 0)

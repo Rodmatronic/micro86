@@ -1,5 +1,5 @@
 /*
- * tsc.c - accurate timekeeping. This file has all functions related to rdtsc along with some helpers.
+ * Granular timekeeping using the TSC
  */
 
 #include <types.h>
@@ -10,22 +10,15 @@ uint64_t tsc_freq_hz = 0;
 uint64_t tsc_offset = 0;
 uint64_t tsc_realtime = 0;
 
-/*
 uint64_t rdtsc(void){
-	uint32_t lo, hi;
-	asm volatile("rdtsc" : "=a"(lo), "=d"(hi));
-	return ((unsigned long long)hi << 32) | lo;
-}
-*/
-
-uint64_t rdtsc()
-{
     uint64_t ret;
     asm volatile ( "rdtsc" : "=A"(ret) );
     return ret;
 }
 
-void tscinit(void){
+// TODO: TSC granular time is not accurate, and this is why. I should really figure out how to clean up this dumb
+// code. It should read from the kernel's clockspeed to calibrate itself.
+void tsc_init(void){
 	uint64_t tsc_start, tsc_end;
 
 	outb(0x61, (inb(0x61) & ~0x02) | 0x01);

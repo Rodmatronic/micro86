@@ -8,16 +8,16 @@ unsigned int mbi_addr;
 unsigned int mbi_size;
 char * cmdline;
 
-void * modget(int type) {
-	for(struct multiboot_header_tag * tag = (struct multiboot_header_tag *)(mbi_addr + 8); tag->type != MULTIBOOT_TAG_TYPE_END; tag = (struct multiboot_header_tag *)((uchar *)tag + ((tag->size + 7) & ~7))) {
-		if (tag->type == type) {
+void * modget(int type){
+	for(struct multiboot_header_tag * tag = (struct multiboot_header_tag *)(mbi_addr + 8); tag->type != MULTIBOOT_TAG_TYPE_END; tag = (struct multiboot_header_tag *)((uchar *)tag + ((tag->size + 7) & ~7))){
+		if (tag->type == type){
 			return (void *)tag;
 		}
 	}
 	return 0;
 }
 
-void set_phystop(void){
+void set_phystop(void){ // Set the memory amount based on Multiboot2 Memory maps
 	struct multiboot_tag *tag;
 	struct multiboot_tag_mmap *mmap;
 	uint64_t max_top = 0;
@@ -34,7 +34,6 @@ void set_phystop(void){
 	unsigned char *endp = (unsigned char *)mmap + mmap->size;
 
 	while (p + sizeof(struct multiboot_mmap_entry) <= endp) {
-
 		struct multiboot_mmap_entry *e = (struct multiboot_mmap_entry *)p;
 		uint64_t start = e->addr;
 		uint64_t len   = e->len;
@@ -67,8 +66,7 @@ void set_phystop(void){
 	if (max_top == 0)
 		return;
 
-	/* FIXME: this sucks! */
-	if (max_top > limit) {
+	if (max_top > limit){ // FIXME: Memory can only go to 0x7DFE0000ULL, and not as high as it should
 		max_top = limit;
 		printk("max_top gimping PHYSTOP to %u\n", limit);
 	}
@@ -83,8 +81,7 @@ void set_phystop(void){
 	printk("Found %dM of memory\n", total_mem / 1048576 + 2);
 }
 
-
-void mbootinit(unsigned long addr) {
+void multiboot_init(unsigned long addr){
 	struct multiboot_tag_string * multiboot_cmdline;
 
 	mbi_addr = (unsigned int)P2V(addr);

@@ -249,7 +249,7 @@ int sys_read(void){
 	if(argfd(0, 0, &f) < 0 || argint(2, &n) < 0 || argptr(1, &p, n) < 0)
 		return -EINVAL;
 
-	return fileread(f, p, n);
+	return file_read(f, p, n);
 }
 
 int sys_write(void){
@@ -260,7 +260,7 @@ int sys_write(void){
 	if(argfd(0, 0, &f) < 0 || argint(2, &n) < 0 || argptr(1, &p, n) < 0)
 		return -EINVAL;
 
-	return filewrite(f, p, n);
+	return file_write(f, p, n);
 }
 
 int sys_open(void){
@@ -294,10 +294,10 @@ int sys_open(void){
 	if (omode & O_TRUNC)
 		itrunc(ip);
 
-	if((f = filealloc()) == 0 || (fd = fdalloc(f)) < 0){
+	if((f = file_alloc()) == 0 || (fd = fdalloc(f)) < 0){
 		if(f){
 			ip->lmtime = epoch_mktime();
-			fileclose(f);
+			file_close(f);
 		}
 		iunlockput(ip);
 		end_op();
@@ -326,7 +326,7 @@ int sys_close(void){
 		return -EINVAL;
 
 	myproc()->ofile[fd] = 0;
-	fileclose(f);
+	file_close(f);
 	return 0;
 }
 
@@ -359,10 +359,10 @@ int sys_creat(void){
 
 	itrunc(ip);
 
-	if((f=filealloc())==0 || (fd=fdalloc(f))<0){
+	if((f=file_alloc())==0 || (fd=fdalloc(f))<0){
 		if(f){
 			ip->lmtime=epoch_mktime();
-			fileclose(f);
+			file_close(f);
 		}
 		iunlockput(ip);
 		end_op();
@@ -1000,7 +1000,7 @@ int sys_dup(void){
 	if((fd=fdalloc(f)) < 0)
 		return -ENOENT;
 
-	filedup(f);
+	file_dup(f);
 	return fd;
 }
 
@@ -1019,8 +1019,8 @@ int sys_pipe(void){
 	if((fd0 = fdalloc(rf)) < 0 || (fd1 = fdalloc(wf)) < 0){
 		if(fd0 >= 0)
 			myproc()->ofile[fd0] = 0;
-		fileclose(rf);
-		fileclose(wf);
+		file_close(rf);
+		file_close(wf);
 		return -ENOMEM;
 	}
 	fd[0] = fd0;
@@ -1060,7 +1060,7 @@ int sys_brk(void){
 	delta = addr - old;
 
 	if(delta != 0) {
-		if(growproc(delta) < 0)
+		if(grow_proc(delta) < 0)
 			return -ENOMEM;
 	}
 
@@ -1178,7 +1178,7 @@ int sys_fcntl(void){
 			for(int i = arg; i < NOFILE; i++){
 				if(curproc->ofile[i] == 0){
 					curproc->ofile[i] = f;
-					filedup(f);
+					file_dup(f);
 					if(cmd == F_DUPFD_CLOEXEC){
 						curproc->cloexec[i] = 1;
 					}
@@ -1218,7 +1218,7 @@ int sys_sbrk(void){
 		return -EINVAL;
 
 	addr = myproc()->sz;
-	if(growproc(n) < 0)
+	if(grow_proc(n) < 0)
 		return -ENOMEM;
 
 	return addr;
@@ -1264,15 +1264,13 @@ int sys_dup2(void){
 		return newfd;
 
 	if(p->ofile[newfd]){
-		fileclose(p->ofile[newfd]);
+		file_close(p->ofile[newfd]);
 		p->ofile[newfd] = 0;
 	}
 
 	p->ofile[newfd] = f;
-	filedup(f);
-
+	file_dup(f);
 	p->cloexec[newfd] = 0;
-
 	return newfd;
 }
 
@@ -1372,7 +1370,7 @@ int sys_getrusage(void){
 	if(argint(0, &pid) < 0 || argptr(1, (void*)&uru, sizeof(uru)) < 0)
 		return -EINVAL;
 
-	struct proc *pp = findproc(pid, myproc());
+	struct proc *pp = find_proc(pid, myproc());
 	if(!pp)
 		return -ESRCH;
 
@@ -1649,7 +1647,7 @@ int sys_writev(void){
 	for(i = 0; i < count; i++){
 		char *p = (char*)vec[i * 2];
 		int n = (int)vec[i * 2 + 1];
-		int r = filewrite(f, p, n);
+		int r = file_write(f, p, n);
 		if(r < 0)
 			return -EIO;
 		total += r;

@@ -1,7 +1,7 @@
 # The xv6 kernel starts executing in this file. This file is linked with
 # the kernel C code, so it can refer to kernel symbols such as main().
 # The boot block (bootasm.S and bootmain.c) jumps to entry below.
-        
+
 # Multiboot header, for multiboot boot loaders like GNU Grub.
 # http://www.gnu.org/software/grub/manual/multiboot/multiboot.html
 #
@@ -24,20 +24,20 @@
 #include <param.h>
 #include <multiboot.h>
 
-# Multiboot header.  Data to direct multiboot loader.
+# Multiboot header. Data to direct multiboot loader.
 .p2align 2
 .text
 .globl multiboot_header
 multiboot_header_start:
-    .align 8
-    .long MULTIBOOT2_HEADER_MAGIC
-    .long 0
-    .long multiboot_header_end - multiboot_header_start
-    .long -(MULTIBOOT2_HEADER_MAGIC + (multiboot_header_end - multiboot_header_start))
+	.align	8
+	.long	MULTIBOOT2_HEADER_MAGIC
+	.long	0
+	.long	multiboot_header_end - multiboot_header_start
+	.long	-(MULTIBOOT2_HEADER_MAGIC + (multiboot_header_end - multiboot_header_start))
 multiboot_end_tag:
-    .align 8
-    .long 0
-    .long 8
+	.align	8
+	.long	0
+	.long	8
 multiboot_header_end:
 
 # By convention, the _start symbol specifies the ELF entry point.
@@ -49,31 +49,31 @@ _start = entry
 # Entering xv6 on boot processor, with paging off.
 .globl entry
 entry:
-  # Turn on page size extension for 4Mbyte pages
-  movl    %cr4, %eax
-  orl     $(CR4_PSE), %eax
-  movl    %eax, %cr4
-  # Set page directory
-  movl    $(V2P_WO(entrypgdir)), %eax
-  movl    %eax, %cr3
-  # Turn on paging.
-  movl    %cr0, %eax
-  orl     $(CR0_PG|CR0_WP), %eax
-  movl    %eax, %cr0
+	# Turn on page size extension for 4Mbyte pages
+	movl	%cr4, %eax
+	orl	$(CR4_PSE), %eax
+	movl	%eax, %cr4
+	# Set page directory
+	movl	$(V2P_WO(entrypgdir)), %eax
+	movl	%eax, %cr3
+	# Turn on paging.
+	movl	%cr0, %eax
+	orl	$(CR0_PG|CR0_WP), %eax
+	movl	%eax, %cr0
 
-  # Set up the stack pointer.
-  movl $(stack + KSTACKSIZE), %esp
+	# Set up the stack pointer.
+	movl	$(stack + KSTACKSIZE), %esp
 
-  pushl $0
-  popfl
+	pushl	$0
+	popfl
 
-  # Jump to kmain(), and switch to executing at
-  # high addresses. The indirect call is needed because
-  # the assembler produces a PC-relative instruction
-  # for a direct jump.
-  pushl %ebx
-  pushl $0
-  mov $kmain, %eax
-  jmp *%eax
+	# Jump to kmain(), and switch to executing at
+	# high addresses. The indirect call is needed because
+	# the assembler produces a PC-relative instruction
+	# for a direct jump.
+	pushl	%ebx
+	pushl	$0
+	mov	$kmain, %eax
+	jmp	*%eax
 
 .comm stack, KSTACKSIZE

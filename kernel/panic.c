@@ -17,8 +17,7 @@ struct stackframe {
 	uint32_t eip;
 };
 
-void traceback(unsigned int MaxFrames)
-{
+void traceback(unsigned int MaxFrames){
 	struct stackframe *stk;
 	asm ("movl %%ebp,%0" : "=r"(stk) ::);
 	printk("---- stack trace ----\n");
@@ -38,13 +37,13 @@ void panic(char *fmt, ...){
 	uart_debug=0;
         console.locking = 0;	// Disable console locking during panic
         printk("Kernel panic: ");
-	colorchange('9', '1');
+	color_change('9', '1');
 
         va_start(ap, fmt);
         vkprintf(fmt, ap);
         va_end(ap);
 
-	consputc('\n');
+	console_putc('\n');
 	printk(banner);
 	traceback(5);
         panicked=1;	// Freeze other CPUs

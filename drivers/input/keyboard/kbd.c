@@ -3,16 +3,15 @@
 #include <defs.h>
 #include <kbd.h>
 
-int
-kgetchar(void) {
-	uchar stat, data;
+int kgetchar(void){
+	unsigned char stat, data;
 
-	for (;;) {
+	for (;;){
 		stat = inb(0x64);
-		if ((stat & 0x01) != 0) {
+		if ((stat & 0x01) != 0){
 			data = inb(0x60);  // Read scancode
 
-			if (!(data & 0x80) && (data < 0x80)) {
+			if (!(data & 0x80) && (data < 0x80)){
 				char c = normalmap[data];
 				if (c != 0) return c;  // Valid character
 			}
@@ -21,38 +20,36 @@ kgetchar(void) {
 	}
 }
 
-int
-is_mouse_data()
-{
-		return (inb(0x64) & 0x20) != 0;
+int is_mouse_data(){
+	return (inb(0x64) & 0x20) != 0;
 }
 
 int
 kbdgetc(void)
 {
-	static unsigned int shift;
+	static uint32_t shift;
 	static uchar *charcode[4] = {
 		normalmap, shiftmap, ctlmap, ctlmap
 	};
-	unsigned int st, data, c;
+	uint32_t st, data, c;
 	if (is_mouse_data()) {
 		return -1;
 	}
 
 	st = inb(KBSTATP);
-	if((st & KBS_DIB) == 0)
+	if ((st & KBS_DIB) == 0)
 		return -1;
 	data = inb(KBDATAP);
 
-	if(data == 0xE0){
+	if (data == 0xE0){
 		shift |= E0ESC;
 		return 0;
-	} else if(data & 0x80){
+	} else if (data & 0x80){
 		// Key released
 		data = (shift & E0ESC ? data : data & 0x7F);
 		shift &= ~(shiftcode[data] | E0ESC);
 		return 0;
-	} else if(shift & E0ESC){
+	} else if (shift & E0ESC){
 		// Last character was an E0 escape; or with 0x80
 		data |= 0x80;
 		shift &= ~E0ESC;
@@ -60,15 +57,15 @@ kbdgetc(void)
 
 	shift |= shiftcode[data];
 
-	if((shift & CTL) && (shift & ALT) && data == 0xD3)
+	if ((shift & CTL) && (shift & ALT) && data == 0xD3)
 		ctrl_alt_del();
 
 	shift ^= togglecode[data];
 	c = charcode[shift & (CTL | SHIFT)][data];
-	if(shift & CAPSLOCK){
-		if('a' <= c && c <= 'z')
+	if (shift & CAPSLOCK){
+		if ('a' <= c && c <= 'z')
 			c += 'A' - 'a';
-		else if('A' <= c && c <= 'Z')
+		else if ('A' <= c && c <= 'Z')
 			c += 'a' - 'A';
 	}
 	switch (c) {
@@ -80,6 +77,6 @@ kbdgetc(void)
 	return c;
 }
 
-void kbdintr(void) {
-	consoleintr(kbdgetc);
+void kbd_interrupt(void){
+	console_interrupt(kbdgetc);
 }

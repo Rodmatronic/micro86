@@ -1,8 +1,6 @@
 /*
- * time.c - kernel time. Handles epoch and whatnot. Portions of this file are copied from Linux 0.01.
- * Though, they have been modified to fix bugs related to Y2k.
- *
- * cmos_read was originally a macro but was changed to a proper function to shut up GCC.
+ * Set up date & time
+ * Portions of this file are copied from Linux 0.01.
  */
 
 #include <types.h>
@@ -11,14 +9,13 @@
 #include <x86.h>
 
 #define BCD_TO_BIN(val) ((val)=((val)&15) + ((val)>>4)*10)
+#define MINUTE	60
+#define HOUR	(60*MINUTE)
+#define DAY	(24*HOUR)
+#define YEAR	(365*DAY)
 
 int tsc_calibrated = 1;
 time_t system_time = 0;
-
-#define MINUTE 60
-#define HOUR (60*MINUTE)
-#define DAY (24*HOUR)
-#define YEAR (365*DAY)
 
 uint8_t cmos_read(uint8_t addr){
 	outb(0x70, 0x80 | addr);
@@ -41,12 +38,11 @@ static int month[12] = {
 	DAY*(31+29+31+30+31+30+31+31+30+31+30)
 };
 
-time_t epoch_mktime(void) {
+time_t epoch_mktime(void){
 	return system_time + (rdtsc() - tsc_offset) / tsc_freq_hz;
 }
 
-time_t mktime(struct tm * tm)
-{
+time_t mktime(struct tm * tm){
 	time_t res;
 	int year;
 
@@ -64,9 +60,7 @@ time_t mktime(struct tm * tm)
 	return res;
 }
 
-void
-timeinit(void)
-{
+void time_init(void){
 	int full_year;
 	struct tm time;
 	unsigned char century_register = 0x32;
