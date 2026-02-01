@@ -81,6 +81,13 @@ int memwrite(int minor, struct inode *ip, char *src, int n, uint32_t off){
 			return -ENXIO;
 		case 11: // kmesg
 			return -ENXIO;
+		case 12: // VGA graphics buffer
+			uint32_t vga_addr = 0xA0000 + off;
+			if (off >= 0x10000 || off + n > 0x10000)
+				return -EINVAL;
+
+			memmove(P2V(vga_addr), src, n);
+			return n;
 		default:
 			return -ENXIO;
 	}
