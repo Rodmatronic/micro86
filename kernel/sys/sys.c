@@ -1552,13 +1552,13 @@ int sys_sigreturn(void){
 }
 
 int sys_setdomainname(void){
-	const char * domainname;
+	char * domainname;
 	size_t len;
 
 	if (!suser())
 		return -EPERM;
 
-	if (argstr(0, (char **)&domainname) < 0 || argptr(1, (void*)&len, sizeof(len)) < 0)
+	if (argstr(0, &domainname) < 0 || argint(1, (void*)&len) < 0)
 		return -EINVAL;
 
 	strncpy(sys_domainname, domainname, len);
