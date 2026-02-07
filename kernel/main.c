@@ -41,6 +41,8 @@ int kmain(uint32_t addr){
 	process_init();	// Process table
 	trap_init();	// Trap vectors
 
+	keyboard_init();	// PS/2 Keyboard
+
 	// Below are for setting up the filesystem/IDE disk
 	buffer_init();	// Buffer cache
 	file_init();	// File table

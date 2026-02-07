@@ -2,6 +2,7 @@
 #include <x86.h>
 #include <defs.h>
 #include <kbd.h>
+#include <traps.h>
 
 int kgetchar(void){
 	unsigned char stat, data;
@@ -20,13 +21,20 @@ int kgetchar(void){
 	}
 }
 
-int is_mouse_data(){
+int is_mouse_data(void){
 	return (inb(0x64) & 0x20) != 0;
 }
 
-int
-kbdgetc(void)
-{
+void keyboard_init(void){
+	// Drain the keyboard controller buffer
+	while (inb(0x64) & 0x01) { // While output buffer full
+		inb(0x60); // Read and discard
+	}
+
+	pic_enable(IRQ_KBD);
+}
+
+int keyboard_getc(void){
 	static uint32_t shift;
 	static uchar *charcode[4] = {
 		normalmap, shiftmap, ctlmap, ctlmap
@@ -78,5 +86,5 @@ kbdgetc(void)
 }
 
 void kbd_interrupt(void){
-	console_interrupt(kbdgetc);
+	console_interrupt(keyboard_getc);
 }

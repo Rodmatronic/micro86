@@ -96,6 +96,7 @@ void		kinit2(void*, void*);
 
 // kbd.c
 extern int	mouse_enable;
+void		keyboard_init(void);
 void		kbd_interrupt(void);
 int		kget_char(void);
 
