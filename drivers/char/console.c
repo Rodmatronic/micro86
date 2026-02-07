@@ -54,122 +54,112 @@ struct cons cons;
 int x, y = 0;
 static ushort *crt = (ushort*)P2V(0xb8000);	// CGA memory
 
-static void print_int(uint32_t xx, int base, int sgn, int width, int zero_pad){
-	static char digits[] = "0123456789ABCDEF";
-	char buf[16];
-	int i, neg;
-	uint32_t x;
+/* Format a string and print it on the screen, just like the libc
+ * function printf. */
+void printf(const char *format, ...){
+	char **arg = (char **) &format;
+	int c;
+	char buf[20];
 
-	neg = 0;
-	if (sgn) {
-		if ((int)xx < 0) {
-			neg = 1;
-			x = (uint32_t)(-(int)xx);
-		} else {
-			x = xx;
-		}
-	} else {
-		x = xx;
-	}
+	arg++;
+	while ((c = *format++) != 0){
+		if (c != '%')
+			console_putc(c);
+		else {
+			char *p, *p2;
+			int pad0 = 0, pad = 0;
 
-	i = 0;
-	do {
-		buf[i++] = digits[x % base];
-	} while ((x /= base) != 0);
-
-	int total_digits = i;
-	int total_chars = total_digits + (neg ? 1 : 0);
-	int pad = width > total_chars ? width - total_chars : 0;
-
-	if (zero_pad) {
-		if (neg) console_putc('-');
-		for (int j = 0; j < pad; j++) console_putc('0');
-		while (--i >= 0) console_putc(buf[i]);
-	}
-	else {
-		for (int j = 0; j < pad; j++) console_putc(' ');
-		if (neg) console_putc('-');
-		while (--i >= 0) console_putc(buf[i]);
-	}
-}
-
-static void vprintf(int fd, const char *fmt, va_list ap){
-	char *s;
-	int c, i, state;
-	int width, zero_pad;
-
-	state = 0;
-	for (i = 0; fmt[i]; i++) {
-		c = fmt[i] & 0xff;
-		if (state == 0) {
-			if (c == '%') {
-				state = '%';
-				width = 0;
-				zero_pad = 0;
-			} else {
-				console_putc(c);
-			}
-		} else if (state == '%') {
-			if (c == '0') {
-				zero_pad = 1;
-				i++;
-				c = fmt[i] & 0xff;
+			c = *format++;
+			if (c == '0'){
+				pad0 = 1;
+				c = *format++;
 			}
 
-			while (c >= '0' && c <= '9') {
-				width = width * 10 + (c - '0');
-				i++;
-				c = fmt[i] & 0xff;
+			if (c >= '0' && c <= '9'){
+				pad = c - '0';
+				c = *format++;
 			}
-			if (c == 'l') {
-				i++;
-				c = fmt[i] & 0xff;
+
+			switch (c){
+				case 'd':
+				case 'u':
+				case 'x':
+					itoa (buf, c, *((int *) arg++));
+					p = buf;
+					goto string;
+					break;
+
+				case 's':
+					p = *arg++;
+					if (! p)
+						p = "(null)";
+
+				string:
+					for (p2 = p; *p2; p2++);
+					for (; p2 < p + pad; p2++)
+						console_putc(pad0 ? '0' : ' ');
+					while (*p)
+						console_putc(*p++);
+					break;
+
+				default:
+					console_putc(*((int *) arg++));
+					break;
 			}
-			if (c == 'd') {
-				print_int((uint32_t)va_arg(ap, int), 10, 1, width, zero_pad);
-			} else if (c == 'u') {
-				print_int(va_arg(ap, uint32_t), 10, 0, width, zero_pad);
-			} else if (c == 'x' || c == 'p') {
-				print_int(va_arg(ap, uint32_t), 16, 0, width, zero_pad);
-			} else if (c == 's') {
-				s = va_arg(ap, char*);
-				if (s == 0) s = "(null)";
-				while (*s != 0) {
-					console_putc(*s);
-					s++;
-				}
-			} else if (c == 'c') {
-				console_putc(va_arg(ap, int));
-			} else if (c == '%') {
-				console_putc(c);
-			} else {
-				console_putc('%');
-				console_putc(c);
-			}
-			state = 0;
 		}
 	}
 }
 
-void vkprintf(const char *fmt, va_list ap){
-	vprintf(1, fmt, ap);
-}
+/* This is the same as normal printf, but uses va_args. */
+void vprintf(const char *format, va_list args){
+	int c;
+	char buf[20];
 
-int vsprintf(char *buf, const char *fmt, va_list ap){
-	char *start = buf;
-	vprintf(1, fmt, ap);
-	*buf = '\0';
-	return buf - start;
-}
+	while ((c = *format++) != 0){
+		if (c != '%')
+			console_putc(c);
+		else {
+			char *p, *p2;
+			int pad0 = 0, pad = 0;
 
-int sprintf(char *buf, const char *fmt, ...){
-	va_list ap;
-	int rc;
+			c = *format++;
+			if (c == '0'){
+				pad0 = 1;
+				c = *format++;
+			}
 
-	va_start(ap, fmt);
-	rc = vsprintf(buf, fmt, ap);
-	va_end(ap);
-	return rc;
+			if (c >= '0' && c <= '9'){
+				pad = c - '0';
+				c = *format++;
+			}
+
+			switch (c){
+				case 'd':
+				case 'u':
+				case 'x':
+					itoa(buf, c, va_arg(args, int));
+					p = buf;
+					goto string;
+
+				case 's':
+					p = va_arg(args, char*);
+					if (!p)
+						p = "(null)";
+
+				string:
+					for (p2 = p; *p2; p2++);
+					for (; p2 < p + pad; p2++)
+						console_putc(pad0 ? '0' : ' ');
+					while (*p)
+						console_putc(*p++);
+					break;
+
+				default:
+					console_putc(va_arg(args, int));
+					break;
+			}
+		}
+	}
 }
 
 void color_change(char low_bit, char high_bit){
@@ -180,54 +170,28 @@ void color_change(char low_bit, char high_bit){
 	console_putc('m');
 }
 
-void _printf(char *func, char *fmt, ...){
-	va_list ap;
+/* Used by printk to print to console */
+void _printk(const char *func, const char *fmt, ...){
 	int locking;
+	uint32_t us;
+	va_list args;
 
-#ifdef CONFIG_PRINTK_TIME
-	uint32_t us, s, rem;
-#endif
-
-	locking = cons.locking;
+	locking = cons.locking; // Aquire console lock
 	if (locking)
 		acquire(&cons.lock);
 
-#ifdef CONFIG_PRINTK_TIME
-#ifdef CONFIG_COLORFUL_KMESG
-	color_change('3', '2');
-#endif
+	/* Colour changes are to differenciate between the time, kernel function, and
+	 * message. The colours used are copied from what is seen in Linux. */
+	printf("\033[32m[ ");
 
-	console_putc('[');
-	console_putc(' ');
+	us = tsc_calibrated ? 0 : tsc_to_us(rdtsc());
 
-	if (tsc_calibrated)
-		us = 0;
-	else
-		us = tsc_to_us(rdtsc());
+	printf("%4u.%06u", us / 1000000, us % 1000000);
+	printf("] \033[33m%s: \033[97m", func);
 
-	s = us / 1000000;
-	rem = us % 1000000;
-
-	print_int(s, 10, 0, 4, 0);
-	console_putc('.');
-	print_int(rem, 10, 0, 6, 1);
-
-	console_putc(']');
-	console_putc(' ');
-
-#ifdef CONFIG_COLORFUL_KMESG
-	color_change('3', '3');
-#endif
-
-	vkprintf(func, 0);
-	console_putc(':');
-	console_putc(' ');
-#endif
-	color_change('9', '7');
-
-	va_start(ap, fmt);
-	vkprintf(fmt, ap);
-	va_end(ap);
+	va_start(args, fmt);
+	vprintf(fmt, args); // print the message
+	va_end(args);
 
 	color_change('3', '7');
 

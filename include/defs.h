@@ -34,20 +34,21 @@ void		sync();
 
 // console.c
 #define		printk(fmt, ...) \
-			_printf((char *)__func__, fmt, ##__VA_ARGS__)
+			_printk((char *)__func__, fmt, ##__VA_ARGS__)
 #define		debug(fmt, ...) \
 			uart_debug=1; \
-			_printf((char *)__func__, fmt, ##__VA_ARGS__);\
+			_printk((char *)__func__, fmt, ##__VA_ARGS__);\
 			uart_debug=0
 
 void		color_change(char, char);
 extern int	current_color;
 void		console_init(void);
 void		console_putc(int);
-void		_printf(char *func, char *fmt, ...);
+void		_printk(const char *func, const char *fmt, ...);
+void		printf(const char *format, ...);
+void		vprintf(const char *format, va_list args);
 void		console_interrupt(int(*)(void));
 int		sprintf(char *buf, const char *fmt, ...);
-void		vkprintf(const char *fmt, va_list ap);
 
 // exec.c
 int		exec(char*, char**);
@@ -172,6 +173,7 @@ int		holdingsleep(struct sleeplock*);
 void		initsleeplock(struct sleeplock*, char*);
 
 // string.c
+void		itoa(char *, int, int);
 int		memcmp(const void*, const void*, uint32_t);
 void*           memmove(void*, const void*, uint32_t);
 void*           memset(void*, int, uint32_t);

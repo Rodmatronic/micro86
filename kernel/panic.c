@@ -12,40 +12,19 @@ int panicked = 0;
 struct cons console;
 extern char * banner;
 
-struct stackframe {
-	struct stackframe* ebp;
-	uint32_t eip;
-};
-
-void traceback(unsigned int MaxFrames){
-	struct stackframe *stk;
-	asm ("movl %%ebp,%0" : "=r"(stk) ::);
-	printk("---- stack trace ----\n");
-
-	for(unsigned int frame = 0; stk && frame < MaxFrames; ++frame){
-		/* Unwind to previous stack frame */
-		printk("[0x%016x]\n", stk->eip);
-		stk = stk->ebp;
-	}
-	printk("-------- end --------");
-}
-
 void panic(char *fmt, ...){
-        va_list ap;
+	va_list ap;
 
         cli();
 	uart_debug=0;
         console.locking = 0;	// Disable console locking during panic
-        printk("Kernel panic: ");
-	color_change('9', '1');
+	printk("Kernel panic: ");
+	printf("\033[91m");
 
-        va_start(ap, fmt);
-        vkprintf(fmt, ap);
-        va_end(ap);
+	va_start(ap, fmt);
+	vprintf(fmt, ap);
+	va_end(ap);
 
-	console_putc('\n');
-	printk(banner);
-	traceback(5);
         panicked=1;	// Freeze other CPUs
         for(;;);
 }
