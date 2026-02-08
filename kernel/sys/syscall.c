@@ -171,6 +171,7 @@ static int (*syscalls[])(void) = {
 	[SYS_setdomainname]	= sys_setdomainname,
 	[SYS_uname]	= sys_uname,
 	[SYS_getpgid]	= sys_getpgid,
+	[SYS__llseek]	= sys__llseek,
 	[SYS_getdents]	= sys_getdents,
 	[SYS_readv]	= sys_readv,
 	[SYS_writev]	= sys_writev,

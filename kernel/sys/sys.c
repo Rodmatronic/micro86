@@ -679,7 +679,7 @@ int sys_lseek(void){
 		return -EINVAL;
 
 	if (f->type == FD_PIPE)
-		return -EPERM;
+		return -ESPIPE;
 
 	ilock(f->ip);
 
@@ -695,7 +695,7 @@ int sys_lseek(void){
 			break;
 		default:
 			iunlock(f->ip);
-			return -ENOENT;
+			return -EINVAL;
 		}
 
 		iunlock(f->ip);
@@ -1626,6 +1626,49 @@ int sys_uname(void){
 
 int sys_getpgid(void){
 	return myproc()->parent->gid;
+}
+
+/*
+ * long lseek
+ */
+int sys__llseek(void){
+	struct file *f;
+	int offset_high;
+	int offset_low;
+	uint64_t *result;
+	int whence;
+	uint64_t offset;
+	uint64_t new_offset;
+
+	if (argfd(0, 0, &f) < 0 || argint(1, &offset_high) < 0 || argint(2, &offset_low) < 0 || argptr(3, (char**)&result, sizeof(uint64_t)) < 0 || argint(4, &whence) < 0)
+		return -EINVAL;
+
+	if (f->type == FD_PIPE)
+		return -ESPIPE;
+
+	offset = ((uint64_t)offset_high << 32) | (uint64_t)offset_low;
+
+	ilock(f->ip);
+
+	switch (whence) {
+		case SEEK_SET:
+			new_offset = offset;
+			break;
+		case SEEK_CUR:
+			new_offset = f->off + offset;
+			break;
+		case SEEK_END:
+			new_offset = f->ip->size + offset;
+			break;
+		default:
+			iunlock(f->ip);
+			return -EINVAL;
+	}
+
+	f->off = new_offset;
+	iunlock(f->ip);
+	*result = new_offset;
+	return 0;
 }
 
 int sys_getdents(void){

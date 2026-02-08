@@ -112,6 +112,7 @@ extern int sys_setresuid32(void);
 extern int sys_setresgid32(void);
 extern int sys_setuid32(void);
 extern int sys_setgid32(void);
+extern int sys__llseek(void);
 extern int sys_getdents64(void);
 extern int sys_fcntl64(void);
 extern int sys_exit_group(void);

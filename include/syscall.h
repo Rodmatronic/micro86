@@ -86,6 +86,7 @@
 #define SYS_setdomainname	121
 #define SYS_uname	122
 #define SYS_getpgid	132
+#define SYS__llseek	140
 #define SYS_getdents	141
 #define SYS_readv	145
 #define SYS_writev	146
