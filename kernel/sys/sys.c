@@ -1184,10 +1184,12 @@ int sys_ioctl(void){
 	struct file *f;
 	int req;
 	void *arg;
+	struct tty *tty;
 
 	if (argfd(0, 0, &f) < 0 || argint(1, &req) < 0 || argptr(2, (char**)&arg, sizeof(struct winsize)) < 0)
 		return -EINVAL;
 
+	tty = &ttys[myproc()->tty];
 	switch(req){
 		case TCGETS:
 			return get_termios((struct termios*)arg);
@@ -1197,6 +1199,9 @@ int sys_ioctl(void){
 			return set_termios((struct termios*)arg);
 		case TIOCGWINSZ: // 21523 / 0x5413 winsize
 			return tty_get_winsize((struct winsize*)arg);
+		case TIOCGPGRP:
+			tty->pgrp = (int)arg;
+			return 0;
 		case VT_ACTIVATE:
 			return change_tty((int)arg);
 		case VT_WAITACTIVE:
@@ -1240,6 +1245,8 @@ int sys_fcntl(void){
 			if (arg & ~O_APPEND)
 				return -EPERM;
 			f->flags = (f->flags & ~O_APPEND) | (arg & O_APPEND);
+			return 0;
+		case F_SETFD:
 			return 0;
 		default:
 			return -EPERM;

@@ -574,6 +574,16 @@ struct proc* find_proc(int pid, struct proc *parent){
 	return 0;
 }
 
+void kill_pgrp(int pgrp, int sig) {
+	struct proc *p;
+
+	for (p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+		if (p->pgrp == pgrp){
+			kill(p->pid, sig);
+		}
+	}
+}
+
 /*
  * syscall in proc.c because of ptable lock
  */
@@ -603,10 +613,8 @@ int sys_setpgid(void){
 	int pid, pgid;
 	struct proc *p, *cur = myproc();
 
-	if (argint(0, &pid) < 0)
-		return -1;
-	if (argint(1, &pgid) < 0)
-		return -1;
+	if (argint(0, &pid) < 0 || argint(1, &pgid) < 0)
+		return -EINVAL;
 
 	acquire(&ptable.lock);
 
@@ -625,12 +633,7 @@ int sys_setpgid(void){
 	}
 	if (!p){
 		release(&ptable.lock);
-		return -1; // no such PID
-	}
-
-	if (p->parent != cur){
-		release(&ptable.lock);
-		return -1;
+		return -ESRCH; // no such PID
 	}
 
 	p->parent->gid = pgid;
