@@ -273,7 +273,7 @@ int change_tty(int num){
 	uint16_t *crt = (uint16_t*)P2V(0xB8000);
 	struct tty *old, *new;
 
-	if (num > NTTYS)	// very important
+	if (num > NTTYS - 1)	// very important
 		return -EINVAL;
 
 	old = &ttys[active_tty];
