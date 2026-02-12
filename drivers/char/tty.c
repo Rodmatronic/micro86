@@ -24,7 +24,7 @@
 int tty_write_output(struct tty *tty, char *src, int n);
 void tty_putc(struct tty *tty, int c);
 extern void cgaputc(int c);
-void handle_ansi_sgr(int param);
+void handle_ansi_sgr(struct tty *tty, int param);
 
 int active_tty = 1;	// default tty of 1
 struct tty ttys[NTTYS];
@@ -63,22 +63,19 @@ void set_cursor(struct tty *tty, int x, int y){
 	if (y < 0) y = 0;
 	if (y > 24) y = 24;
 	int pos = y * 80 + x;
-	outb(CRTPORT, 14);
-	outb(CRTPORT+1, pos >> 8);
-	outb(CRTPORT, 15);
-	outb(CRTPORT+1, pos & 0xFF);
+	tty->pos = pos;
 }
 
-void handle_ansi_sgr_sequence(int params[], int count){
+void handle_ansi_sgr_sequence(struct tty *tty, int params[], int count){
 	for (int i = 0; i < count; i++)
-		handle_ansi_sgr(params[i]);
+		handle_ansi_sgr(tty, params[i]);
 }
 
 void handle_ansi_clear(struct tty *tty, int param){
 	if (param == 2 || param == 0){ // 2J = clear entire screen, 0J = clear from cursor
 		set_cursor(tty, 0, 0);
 		for (int i = 0; i < 80*25; i++){
-			crt[i] = ' ' | 0x0700;
+			tty->screen[i] = ' ' | 0x0700;
 		}
 	} else if (param == 1){ // clear from top to cursor
 		outb(CRTPORT, 14);
@@ -86,117 +83,117 @@ void handle_ansi_clear(struct tty *tty, int param){
 		outb(CRTPORT, 15);
 		pos |= inb(CRTPORT+1);
 		for (int i = 0; i <= pos; i++){
-			crt[i] = ' ' | 0x0700;
+			tty->screen[i] = ' ' | 0x0700;
 		}
 	}
 }
 
-void handle_ansi_sgr(int param){
+void handle_ansi_sgr(struct tty *tty, int param){
 	switch(param){
 		case 0:	// reset
-			current_color = 0x0700; // white on black
+			tty->ansi_sgr = 0x0700; // white on black
 			break;
 		case 1:	// bold
-			current_color = (current_color & 0x0F00) | 0x0800;
+			tty->ansi_sgr = (tty->ansi_sgr & 0x0F00) | 0x0800;
 			break;
 		case 30: // black foreground
-			current_color = (current_color & 0xF0FF) | 0x0000;
+			tty->ansi_sgr = (tty->ansi_sgr & 0xF0FF) | 0x0000;
 			break;
 		case 31: // red foreground
-			current_color = (current_color & 0xF0FF) | 0x0400;
+			tty->ansi_sgr = (tty->ansi_sgr & 0xF0FF) | 0x0400;
 			break;
 		case 32: // green foreground
-			current_color = (current_color & 0xF0FF) | 0x0200;
+			tty->ansi_sgr = (tty->ansi_sgr & 0xF0FF) | 0x0200;
 			break;
 		case 33: // yellow foreground
-			current_color = (current_color & 0xF0FF) | 0x0600;
+			tty->ansi_sgr = (tty->ansi_sgr & 0xF0FF) | 0x0600;
 			break;
 		case 34: // blue foreground
-			current_color = (current_color & 0xF0FF) | 0x0100;
+			tty->ansi_sgr = (tty->ansi_sgr & 0xF0FF) | 0x0100;
 			break;
 		case 35: // magenta foreground
-			current_color = (current_color & 0xF0FF) | 0x0500;
+			tty->ansi_sgr = (tty->ansi_sgr & 0xF0FF) | 0x0500;
 			break;
 		case 36: // cyan foreground
-			current_color = (current_color & 0xF0FF) | 0x0300;
+			tty->ansi_sgr = (tty->ansi_sgr & 0xF0FF) | 0x0300;
 			break;
 		case 37: // white foreground
-			current_color = (current_color & 0xF0FF) | 0x0700;
+			tty->ansi_sgr = (tty->ansi_sgr & 0xF0FF) | 0x0700;
 			break;
 
 		case 40: // black background
-			current_color = (current_color & 0x0FFF) | 0x0000;
+			tty->ansi_sgr = (tty->ansi_sgr & 0x0FFF) | 0x0000;
 			break;
 		case 41: // red background
-			current_color = (current_color & 0x0FFF) | 0x4000;
+			tty->ansi_sgr = (tty->ansi_sgr & 0x0FFF) | 0x4000;
 			break;
 		case 42: // green background
-			current_color = (current_color & 0x0FFF) | 0x2000;
+			tty->ansi_sgr = (tty->ansi_sgr & 0x0FFF) | 0x2000;
 			break;
 		case 43: // yellow background
-			current_color = (current_color & 0x0FFF) | 0x6000;
+			tty->ansi_sgr = (tty->ansi_sgr & 0x0FFF) | 0x6000;
 			break;
 		case 44: // blue background
-			current_color = (current_color & 0x0FFF) | 0x1000;
+			tty->ansi_sgr = (tty->ansi_sgr & 0x0FFF) | 0x1000;
 			break;
 		case 45: // magenta background
-			current_color = (current_color & 0x0FFF) | 0x5000;
+			tty->ansi_sgr = (tty->ansi_sgr & 0x0FFF) | 0x5000;
 			break;
 		case 46: // cyan background
-			current_color = (current_color & 0x0FFF) | 0x3000;
+			tty->ansi_sgr = (tty->ansi_sgr & 0x0FFF) | 0x3000;
 			break;
 		case 47: // white background
-			current_color = (current_color & 0x0FFF) | 0x7000;
+			tty->ansi_sgr = (tty->ansi_sgr & 0x0FFF) | 0x7000;
 			break;
 
 		case 90: // hi black foreground
-			current_color = (current_color & 0xF0FF) | 0x0800;
+			tty->ansi_sgr = (tty->ansi_sgr & 0xF0FF) | 0x0800;
 			break;
 		case 91: // hi red foreground
-			current_color = (current_color & 0xF0FF) | 0x0C00;
+			tty->ansi_sgr = (tty->ansi_sgr & 0xF0FF) | 0x0C00;
 			break;
 		case 92: // hi green foreground
-			current_color = (current_color & 0xF0FF) | 0x0A00;
+			tty->ansi_sgr = (tty->ansi_sgr & 0xF0FF) | 0x0A00;
 			break;
 		case 93: // hi yellow foreground
-			current_color = (current_color & 0xF0FF) | 0x0E00;
+			tty->ansi_sgr = (tty->ansi_sgr & 0xF0FF) | 0x0E00;
 			break;
 		case 94: // hi blue foreground
-			current_color = (current_color & 0xF0FF) | 0x0900;
+			tty->ansi_sgr = (tty->ansi_sgr & 0xF0FF) | 0x0900;
 			break;
 		case 95: // hi magenta foreground
-			current_color = (current_color & 0xF0FF) | 0x0D00;
+			tty->ansi_sgr = (tty->ansi_sgr & 0xF0FF) | 0x0D00;
 			break;
 		case 96: // hi cyan foreground
-			current_color = (current_color & 0xF0FF) | 0x0B00;
+			tty->ansi_sgr = (tty->ansi_sgr & 0xF0FF) | 0x0B00;
 			break;
 		case 97: // hi white foreground
-			current_color = (current_color & 0xF0FF) | 0x0F00;
+			tty->ansi_sgr = (tty->ansi_sgr & 0xF0FF) | 0x0F00;
 			break;
 
 		case 100: // hi black background
-			current_color = (current_color & 0x0FFF) | 0x8000;
+			tty->ansi_sgr = (tty->ansi_sgr & 0x0FFF) | 0x8000;
 			break;
 		case 101: // hi red background
-			current_color = (current_color & 0x0FFF) | 0xC000;
+			tty->ansi_sgr = (tty->ansi_sgr & 0x0FFF) | 0xC000;
 			break;
 		case 102: // hi green background
-			current_color = (current_color & 0x0FFF) | 0xA000;
+			tty->ansi_sgr = (tty->ansi_sgr & 0x0FFF) | 0xA000;
 			break;
 		case 103: // hi yellow background
-			current_color = (current_color & 0x0FFF) | 0xE000;
+			tty->ansi_sgr = (tty->ansi_sgr & 0x0FFF) | 0xE000;
 			break;
 		case 104: // hi blue background
-			current_color = (current_color & 0x0FFF) | 0x9000;
+			tty->ansi_sgr = (tty->ansi_sgr & 0x0FFF) | 0x9000;
 			break;
 		case 105: // hi magenta background
-			current_color = (current_color & 0x0FFF) | 0xD000;
+			tty->ansi_sgr = (tty->ansi_sgr & 0x0FFF) | 0xD000;
 			break;
 		case 106: // hi cyan background
-			current_color = (current_color & 0x0FFF) | 0xB000;
+			tty->ansi_sgr = (tty->ansi_sgr & 0x0FFF) | 0xB000;
 			break;
 		case 107: // hi white background
-			current_color = (current_color & 0x0FFF) | 0xF000;
+			tty->ansi_sgr = (tty->ansi_sgr & 0x0FFF) | 0xF000;
 			break;
 	}
 }
@@ -255,7 +252,6 @@ void tty_interrupt(int (*getc)(void)){
 
 		default:
 			if (c != 0 && tty->input_e-tty->input_r < INPUT_BUF){
-//				c = (c == '\r') ? '\n' : c;
 				tty->input_buf[tty->input_e++ % INPUT_BUF] = c;
 				if (tty->termios.c_lflag & ECHO)
 					if (tty->attached_console)
@@ -271,21 +267,142 @@ void tty_interrupt(int (*getc)(void)){
 }
 
 /*
- * Output to the TTY
+ * Switch over the context to another virtual TTY
+ */
+int change_tty(int num){
+	uint16_t *crt = (uint16_t*)P2V(0xB8000);
+	struct tty *old, *new;
+
+	if (num > NTTYS)	// very important
+		return -EINVAL;
+
+	old = &ttys[active_tty];
+	new = &ttys[num];
+
+	for (int i = 0; i < TTY_ROWS * TTY_COLS; i++) {
+		old->screen[i] = crt[i];
+	}
+
+	active_tty = num;
+
+	for (int i = 0; i < TTY_ROWS * TTY_COLS; i++) {
+		crt[i] = new->screen[i];
+	}
+
+	outb(CRTPORT, 14);
+	outb(CRTPORT+1, new->pos >> 8);
+	outb(CRTPORT, 15);
+	outb(CRTPORT+1, new->pos);
+	return 0;
+}
+
+void dumb_putc(struct tty *tty, int c){
+	crt[tty->pos - 1] = (c & 0xff) | tty->ansi_sgr;
+}
+
+void tty_sgr(struct tty *tty, int sgr){
+	tty->ansi_sgr = (tty->ansi_sgr & ~0x0F00) | sgr;
+}
+
+/*
+ * Output to the TTY or VGA console if available.
  */
 void tty_putc(struct tty *tty, int c){
-	if (tty->attached_console){
-		if (tty->num == active_tty){
-			cgaputc(c);
+	int rflag = 0;
+	int spaces = 8 - (tty->pos % 8);
+
+	switch(c) {
+		case('\n'):	// newline
+			tty->pos += 80 - tty->pos%80;
+			break;
+
+		case('\r'):	// carriage return
+			tty->pos -= tty->pos % 80;
+			rflag = 1;
+			break;
+
+		case(BACKSPACE):
+			if (tty->pos > 0) -- tty->pos;
+			break;
+
+	case('\t'):	// tab
+		for (int i = 0; i < spaces; i++){
+			tty->screen[tty->pos++] = ' ' | tty->ansi_sgr;
+			if ((pos/80) >= 25){
+				memmove(tty->screen, tty->screen+80, sizeof(tty->screen[0])*24*80);
+				tty->pos -= 80;
+				memset(tty->screen+tty->pos, 0, sizeof(tty->screen[0])*(25*80 - tty->pos));
+				if (tty->attached_console){
+					if (tty->num == active_tty){
+						for (int i = 0; i < TTY_ROWS * TTY_COLS; i++) {
+							crt[i] = tty->screen[i];
+						}
+					}
+				}
+			}
+		}
+		break;
+
+	default:
+		if ((c == 0x00))
+			break;
+		if ((c & 0xff) < 0x20){	// special characters
+			tty->screen[tty->pos++] = '^' | tty->ansi_sgr;
+			tty->screen[tty->pos++] = ((c & 0xff) + '@') | tty->ansi_sgr;
+			if (tty->attached_console){
+				if (tty->num == active_tty){
+					crt[tty->pos-2] = '^' | tty->ansi_sgr;
+					crt[tty->pos-1] = ((c & 0xff) + '@') | tty->ansi_sgr;
+				}
+			}
+		} else {	// normal characters
+			tty->screen[tty->pos++] = (c & 0xff) | tty->ansi_sgr;
+			if (tty->attached_console){
+				if (tty->num == active_tty){
+					dumb_putc(tty, c);
+				}
+			}
+		}
+		break;
+	}
+
+	if ((tty->pos/80) >= 25){	// Scroll up.
+		memmove(tty->screen, tty->screen+80, sizeof(tty->screen[0])*24*80);
+		tty->pos -= 80;
+		memset(tty->screen+tty->pos, 0, sizeof(tty->screen[0])*(25*80 - tty->pos));
+		if (tty->attached_console){
+			if (tty->num == active_tty){
+				for (int i = 0; i < TTY_ROWS * TTY_COLS; i++) {
+					crt[i] = tty->screen[i];
+				}
+			}
 		}
 	}
-	
+
+	if (!rflag) {	// don't do this when printing \r
+		tty->screen[tty->pos] = ' ' | 0x0700;
+		if (tty->attached_console){
+			if (tty->num == active_tty){
+				crt[tty->pos] = ' ' | 0x0700;
+			}
+		}
+	}
+
+	if (tty->attached_console){
+		if (tty->num == active_tty){
+			outb(CRTPORT, 14);
+			outb(CRTPORT+1, tty->pos>>8);
+			outb(CRTPORT, 15);
+			outb(CRTPORT+1, tty->pos);
+		}
+	}
+
 	// TODO: If this is a PTY, write to master side
 	// TODO: If logging is enabled, write to log
 }
 
 /*
- * Pretty things up before putting them to the screen or serial
+ * Pretty things up before putting characters down to the screen or serial
  */
 void termio_putc(struct tty *tty, char c){
 	// If output processing is disabled, just pass through
@@ -293,7 +410,7 @@ void termio_putc(struct tty *tty, char c){
 		tty_putc(tty, c);
 		return;
 	}
-	
+
 	switch (c){
 	case '\n':
 		if (tty->termios.c_oflag & ONLCR){	// Map NL to CR-NL
@@ -342,7 +459,7 @@ void termio_putc(struct tty *tty, char c){
 				tty->ansi_param_count = 1;
 				tty->ansi_state = ANSI_PARAM;
 			} else if (c == 'm'){
-				handle_ansi_sgr(0);
+				handle_ansi_sgr(tty, 0);
 				tty->ansi_state = ANSI_NORMAL;
 			} else if (c == 'H'){
 				set_cursor(tty, 0, 0);
@@ -361,7 +478,7 @@ void termio_putc(struct tty *tty, char c){
 						tty->ansi_param_count++;
 					return;
 				} else if (c == 'm'){
-					handle_ansi_sgr_sequence(tty->ansi_params, tty->ansi_param_count);
+					handle_ansi_sgr_sequence(tty, tty->ansi_params, tty->ansi_param_count);
 					tty->ansi_state = ANSI_NORMAL;
 					return;
 				} else if (c == 'J'){
@@ -457,12 +574,27 @@ int ttyread(int minor, struct inode *ip, char *dst, int n, uint32_t off){
 	return target - n;
 }
 
+/*
+ * initialize the index of virtual terminals
+ */
 void tty_init(void){
+	uint16_t *crt = (uint16_t*)P2V(0xB8000);
+
 	for (int i = 0; i < NTTYS; i++){
 		ttys[i].num = i;
 		ttys[i].input_r = ttys[i].input_w = ttys[i].input_e = 0;
 		ttys[i].attached_console = 1;
+		ttys[i].pos = 0;
+		for (int j = 0; j < TTY_ROWS * TTY_COLS; j++){
+			ttys[i].screen[j] = 0x0720;	// black with gray text
+		}
+		ttys[i].ansi_sgr = 0x0700;
 		ttys[i].ansi_param_count = 0;
 		ttys[i].termios = default_termios;
 	}
+
+	for (int i = 0; i < TTY_ROWS * TTY_COLS; i++){
+		ttys[1].screen[i] = crt[i];
+	}
+	ttys[1].pos = pos;
 }

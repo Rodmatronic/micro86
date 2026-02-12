@@ -19,7 +19,7 @@ void panic(char *fmt, ...){
 	uart_debug=0;
         console.locking = 0;	// Disable console locking during panic
 	printk("Kernel panic: ");
-	color_change(0x0C00);
+	tty_sgr(&ttys[active_tty], 0x0C00);
 
 	va_start(ap, fmt);
 	vprintf(fmt, ap);

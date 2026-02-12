@@ -10,6 +10,7 @@ struct file;
 struct inode;
 struct pipe;
 struct proc;
+struct tty;
 struct rtcdate;
 struct spinlock;
 struct sleeplock;
@@ -218,6 +219,11 @@ uint64_t	rdtsc(void);
 void		tsc_init(void);
 uint64_t	tsc_to_us(uint64_t);
 uint64_t	tsc_to_ns(uint64_t);
+
+// tty.c
+int		change_tty(int);
+void		tty_putc(struct tty *, int);
+void		tty_sgr(struct tty *, int);
 
 // uart.c
 extern int	uart_debug;

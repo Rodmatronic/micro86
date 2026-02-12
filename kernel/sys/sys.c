@@ -1180,9 +1180,6 @@ int set_termios(struct termios *termios){
 	return 0;
 }
 
-/*
- * palceholder for IOCTL to get printf working under MUSL
- */
 int sys_ioctl(void){
 	struct file *f;
 	int req;
@@ -1200,6 +1197,10 @@ int sys_ioctl(void){
 			return set_termios((struct termios*)arg);
 		case TIOCGWINSZ: // 21523 / 0x5413 winsize
 			return tty_get_winsize((struct winsize*)arg);
+		case VT_ACTIVATE:
+			return change_tty((int)arg);
+		case VT_WAITACTIVE:
+			return 0;
 		default:
 			printk("%s: bad ioctl request [0x%x]\n", myproc()->name, req);
 			return -ENOTTY;

@@ -31,6 +31,7 @@ int current_color = 0x0700;
 struct cons cons;
 int x, y = 0;
 unsigned short *crt = (ushort*)P2V(0xb8000);	// CGA memory
+int pos = 0;
 
 /* Format a string and print it on the screen, just like the libc
  * function printf. */
@@ -140,10 +141,6 @@ void vprintf(const char *format, va_list args){
 	}
 }
 
-void color_change(int colour){
-	current_color = (current_color & ~0x0F00) | colour;
-}
-
 /* Used by printk to print to console */
 void _printk(const char *func, const char *fmt, ...){
 	int locking;
@@ -156,29 +153,28 @@ void _printk(const char *func, const char *fmt, ...){
 
 	/* Colour changes are to differenciate between the time, kernel function, and
 	 * message. The colours used are copied from what is seen in Linux. */
-	color_change(0x0200);
+	tty_sgr(&ttys[active_tty], 0x0200);
 	printf("[ ");
 
 	us = tsc_calibrated ? 0 : tsc_to_us(rdtsc());
 	printf("%4u.%06u", us / 1000000, us % 1000000);
 
 	printf("] ");
-	color_change(0x0600);
+	tty_sgr(&ttys[active_tty], 0x0600);
 	printf("%s: ", func);
-	color_change(0x0F00);
+	tty_sgr(&ttys[active_tty], 0x0F00);
 
 	va_start(args, fmt);
 	vprintf(fmt, args); // print the message
 	va_end(args);
 
-	color_change(0x0700);
+	tty_sgr(&ttys[active_tty], 0x0700);
 
 	if (locking)
 		release(&cons.lock);
 }
 
 void cgaputc(int c){
-	int pos;
 	int rflag = 0;
 
 	// Cursor position: col + 80*row.
@@ -186,6 +182,7 @@ void cgaputc(int c){
 	pos = inb(CRTPORT+1) << 8;
 	outb(CRTPORT, 15);
 	pos |= inb(CRTPORT+1);
+
 	int spaces = 8 - (pos % 8);
 
 	switch(c) {
@@ -256,7 +253,7 @@ void console_putc(int c){
 	if (uart_debug)	// this is for the serial debug line, don't print to vga
 		return;
 
-	cgaputc(c);
+	tty_putc(&ttys[active_tty], c);
 }
 
 /*

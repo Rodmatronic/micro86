@@ -25,6 +25,10 @@ extern void tty_init(void);
 int kmain(uint32_t addr){
 	// The first thing we do is set up serial for debugging.
 	uart_init();	// serial port for debugging
+
+	// Enable the early TTY console so that we can see
+	// important kernel messages
+	tty_init();
 	printk(banner);
 	multiboot_init(addr);	// Verify Multiboot2 header & set up physical memory
 	kinit1(end, P2V(4*1024*1024)); // phys page allocator
@@ -39,7 +43,6 @@ int kmain(uint32_t addr){
 	pic_enable(IRQ_COM1);	// Enable keyboard interrupts for COM1
 	segment_init();	// Segment descriptors
 	console_init();	// Console hardware
-	tty_init();	// Virtual/Serial terminals
 	process_init();	// Process table
 	trap_init();	// Trap vectors
 
