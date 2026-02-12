@@ -588,6 +588,7 @@ void tty_init(void){
 
 	for (int i = 0; i < NTTYS; i++){
 		ttys[i].num = i;
+		ttys[i].pgrp = 0;
 		ttys[i].input_r = ttys[i].input_w = ttys[i].input_e = 0;
 		ttys[i].attached_console = 1;
 		ttys[i].pos = 0;
