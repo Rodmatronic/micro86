@@ -590,7 +590,7 @@ void kill_pgrp(int pgrp, int sig) {
 int sys_rt_sigsuspend(void){
 	uint32_t *mask;
 	if (argptr(0, (void*)&mask, sizeof(*mask)) < 0)
-		return -1;
+		return -EINVAL;
 
 	struct proc *p = myproc();
 	uint32_t oldmask = p->sigmask;
@@ -606,7 +606,7 @@ int sys_rt_sigsuspend(void){
 
 	dosignal();
 
-	return -1;
+	return -EINTR;
 }
 
 int sys_setpgid(void){
