@@ -270,6 +270,7 @@ int sys_open(void){
 	int mode = 0;
 	struct file *f;
 	struct inode *ip;
+	struct proc *p = myproc();
 
 	if (argstr(0, &path) < 0 || argint(1, &omode) < 0)
 		return -EINVAL;
@@ -292,6 +293,15 @@ int sys_open(void){
 		}
 		ilock(ip);
 	}
+
+	if (S_ISCHR(ip->mode)){
+		if (ip->major == 4){	// tty
+			if (p->leader && p->tty < 0){
+				p->tty = ip->minor;
+			}
+		}
+	}
+
 	if (omode & O_TRUNC)
 		itrunc(ip);
 
