@@ -94,7 +94,7 @@ found:
 	p->umask = 0022;
 	p->session = 0;
 	p->leader = 0;
-	p->tty = 1;
+	p->tty = -1;
 
 	for (int i = 0; i < NGROUPS; i++)
 		p->groups[i] = 0;
@@ -150,6 +150,7 @@ void user_init(void){
 	p->tf->eflags = FL_IF;
 	p->tf->esp = PGSIZE;
 	p->tf->eip = 0;	// beginning of initcode.S
+	p->tty = -1;
 
 	safestrcpy(p->name, "initcode", sizeof(p->name));
 	p->cwd = namei("/");

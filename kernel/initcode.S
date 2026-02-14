@@ -20,6 +20,10 @@ start:
 	movl    $((4 << 8) | 1), %edx       # makedev(major=4, minor=1) /dev/tty1
 	int     $T_SYSCALL
 
+	# setsid
+	movl	$SYS_setsid, %eax
+	int	$T_SYSCALL
+
 	# open console
 	movl	$SYS_open, %eax
 	movl	$tty, %ebx
