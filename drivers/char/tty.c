@@ -381,7 +381,8 @@ void tty_putc(struct tty *tty, int c){
 			break;
 
 	case(BACKSPACE):	// backspace if not handled
-		tty->screen[tty->pos--] = ' ' | 0x0700;
+		tty->pos--;
+		tty->screen[tty->pos] = ' ' | 0x0700;
 		if (tty->attached_console)
 			if (tty->num == active_tty)
 				crt[tty->pos] = ' ' | 0x0700;
