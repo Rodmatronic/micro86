@@ -120,8 +120,8 @@ $S/fs.img: $S/mkfs/mkfs
 
 clean:
 	find . -type f \( -name '*.o' -o -name '*.asm' -o -name '*.sym' -o -name '*.d' \) -delete
-	rm -rf $S/pl/vectors.S $S/boot/entryother \
-	$S/initcode $S/initcode.out $S/miunix xv6.img $S/fs.img $S/kernelmemfs \
+	rm -rf $S/pl/vectors.S $S/boot/asm/entryother \
+	$S/asm/initcode $S/asm/initcode.out $S/miunix xv6.img $S/fs.img $S/kernelmemfs \
 	xv6memfs.img $S/mkfs/mkfs .gdbinit microunix.iso
 	rm -rf isotree/
 
