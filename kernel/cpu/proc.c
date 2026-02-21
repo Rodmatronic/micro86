@@ -132,7 +132,7 @@ found:
 // Set up first user process.
 void user_init(void){
 	struct proc *p;
-	extern char _binary_kernel_initcode_start[], _binary_kernel_initcode_size[];
+	extern char _binary_kernel_asm_initcode_start[], _binary_kernel_asm_initcode_size[];
 
 	p = allocproc();
 	p->uid = p->euid = p->suid = p->gid = p->egid = p->sgid = 0;
@@ -141,7 +141,7 @@ void user_init(void){
 	if ((p->pgdir = setupkvm()) == 0)
 		panic("userinit: out of memory");
 
-	inituvm(p->pgdir, _binary_kernel_initcode_start, (int)_binary_kernel_initcode_size);
+	inituvm(p->pgdir, _binary_kernel_asm_initcode_start, (int)_binary_kernel_asm_initcode_size);
 	p->sz = PGSIZE;
 	memset(p->tf, 0, sizeof(*p->tf));
 	p->tf->cs = (SEG_UCODE << 3) | DPL_USER;

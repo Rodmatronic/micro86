@@ -24,35 +24,36 @@ QEMUOPTS += -accel tcg -cdrom microunix.iso -boot d -drive file=$S/fs.img,index=
 
 #kernel, then drivers
 OBJS = \
-	$S/bio.o\
-	$S/exec.o\
-	$S/file.o\
-	$S/fs.o\
-	$S/kalloc.o\
-	$S/lapic.o\
-	$S/log.o\
+	$S/fs/bio.o\
+	$S/cpu/cpu.o\
+	$S/lib/exec.o\
+	$S/fs/file.o\
+	$S/fs/fs.o\
+	$S/mm/kalloc.o\
+	$S/fs/log.o\
 	$S/main.o\
 	$S/boot/multiboot.o\
-	$S/mp.o\
-	$S/panic.o\
-	$S/picirq.o\
-	$S/pipe.o\
-	$S/proc.o\
-	$S/signal.o\
-	$S/sleeplock.o\
-	$S/spinlock.o\
-	$S/string.o\
-	$S/swtch.o\
+	$S/cpu/mp.o\
+	$S/lib/panic.o\
+	$S/lib/print.o\
+	$S/cpu/picirq.o\
+	$S/fs/pipe.o\
+	$S/cpu/proc.o\
+	$S/signal/signal.o\
+	$S/cpu/sleeplock.o\
+	$S/cpu/spinlock.o\
+	$S/lib/string.o\
+	$S/asm/swtch.o\
 	$S/sys/syscall.o\
 	$S/sys/sys.o\
-	$S/timer.o\
-	$S/boot/trapasm.o\
-	$S/trap.o\
-	$S/tsc.o\
-	$S/time.o\
-	$S/type64.o\
+	$S/cpu/pit.o\
+	$S/boot/asm/trapasm.o\
+	$S/cpu/trap.o\
+	$S/time/tsc.o\
+	$S/time/time.o\
+	$S/lib/type64.o\
 	$S/pl/vectors.o\
-	$S/vm.o\
+	$S/mm/vm.o\
 	$D/char/console.o\
 	$D/char/mem.o\
 	$D/char/random.o\
@@ -71,23 +72,23 @@ xv6memfs.img: $S/boot/bootblock $S/kernelmemfs
 	dd if=$S/boot/bootblock of=xv6memfs.img conv=notrunc
 	dd if=$S/kernelmemfs of=xv6memfs.img seek=1 conv=notrunc
 
-$S/boot/entryother: $S/boot/entryother.S
-	$(CC) $(CFLAGS) -fno-pic -nostdinc -I. -c $S/boot/entryother.S -o $S/boot/entryother.o
-	$(OBJCOPY) -S -O binary -j .text $S/boot/entryother.o $S/boot/entryother
-	$(OBJDUMP) -S $S/boot/entryother.o > $S/boot/entryother.asm
+$S/boot/asm/entryother: $S/boot/asm/entryother.S
+	$(CC) $(CFLAGS) -fno-pic -nostdinc -I. -c $S/boot/asm/entryother.S -o $S/boot/asm/entryother.o
+	$(OBJCOPY) -S -O binary -j .text $S/boot/asm/entryother.o $S/boot/asm/entryother
+	$(OBJDUMP) -S $S/boot/asm/entryother.o > $S/boot/asm/entryother.asm
 
-$S/initcode: $S/initcode.S
-	$(CC) $(CFLAGS) -nostdinc -I. -c $S/initcode.S -o $S/initcode.o
-	$(LD) $(LDFLAGS) -N -e start -Ttext 0 -o $S/initcode.out $S/initcode.o
-	$(OBJCOPY) -S -O binary $S/initcode.out $S/initcode
-	$(OBJDUMP) -S $S/initcode.o > $S/initcode.asm
+$S/asm/initcode: $S/asm/initcode.S
+	$(CC) $(CFLAGS) -nostdinc -I. -c $S/asm/initcode.S -o $S/asm/initcode.o
+	$(LD) $(LDFLAGS) -N -e start -Ttext 0 -o $S/asm/initcode.out $S/asm/initcode.o
+	$(OBJCOPY) -S -O binary $S/asm/initcode.out $S/asm/initcode
+	$(OBJDUMP) -S $S/asm/initcode.o > $S/asm/initcode.asm
 
 include $(wildcard kernel/*.d)
 include $(wildcard drivers/*.d)
 
-$S/miunix: $(OBJS) $S/boot/entry.o $S/boot/entryother $S/initcode $S/boot/kernel.ld
-	$(LD) $(LDFLAGS) -T $S/boot/kernel.ld -o $S/miunix $S/boot/entry.o $(OBJS) -b binary $S/initcode $S/boot/entryother
-	$(OBJDUMP) -S $S/miunix > $S/kernel.asm
+$S/miunix: $(OBJS) $S/boot/asm/entry.o $S/boot/asm/entryother $S/asm/initcode $S/boot/kernel.ld
+	$(LD) $(LDFLAGS) -T $S/boot/kernel.ld -o $S/miunix $S/boot/asm/entry.o $(OBJS) -b binary $S/asm/initcode $S/boot/asm/entryother
+	$(OBJDUMP) -S $S/miunix > $S/asm/kernel.asm
 	$(OBJDUMP) -t $S/miunix | sed '1,/SYMBOL TABLE/d; s/ .* / /; /^$$/d' > $S/kernel.sym
 
 # kernelmemfs is a copy of kernel that maintains the
