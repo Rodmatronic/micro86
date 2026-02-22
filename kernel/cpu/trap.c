@@ -120,14 +120,14 @@ void trap(struct trapframe *tf){
 		break;
 	case T_IRQ0 + 7:
 	case T_IRQ0 + IRQ_SPURIOUS:
-		printk("warning: spurious interrupt at %x:%x\n", tf->cs, tf->eip);
+		printk("warning: spurious interrupt at 0x%x:0x%x\n", tf->cs, tf->eip);
 		interrupt_eoi();
 		break;
 
 	default:
 		if (myproc() == 0 || (tf->cs&3) == 0){
 			// In kernel, it must be our mistake.
-			printk("unexpected trap %d [eip %x][cr2=0x%x]\n", tf->trapno, tf->eip, rcr2());
+			printk("unexpected trap %d [eip=0x%x][cr2=0x%x]\n", tf->trapno, tf->eip, rcr2());
 			panic("%s", exceptions[tf->trapno]);
 		}
 		// In user space, assume process misbehaved.
