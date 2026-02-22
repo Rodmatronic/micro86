@@ -201,9 +201,9 @@ int loaduvm(pde_t *pgdir, char *addr, struct inode *ip, uint32_t offset, uint32_
 	uint32_t i, pa, n;
 	pte_t *pte;
 
-	if ((uint32_t) addr % PGSIZE != 0){
-		panic("loaduvm: addr must be page aligned");
-	}
+//	if ((uint32_t) addr % PGSIZE != 0){
+//		panic("loaduvm: addr must be page aligned");
+//	}
 	for (i = 0; i < sz; i += PGSIZE){
 		if ((pte = walkpgdir(pgdir, addr+i, 0)) == 0)
 			panic("loaduvm: address should exist");
