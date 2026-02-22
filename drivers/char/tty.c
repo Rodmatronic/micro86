@@ -618,9 +618,12 @@ int ttyread(int minor, struct inode *ip, char *dst, int n, uint32_t off){
 	while (n > 0){
 		while (tty->input_r == tty->input_w){
 			if (myproc()->killed){
-				ilock(ip);
 				release(&tty->lock);
-				return -1;
+				return -EINTR;
+			}
+			if (myproc()->sigpending & ~myproc()->sigmask){
+				release(&tty->lock);
+				return -EINTR;
 			}
 			sleep(&tty->input_r, &tty->lock);
 		}
