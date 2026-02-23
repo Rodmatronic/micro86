@@ -581,6 +581,7 @@ void kill_pgrp(int pgrp, int sig) {
 
 	for (p = ptable.proc; p < &ptable.proc[NPROC]; p++){
 		if (p->pgrp == pgrp){
+			debug("^Cing %s\n", p->name);
 			kill(p->pid, sig);
 		}
 	}

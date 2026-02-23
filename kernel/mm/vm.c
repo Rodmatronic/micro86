@@ -225,8 +225,8 @@ int allocuvm(pde_t *pgdir, uint32_t oldsz, uint32_t newsz){
 	char *mem;
 	uint32_t a;
 
-	if (newsz >= KERNBASE)
-		return 0;
+//	if (newsz >= KERNBASE)
+//		return 0;
 	if (newsz < oldsz)
 		return oldsz;
 

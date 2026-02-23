@@ -70,19 +70,17 @@ int exec(char *path, char **argv){
 	for(i=0, off=elf.phoff; i<elf.phnum; i++, off+=sizeof(ph)){
 		if(readi(ip, (char*)&ph, off, sizeof(ph)) != sizeof(ph))
 			goto bad;
-		debug("addr of 0x%x\n", ph.vaddr);
 		if(ph.type != ELF_PROG_LOAD)
 			continue;
 		if(ph.memsz < ph.filesz)
 			goto bad;
 		if(ph.vaddr + ph.memsz < ph.vaddr)
 			goto bad;
-		uint32_t page_off = ph.vaddr % PGSIZE;
-		uint32_t lo = PGROUNDDOWN(ph.vaddr);
-		uint32_t hi = ph.vaddr + ph.memsz;
-		if((sz = allocuvm(pgdir, lo, hi)) == 0)
+		if((sz = allocuvm(pgdir, sz, ph.vaddr + ph.memsz)) == 0)
 			goto bad;
-		if(loaduvm(pgdir, (char*)lo, ip, ph.off - page_off, ph.filesz + page_off) < 0)
+		if(ph.vaddr % PGSIZE != 0)
+			goto bad;
+		if(loaduvm(pgdir, (char*)ph.vaddr, ip, ph.off, ph.filesz) < 0)
 			goto bad;
 	}
 	iunlockput(ip);
