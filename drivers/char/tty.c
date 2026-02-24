@@ -278,6 +278,17 @@ void tty_interrupt(int (*getc)(void)){
 				tty->input_e = tty->input_w = tty->input_r;
 			}
 			break;
+		case C('\\'):	// Kill (SIGKILL)
+			if (tty->termios.c_lflag & ISIG) {
+				if (tty->pgrp > 0)
+					kill_pgrp(tty->pgrp, SIGKILL);
+				if (tty->termios.c_lflag & ECHO)
+					if (tty->attached_console)
+						tty_putc(tty, c);
+				// Discard input line
+				tty->input_e = tty->input_w = tty->input_r;
+			}
+			break;
 		case C('H'): case '\x7f':	// Backspace
 			if (tty->termios.c_lflag & ICANON){
 				if (tty->input_e != tty->input_w){
