@@ -224,9 +224,8 @@ int loaduvm(pde_t *pgdir, char *addr, struct inode *ip, uint32_t offset, uint32_
 int allocuvm(pde_t *pgdir, uint32_t oldsz, uint32_t newsz){
 	char *mem;
 	uint32_t a;
+	struct proc *p;
 
-//	if (newsz >= KERNBASE)
-//		return 0;
 	if (newsz < oldsz)
 		return oldsz;
 
@@ -234,13 +233,15 @@ int allocuvm(pde_t *pgdir, uint32_t oldsz, uint32_t newsz){
 	for (; a < newsz; a += PGSIZE){
 		mem = kalloc();
 		if (mem == 0){
-			panic("Out of memory");
+			p = find_proc(-2, 0);	// newest process
+			p->killed = 1;
+			printk("Out of memory. Killed process %s (%d)\n", p->name, p->pid);
 			deallocuvm(pgdir, newsz, oldsz);
 			return 0;
 		}
 		memset(mem, 0, PGSIZE);
 		if (mappages(pgdir, (char*)a, PGSIZE, V2P(mem), PTE_W|PTE_U) < 0){
-			printk("allocuvm out of memory (2)\n");
+			printk("Out of memory.\n");
 			deallocuvm(pgdir, newsz, oldsz);
 			kfree(mem);
 			return 0;

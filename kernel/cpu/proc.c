@@ -561,6 +561,17 @@ int kill(int pid, int status){
  */
 struct proc* find_proc(int pid, struct proc *parent){
 	struct proc *p;
+	struct proc *max_proc = 0;
+
+	if (pid == -2){	// Highest (avail) PID
+		for (p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+			if (p->state == UNUSED)
+				continue;
+			if (max_proc == 0 || p->pid > max_proc->pid)
+				max_proc = p;
+		}
+		return max_proc;
+	}
 
 	for (p = ptable.proc; p < &ptable.proc[NPROC]; p++){
 		if (pid == -1){ // Child process
