@@ -82,6 +82,6 @@ deliver_failed:
 	// Signal cannot be written and the userspace stack is wildly broken.
 	// The process must be immidiately terminated to stop it from destroying
 	// things even further.
-	p->sigpending = 0;
+//	p->sigpending = 0;
 	p->killed = 1;
 }

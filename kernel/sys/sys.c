@@ -1081,12 +1081,23 @@ int sys_getgid(void){
 }
 
 int sys_signal(void){
-	int signum;
-	uint32_t handler;
+	uint32_t signum, handler, restorer, i;
 	struct proc *p = myproc();
 
-	if (argint(0, &signum) < 0 || argint(1, (int*)&handler) < 0)
+	if (argint(0, (int*)&signum) < 0 || argint(1, (int*)&handler) < 0 || argint(2, (int*)&restorer))
 		return -EINVAL;
+
+	switch (signum){
+		case SIGHUP: case SIGINT: case SIGQUIT: case SIGILL:
+		case SIGTRAP: case SIGABRT: case SIGFPE: case SIGUSR1:
+		case SIGSEGV: case SIGUSR2: case SIGPIPE: case SIGALRM:
+		case SIGCHLD:
+			i=(long) p->sighandlers[signum];
+			p->sighandlers[signum] = handler;
+			p->sigrestorers[signum] = restorer;
+			return i;
+		default: return -1;
+	}
 
 	if (signum < 1 || signum >= NSIG || signum == SIGKILL)
 		return -EPERM;  // Can't catch SIGKILL

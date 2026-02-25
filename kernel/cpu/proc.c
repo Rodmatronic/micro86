@@ -603,24 +603,22 @@ void kill_pgrp(int pgrp, int sig){
 
 /*
  * syscall in proc.c because of ptable lock
+ * wait on interrupt
  */
 int sys_rt_sigsuspend(void){
-	uint32_t *mask;
-	if (argptr(0, (void*)&mask, sizeof(*mask)) < 0)
+	uint32_t oldmask;
+	struct proc *p = myproc();
+
+	if (argptr(0, (void*)&oldmask, sizeof(oldmask)) < 0)
 		return -EINVAL;
 
-	struct proc *p = myproc();
-	uint32_t oldmask = p->sigmask;
-
+	p->sigmask = oldmask;
 	acquire(&ptable.lock);
-	p->sigmask = *mask;
 
-	while((p->sigpending & ~p->sigmask) == 0)
+	while (!p->sigpending)
 		sleep(p, &ptable.lock);
 
-	p->sigmask = oldmask;
 	release(&ptable.lock);
-
 	return -EINTR;
 }
 
