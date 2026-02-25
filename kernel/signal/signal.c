@@ -30,6 +30,7 @@ void dosignal(void){
 		handler = p->sighandlers[signo];
 
 		if (signo == SIGKILL || handler == (uint32_t)SIG_DFL){
+			p->termsig = signo;
 			p->killed = 1;
 			return;
 		}

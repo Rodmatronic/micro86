@@ -140,6 +140,7 @@ struct proc*	find_proc(int, struct proc *parent);
 int		fork(void);
 int		grow_proc(int);
 int		kill(int, int);
+void		kill_pgrp(int pgrp, int sig);
 struct cpu*     mycpu(void);
 struct proc*    myproc(void);
 void		pause(void);

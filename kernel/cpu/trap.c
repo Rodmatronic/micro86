@@ -132,11 +132,12 @@ void trap(struct trapframe *tf){
 			panic("%s", exceptions[tf->trapno]);
 		}
 		// In user space, assume process misbehaved.
-		if (tf->eip != -1)
-			printk("%s[%d] %s[%d] ip:0x%x sp:0x%x\n", myproc()->name, myproc()->pid, exceptions[myproc()->tf->trapno], myproc()->tf->trapno, tf->eip, myproc()->tf->esp);
-		else	// we are returning
+		if (tf->eip != -1) {
+			debug("%s[%d] %s[%d] ip:0x%x sp:0x%x\n", myproc()->name, myproc()->pid, exceptions[myproc()->tf->trapno], myproc()->tf->trapno, tf->eip, myproc()->tf->esp);
+		} else	// we are returning
 			exit(myproc()->exitstatus);
-		myproc()->sigpending |= SIGSEGV;
+		myproc()->sigpending |= (1 << SIGSEGV);
+		dosignal();
 	}
 
 	// Force process exit if it has been killed and is in user space.

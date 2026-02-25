@@ -59,6 +59,7 @@ struct proc {
 	unsigned short gid, egid, sgid; // Group ID
 	long pgrp;		// Process Group
 	int exitstatus;		// Exit status number
+	int termsig;		// Signal number (on signal kill)
 	int ttyflags;		// TTY flags
 	unsigned int sighandlers[NSIG];	// List of signal handlers
 	unsigned int sigrestorers[NSIG];	// List of signal restorers

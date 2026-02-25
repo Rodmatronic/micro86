@@ -96,6 +96,7 @@ found:
 	p->leader = 0;
 	p->tty = -1;
 	p->close_on_exec = 0;
+	p->termsig = 0;
 
 	for (int i = 0; i < NGROUPS; i++)
 		p->groups[i] = 0;
@@ -332,7 +333,7 @@ int waitpid(int pid, int *status, int options){
 				int childpid = p->pid;
 
 				if (status)
-					*status = (p->exitstatus & 0xFF) << 8;
+					*status = (p->termsig & 0x7f);
 
 				kfree(p->kstack);
 				p->kstack = 0;
