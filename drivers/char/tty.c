@@ -278,10 +278,10 @@ void tty_interrupt(int (*getc)(void)){
 				tty->input_e = tty->input_w = tty->input_r;
 			}
 			break;
-		case C('\\'):	// Kill (SIGKILL)
+		case C('\\'):	// Kill (SIGQUIT)
 			if (tty->termios.c_lflag & ISIG) {
 				if (tty->pgrp > 0)
-					kill_pgrp(tty->pgrp, SIGKILL);
+					kill_pgrp(tty->pgrp, SIGQUIT);
 				if (tty->termios.c_lflag & ECHO)
 					if (tty->attached_console)
 						tty_putc(tty, c);

@@ -590,13 +590,26 @@ struct proc* find_proc(int pid, struct proc *parent){
 
 void kill_pgrp(int pgrp, int sig){
 	struct proc *p;
+	int children = 0;
 	acquire(&ptable.lock);
+
+	for (p = ptable.proc; p < &ptable.proc[NPROC]; p++){	// do we have children?
+		if (p->pgrp == pgrp && p->state != UNUSED && p->parent && p->parent->leader == 1){
+			children = 1;
+			break;
+		}
+	}
+
 	for (p = ptable.proc; p < &ptable.proc[NPROC]; p++){
 		if (p->pgrp == pgrp && p->state != UNUSED){
-			debug("Signaling %s to stop with keyboard sig %d\n", p->name, sig);
-			p->sigpending |= 1 << (sig);
-			if (p->state == SLEEPING)
-				p->state = RUNNABLE;
+			if ((sig == SIGQUIT || sig == SIGINT || sig == SIGTSTP) && p->leader == 1 && children){
+				continue;
+			} else {
+				debug("Signaling %s to stop with keyboard sig %d\n", p->name, sig);
+				p->sigpending |= 1 << (sig);
+				if (p->state == SLEEPING)
+					p->state = RUNNABLE;
+			}
 		}
 	}
 	release(&ptable.lock);
@@ -607,19 +620,22 @@ void kill_pgrp(int pgrp, int sig){
  * wait on signal
  */
 int sys_rt_sigsuspend(void){
-	uint32_t oldmask;
+	uint32_t oldmask, newmask;
 	struct proc *p = myproc();
 
 	if (argptr(0, (void*)&oldmask, sizeof(oldmask)) < 0)
 		return -EINVAL;
 
+	newmask = p->sigmask;
 	p->sigmask = oldmask;
-	acquire(&ptable.lock);
 
-	while (!p->sigpending)
+	acquire(&ptable.lock);
+	while ((p->sigpending & ~p->sigmask) == 0)
 		sleep(p, &ptable.lock);
 
 	release(&ptable.lock);
+	dosignal();
+	p->sigmask = newmask;
 	return -EINTR;
 }
 

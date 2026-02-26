@@ -29,6 +29,10 @@ void dosignal(void){
 		p->sigpending &= ~(1 << signo);
 		handler = p->sighandlers[signo];
 
+		if (signo == SIGQUIT){
+			debug("handler %s:%x for SIGQUIT\n", p->name, p->sighandlers[signo]);
+		}
+
 		if (signo == SIGKILL || handler == (uint32_t)SIG_DFL){
 			p->termsig = signo;
 			p->killed = 1;
