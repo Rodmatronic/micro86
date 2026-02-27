@@ -332,8 +332,26 @@ int waitpid(int pid, int *status, int options){
 			if (p->state == ZOMBIE){
 				int childpid = p->pid;
 
-				if (status)
-					*status = (p->termsig & 0x7f);
+				if (status){
+					switch(p->termsig){
+						case SIGQUIT:
+						case SIGILL:
+						case SIGTRAP:
+						case SIGBUS:
+						case SIGFPE:
+						case SIGSEGV:
+						case SIGSYS:
+							// signal core dumps, for if we eventually
+							// have core dumping. TODO: This should
+							// only happen if a core dump file was
+							// actually produced. oh well
+							*status = (p->termsig & 0x7f) | 0x80;
+							break;
+						default:
+							*status = (p->termsig & 0x7f);
+							break;
+					}
+				}
 
 				kfree(p->kstack);
 				p->kstack = 0;
