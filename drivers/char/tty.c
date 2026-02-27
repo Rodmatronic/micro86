@@ -403,9 +403,8 @@ void tty_putc(struct tty *tty, int c){
 		break;
 	case 0x08:	// ^H (Ctrl-H)
 	case 0x7f:	// DEL
-		if (tty->pos % 80 != 0) {
+		if (tty->pos % 80 != 0)
 			tty->pos--;
-		}
 		break;
 
 	case('\t'):	// tab
@@ -545,6 +544,11 @@ void termio_putc(struct tty *tty, char c){
 			} else if (c == 'H'){
 				set_cursor(tty, 0, 0);
 				tty->ansi_state = ANSI_NORMAL;
+			} else if (c == '?'){
+				tty->ansi_private = 1;
+				tty->ansi_param_count = 1;
+				tty->ansi_params[0] = 0;
+				tty->ansi_state = ANSI_PARAM;
 			} else {
 				tty->ansi_state = ANSI_NORMAL; // invalid
 			}
@@ -571,6 +575,22 @@ void termio_putc(struct tty *tty, char c){
 					int row = (tty->ansi_param_count >= 1 ? tty->ansi_params[0] : 1) - 1;
 					int col = (tty->ansi_param_count >= 2 ? tty->ansi_params[1] : 1) - 1;
 					set_cursor(tty, col, row);
+					tty->ansi_state = ANSI_NORMAL;
+					return;
+				} else if ((c == 'h' || c == 'l') && tty->ansi_private){
+					int param = tty->ansi_params[0];
+
+					if (param == 25){
+						if (c == 'h'){	// show cursor
+							outb(0x3D4, 0x0A);
+							outb(0x3D5, (inb(0x3D5) & 0xC0) | 0);
+							outb(0x3D4, 0x0B);
+							outb(0x3D5, (inb(0x3D5) & 0xE0) | 0x0E);
+						} else {	// hide cursor
+							outb(0x3D4, 0x0A);
+							outb(0x3D5, 0x20);
+						}
+					}
 					tty->ansi_state = ANSI_NORMAL;
 					return;
 				} else {
@@ -679,6 +699,7 @@ void tty_init(void){
 		}
 		ttys[i].ansi_sgr = 0x0700;
 		ttys[i].ansi_param_count = 0;
+		ttys[i].ansi_private = 0;
 		ttys[i].termios = default_termios;
 	}
 
