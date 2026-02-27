@@ -40,6 +40,7 @@ struct tty {
 
 	int ansi_params[8];
 	int ansi_param_count;
+	int ansi_private;
 	int ansi_sgr;	// ANSI foreground colour
 	char input_buf[INPUT_BUF];
 	uint32_t input_r;	// Read index
