@@ -1,5 +1,5 @@
 /*
- * panic.c - bring the system down. 'panic' brings the system to a halt on serious error.
+ * Bring the system down in case of a fatal error
  */
 
 #include <types.h>
