@@ -31,7 +31,7 @@ void		buffer_init(void);
 struct buf*     buffer_read(uint32_t, uint32_t);
 void		buffer_release(struct buf*);
 void		buffer_write(struct buf*);
-void		sync();
+void		sync(void);
 
 // console.c
 #define		printk(fmt, ...) \
